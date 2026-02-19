@@ -48,11 +48,11 @@ require('modules/head.php');
         >
           <div class="row mb-3">
             <div class="col-md-6 position-relative">
-              <label class="form-label fw-semibold small">Customer Name</label>
+              <label class="form-label fw-semibold small">Passenger Name</label>
               <input
                 type="text"
                 class="form-control text-muted"
-                placeholder="Type to search customer"
+                placeholder="Type to search passenger"
                 id="customerNameInput"
                 autocomplete="off"
               />
@@ -80,11 +80,14 @@ require('modules/head.php');
           <div class="row mb-3">
             <div class="col-md-3">
               <label class="form-label fw-semibold small">Service Type</label>
-              <select class="form-select text-muted" id="serviceType">
-                <option value="Economy">Economy</option>
-                <option value="Business">Business</option>
-                <option value="Premium">Premium</option>
-              </select>
+                <select class="form-select text-muted" id="serviceType">
+             <option value="Economy">Economy</option>
+                     <option value="Economy XL">Economy XL</option>
+                      <option value="Business">Business</option>
+                   <option value="Business Plus">Business Plus</option>
+                         <option value="Limousine">Limousine</option>
+                               <option value="Wheelchair accessible">Wheelchair accessible</option>
+                          </select>
             </div>
             <div class="col-md-3">
               <label class="form-label fw-semibold small">Seats</label>
@@ -108,23 +111,40 @@ require('modules/head.php');
             </div>
           </div>
 
-          <div class="mb-4 mt-3">
-            <button
-              class="btn btn-md"
-              style="
-                color: #f37a20;
-                border: 1px solid #f37a20;
-                background-color: #fff;
-              "
-              onmouseover="this.style.backgroundColor='#f37a20'; this.style.color='#fff';"
-              onmouseout="this.style.backgroundColor='#fff'; this.style.color='#f37a20';"
-              data-bs-toggle="modal"
-              data-bs-target="#assignDriverModal"
-            >
-              Assign Driver Manually
-            </button>
-          </div>
+          <div class="mt-2 mb-3 d-flex gap-3 flex-wrap">
+  <button
+    class="btn px-4 py-2"
+    style="
+      color: #f37a20;
+      border: 1px solid #f37a20;
+      background-color: #fff;
+      transition: all 0.3s ease;
+    "
+    onmouseenter="this.style.backgroundColor='#f37a20'; this.style.color='#fff';"
+    onmouseleave="this.style.backgroundColor='#fff'; this.style.color='#f37a20';"
+    data-bs-toggle="modal"
+    data-bs-target="#assignDriverModal"
+  >
+    Assign Driver Manually
+  </button>
 
+  <button
+    class="btn px-4 py-2"
+    style="
+      color: #f37a20;
+      border: 1px solid #f37a20;
+      background-color: #fff;
+      transition: all 0.3s ease;
+    "
+    onmouseleave="this.style.backgroundColor='#f37a20'; this.style.color='#fff';"
+    onmouseenter="this.style.backgroundColor='#fff'; this.style.color='#f37a20';"
+    data-bs-toggle="modal"
+    data-bs-target="#assignDriverModal"
+  >
+    Assign Nearest Driver
+  </button>
+
+</div>
           <div class="container-fluid p-0" style="display: flex">
             <div
               class="col-md-6 bg-white p-2 d-flex flex-column"

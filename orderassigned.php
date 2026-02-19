@@ -73,20 +73,30 @@ require('modules/head.php');
       <div style="background-color: #f8f9fa">
         <div class="row g-4">
           <div class="col-md-6">
-            <!-- Customer Details -->
             <div
               id="customerDetailsSection"
               class="bg-white p-4 mb-4 rounded shadow-sm"
             >
               <h6 class="fw-bold mb-3">Customer Details</h6>
-              <div class="d-flex align-items-center mb-3">
-                <div>
-                  <div class="fw-semibold" id="customerName">John Doe</div>
-                </div>
-              </div>
+                <div class="position-relative mb-3">
+              <label class="form-label fw-semibold small">Passenger Name</label>
+              <input
+                type="text"
+                class="form-control text-muted"
+                placeholder="Type to search passenger"
+                id="customerNameInput"
+                autocomplete="off"
+              />
+              <input type="hidden" id="customerId" />
+              <div
+                id="customerSuggestions"
+                class="list-group position-absolute w-100"
+                style="z-index: 10; max-height: 200px; overflow-y: auto; display: none;"
+              ></div>
+            </div>
 
               <div class="mb-3">
-  <label class="form-label text-muted small">Phone Number</label>
+  <label class="form-label fw-semibold small">Phone Number</label>
 
   <div class="d-flex gap-2">
     <!-- Static Country Code -->
@@ -108,21 +118,21 @@ require('modules/head.php');
   </div>
 </div>
 
-              <div class="mb-3">
-  <label class="form-label text-muted small">Service Type</label>
+<div class="mb-3">
+  <label class="form-label fw-semibold small">Service Type</label>
   <select class="form-select" id="serviceType">
     <option value="Economy">Economy</option>
+    <option value="Economy XL">Economy XL</option>
     <option value="Business">Business</option>
-    <option value="Luxury">Luxury</option>
-    <option value="SUV">SUV</option>
-    <option value="Van">Van</option>
+    <option value="Business Plus">Business Plus</option>
+    <option value="Limousine">Limousine</option>
+    <option value="Wheelchair accessible">Wheelchair accessible</option>
   </select>
 </div>
 
-
 <div class="row g-2">
   <div class="col-md-6">
-    <label class="form-label text-muted small">Date</label>
+    <label class="form-label fw-semibold small">Date</label>
     <input
       type="date"
       class="form-control"
@@ -131,7 +141,7 @@ require('modules/head.php');
   </div>
 
   <div class="col-md-6">
-    <label class="form-label text-muted small">Time</label>
+    <label class="form-label fw-semibold small">Time</label>
     <input
       type="time"
       class="form-control"
@@ -147,7 +157,7 @@ require('modules/head.php');
 
   <!-- Pickup -->
   <div class="mb-3">
-    <label class="form-label text-muted small">Pickup</label>
+    <label class="form-label fw-semibold small">Pickup</label>
     <div class="d-flex align-items-center">
       <i class="bi bi-geo-alt-fill text-orange me-2"></i>
       <input
@@ -161,7 +171,7 @@ require('modules/head.php');
 
   <!-- Drop Off -->
   <div class="mb-3">
-    <label class="form-label text-muted small">Drop Off</label>
+    <label class="form-label fw-semibold small">Drop Off</label>
     <div class="d-flex align-items-center">
       <i class="bi bi-geo-alt-fill text-danger me-2"></i>
       <input
@@ -176,7 +186,7 @@ require('modules/head.php');
   <!-- Estimated Fare & Time -->
   <div class="row g-2 mb-3">
     <div class="col-md-6">
-      <label class="form-label text-muted small">Estimated Fare</label>
+      <label class="form-label fw-semibold small">Estimated Fare</label>
       <input
         type="text"
         class="form-control"
@@ -186,7 +196,7 @@ require('modules/head.php');
       />
     </div>
     <div class="col-md-6">
-      <label class="form-label text-muted small">Estimated Time</label>
+      <label class="form-label fw-semibold small">Estimated Time</label>
       <input
         type="text"
         class="form-control"
@@ -199,7 +209,7 @@ require('modules/head.php');
 
   <!-- Distance -->
   <div class="mb-3">
-    <label class="form-label text-muted small">Distance</label>
+    <label class="form-label fw-semibold small">Distance</label>
     <input
       type="text"
       class="form-control"
@@ -211,7 +221,7 @@ require('modules/head.php');
 
   <!-- Extras -->
   <div class="mb-3">
-    <label class="form-label text-muted small">Extras</label>
+    <label class="form-label fw-semibold small">Extras</label>
     <div class="d-flex flex-wrap gap-2">
       <div class="form-check">
         <input
@@ -234,6 +244,28 @@ require('modules/head.php');
           Extra Luggage Space
         </label>
       </div>
+
+        <div class="form-check">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          id="extraLuggage"
+        />
+        <label class="form-check-label" for="extraLuggage">
+          Pets Allowed
+        </label>
+      </div>
+
+        <div class="form-check">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          id="extraLuggage"
+        />
+        <label class="form-check-label" for="extraLuggage">
+          Delivery
+        </label>
+      </div>
     </div>
   </div>
 
@@ -251,7 +283,6 @@ require('modules/head.php');
           </div>
 
           <div class="col-md-6">
-            <!-- Driver Details -->
            <div
     id="driverAssignSection"
     class="bg-white p-4 mb-4 rounded shadow-sm"
@@ -259,7 +290,7 @@ require('modules/head.php');
     <h6 class="fw-bold mb-3">Assign Driver</h6>
 
     <div class="mb-3">
-      <label class="form-label text-muted small">
+      <label class="form-label fw-semibold small">
         Select Driver
       </label>
 
@@ -271,29 +302,11 @@ require('modules/head.php');
     </div>
   </div>
 
-            <!-- Map -->
             <div
               class="bg-white rounded shadow-sm overflow-hidden"
               style="height: 400px; position: relative"
             >
               <div id="map" style="height: 100%; width: 100%; border-radius: 8px;"></div>
-
-              <div class="position-absolute top-0 end-0 m-2">
-                <button class="btn btn-light btn-sm rounded-circle shadow-sm">
-                  <i class="bi bi-fullscreen"></i>
-                </button>
-              </div>
-
-              <div class="position-absolute bottom-0 start-0 m-2">
-                <div class="btn-group shadow-sm" role="group">
-                  <button class="btn btn-light btn-sm rounded-start">
-                    Traffic
-                  </button>
-                  <button class="btn btn-light btn-sm rounded-end">
-                    Nearest Drivers
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -306,7 +319,6 @@ require('modules/head.php');
 
     </main>
 
-    <!-- Driver Assigned Success Modal -->
 <div
   class="modal fade"
   id="driverAssignedModal"
