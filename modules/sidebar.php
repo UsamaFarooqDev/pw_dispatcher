@@ -1,4 +1,4 @@
-<div class="sidebar text-white p-3">
+<div class="sidebar text-white p-3" style="z-index: 1031">
   <div class="d-flex flex-column h-100">
     <div class="sidebar-header mb-10 d-flex justify-content-center align-items-center" style="height: 60px">
       <img
@@ -11,25 +11,25 @@
 
     <ul class="nav nav-pills flex-column mt-4" id="sidebarMenu">
       <li class="nav-item">
-        <a href="home.php" class="nav-link sidebar-link d-flex align-items-center text-body">
+        <a href="home.php" class="nav-link sidebar-link d-flex align-items-center py-2 fw-semibold text-body">
           <i class="bi bi-houses fs-6 me-2"></i> Dashbaord
         </a>
       </li>
 
       <li class="nav-item">
-        <a href="preorder.php" class="nav-link sidebar-link d-flex align-items-center text-body">
+        <a href="preorder.php" class="nav-link sidebar-link d-flex align-items-center py-2 fw-semibold text-body">
           <i class="bi bi-lightning-charge fs-6 me-2"></i> Pre Order
         </a>
       </li>
 
       <li class="nav-item">
-        <a href="orderassigned.php" class="nav-link sidebar-link d-flex align-items-center text-body">
+        <a href="orderassigned.php" class="nav-link sidebar-link d-flex align-items-center py-2 fw-semibold text-body">
           <i class="bi bi-clipboard-check fs-6 me-2"></i> Order Assign
         </a>
       </li>
 
       <li class="nav-item">
-        <a href="corporate.php" class="nav-link sidebar-link d-flex align-items-center text-body">
+        <a href="corporate.php" class="nav-link sidebar-link d-flex align-items-center py-2 fw-semibold text-body">
           <i class="bi bi-building fs-6 me-2"></i> Corporate Ride
         </a>
       </li>

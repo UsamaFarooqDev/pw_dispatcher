@@ -93,7 +93,7 @@ require('modules/head.php');
       id="tab-finished"
       disabled
     >
-      Finished (0)
+      Completed (0)
     </button>
     <span class="text-muted">›</span>
     <button

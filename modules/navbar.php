@@ -18,7 +18,7 @@ $user_email = isset($_SESSION['user_email']) ? $_SESSION['user_email'] : 'john@p
 $profile_image = isset($_SESSION['profile_image']) ? $_SESSION['profile_image'] : '/assets/profile.svg';
 ?>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-white d-flex align-items-center justify-content-between px-3 py-2">
+<nav class="navbar navbar-expand-lg navbar-light bg-white d-flex align-items-center justify-content-between px-3 py-2.5 sticky-top" style="z-index: 1030; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
   <div class="d-flex align-items-center w-100">
     <button
       class="navbar-toggler me-2 d-md-none btn p-1"
@@ -81,9 +81,6 @@ $profile_image = isset($_SESSION['profile_image']) ? $_SESSION['profile_image'] 
         <div class="d-none d-md-flex flex-column ms-2 me-2 overflow-hidden">
           <span id="navbarUserName" class="fw-bold text-truncate" style="font-size: 0.875rem;">
             <?php echo htmlspecialchars($user_name); ?>
-          </span>
-          <span id="navbarUserEmail" class="text-muted text-truncate" style="font-size: 0.75rem;">
-            <?php echo htmlspecialchars($user_email); ?>
           </span>
         </div>
         <i class="bi bi-chevron-down text-muted d-none d-md-inline"></i>

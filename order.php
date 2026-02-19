@@ -111,40 +111,6 @@ require('modules/head.php');
             </div>
           </div>
 
-          <div class="mt-2 mb-3 d-flex gap-3 flex-wrap">
-  <button
-    class="btn px-4 py-2"
-    style="
-      color: #f37a20;
-      border: 1px solid #f37a20;
-      background-color: #fff;
-      transition: all 0.3s ease;
-    "
-    onmouseenter="this.style.backgroundColor='#f37a20'; this.style.color='#fff';"
-    onmouseleave="this.style.backgroundColor='#fff'; this.style.color='#f37a20';"
-    data-bs-toggle="modal"
-    data-bs-target="#assignDriverModal"
-  >
-    Assign Driver Manually
-  </button>
-
-  <button
-    class="btn px-4 py-2"
-    style="
-      color: #f37a20;
-      border: 1px solid #f37a20;
-      background-color: #fff;
-      transition: all 0.3s ease;
-    "
-    onmouseleave="this.style.backgroundColor='#f37a20'; this.style.color='#fff';"
-    onmouseenter="this.style.backgroundColor='#fff'; this.style.color='#f37a20';"
-    data-bs-toggle="modal"
-    data-bs-target="#assignDriverModal"
-  >
-    Assign Nearest Driver
-  </button>
-
-</div>
           <div class="container-fluid p-0" style="display: flex">
             <div
               class="col-md-6 bg-white p-2 d-flex flex-column"
@@ -379,8 +345,46 @@ require('modules/head.php');
                     />
                   </div>
                 </div>
+
+      <div class="mt-3 mb-1 d-flex gap-3 flex-wrap">
+  <button
+    class="btn px-3 py-1"
+    style="
+      color: #f37a20;
+      border: 1px solid #f37a20;
+      background-color: #fff;
+      transition: all 0.3s ease;
+    "
+    onmouseenter="this.style.backgroundColor='#f37a20'; this.style.color='#fff';"
+    onmouseleave="this.style.backgroundColor='#fff'; this.style.color='#f37a20';"
+    data-bs-toggle="modal"
+    data-bs-target="#assignDriverModal"
+  >
+    Assign Driver Manually
+  </button>
+
+  <button
+    class="btn px-3 py-1"
+    style="
+      color: #f37a20;
+      border: 1px solid #f37a20;
+      background-color: #fff;
+      transition: all 0.3s ease;
+    "
+    onmouseleave="this.style.backgroundColor='#f37a20'; this.style.color='#fff';"
+    onmouseenter="this.style.backgroundColor='#fff'; this.style.color='#f37a20';"
+    data-bs-toggle="modal"
+     data-bs-target="#searchDriverModal"
+  >
+    Assign Nearest Driver
+  </button>
+
+</div>
+
               </div>
             </div>
+
+            
 
             <div
               class="col-md-6 p-0 position-relative"
@@ -470,6 +474,62 @@ require('modules/head.php');
             </div>
           </div>
         </div>
+
+        <!-- Searching Driver Modal -->
+<div
+  class="modal fade"
+  id="searchDriverModal"
+  tabindex="-1"
+  aria-hidden="true"
+  data-bs-backdrop="static"
+  data-bs-keyboard="false"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div
+      class="modal-content p-5 text-center"
+      style="border-radius: 12px; max-width: 500px; margin: auto"
+    >
+      <!-- Circular Spinner -->
+      <div class="d-flex justify-content-center mb-4">
+        <div
+          class="spinner-border"
+          role="status"
+          style="width: 3rem; height: 3rem; border-width: 0.25em; color: #f37a20;"
+        >
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+
+      <!-- Message -->
+      <h4 class="fw-bold mb-3">Searching for drivers</h4>
+      <p class="text-muted mb-4">Finding available drivers within 5km of your location...</p>
+
+      <!-- Action Buttons -->
+      <div class="d-flex justify-content-center gap-3 mt-2">
+        <button
+          type="button"
+          class="btn px-4"
+          style="
+            background-color: #f37a20;
+            color: white;
+            border-radius: 6px;
+          "
+          id="assignNearestDriverBtn"
+        >
+          Assign
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-secondary px-4"
+          style="border-radius: 6px"
+          data-bs-dismiss="modal"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
         <!-- Assign Driver Manually Modal -->
         <div

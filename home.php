@@ -40,7 +40,7 @@ require('modules/head.php');
       type="text"
       placeholder="Search"
       class="form-control w-100 border border-secondary px-3 mx-auto mx-md-0"
-      style="border-radius: 30px; color: #3b3b3b; min-height: 36px;"
+      style="border-radius: 14px; color: #3b3b3b; min-height: 36px;"
     />
   </div>
 </div>
@@ -52,16 +52,16 @@ require('modules/head.php');
 <div class="d-flex align-items-center mb-3">
   <button 
     id="driverViewBtn" 
-    class="btn btn-sm fw-semibold me-2" 
-    style="background: #f37a20; color: white; border-radius: 15px;"
+    class="btn btn-sm fw-semibold me-2 px-3" 
+    style="background: #f37a20; color: white; border-radius: 14px;"
     onclick="switchTableView('driver')"
   >
     Driver
   </button>
   <button 
     id="customerViewBtn" 
-    class="btn btn-sm fw-semibold" 
-    style="background: #fff; color: #3b3b3b; border: 1px solid #3b3b3b; border-radius: 15px;"
+    class="btn btn-sm fw-semibold px-3" 
+    style="background: #fff; color: #3b3b3b; border: 1px solid #3b3b3b; border-radius: 14px;"
     onclick="switchTableView('customer')"
   >
     Passenger
