@@ -82,7 +82,6 @@ require('modules/head.php');
       class="btn btn-link text-decoration-none px-2 py-1 fs-6 fw-medium"
       style="color: #3b3b3b;"
       id="tab-cancelled"
-      disabled
     >
       Cancelled (0)
     </button>
@@ -91,7 +90,6 @@ require('modules/head.php');
       class="btn btn-link text-decoration-none px-2 py-1 fs-6 fw-medium"
       style="color: #3b3b3b;"
       id="tab-finished"
-      disabled
     >
       Completed (0)
     </button>
@@ -143,6 +141,12 @@ require('modules/head.php');
       <tbody id="scheduledRidesBody" style="display: none;">
         <!-- Dynamic scheduled rides -->
       </tbody>
+      <tbody id="cancelledRidesBody" style="display: none;">
+        <!-- Dynamic cancelled rides -->
+      </tbody>
+      <tbody id="completedRidesBody" style="display: none;">
+        <!-- Dynamic completed rides -->
+      </tbody>
     </table>
   </div>
 
@@ -167,7 +171,9 @@ require('modules/head.php');
       let currentRidesData = {
         unassigned: [],
         assigned: [],
-        scheduled: []
+        scheduled: [],
+        cancelled: [],
+        completed: []
       }; // Cache current rides data to detect changes
       
       // Pagination
@@ -204,6 +210,8 @@ require('modules/head.php');
           loadUnassignedRides(true);
           loadAssignedRides(true);
           loadScheduledRides(true);
+          loadCancelledRides(true);
+          loadCompletedRides(true);
           // Start polling for ride status updates (silent - no UI reload)
           startPolling();
 
@@ -217,6 +225,8 @@ require('modules/head.php');
           loadUnassignedRides(true);
           loadAssignedRides(true);
           loadScheduledRides(true);
+          loadCancelledRides(true);
+          loadCompletedRides(true);
         }
       });
 
@@ -291,6 +301,16 @@ require('modules/head.php');
             return status === 'upcoming' || status === 'scheduled';
           });
 
+          const cancelledRides = rides.filter((ride) => {
+            const status = (ride.status || '').toLowerCase();
+            return status === 'cancelled' || status === 'canceled';
+          });
+
+          const completedRides = rides.filter((ride) => {
+            const status = (ride.status || '').toLowerCase();
+            return status === 'completed' || status === 'finished';
+          });
+
              // Initialize previous statuses on first check if empty
           if (previousRideStatuses.size === 0) {
             rides.forEach((ride) => {
@@ -333,6 +353,28 @@ require('modules/head.php');
             updateScheduledTabCount(scheduledRides.length);
             if (currentTab === 'scheduled') {
               updatePaginationInfo(scheduledRides.length);
+              const currentPage = preorderPagination ? preorderPagination.getCurrentPage() : 1;
+              updateTableForCurrentTab(currentPage, ITEMS_PER_PAGE);
+            }
+          }
+
+          const cancelledChanged = hasRidesChanged(currentRidesData.cancelled, cancelledRides);
+          if (cancelledChanged) {
+            currentRidesData.cancelled = cancelledRides;
+            updateCancelledTabCount(cancelledRides.length);
+            if (currentTab === 'cancelled') {
+              updatePaginationInfo(cancelledRides.length);
+              const currentPage = preorderPagination ? preorderPagination.getCurrentPage() : 1;
+              updateTableForCurrentTab(currentPage, ITEMS_PER_PAGE);
+            }
+          }
+
+          const completedChanged = hasRidesChanged(currentRidesData.completed, completedRides);
+          if (completedChanged) {
+            currentRidesData.completed = completedRides;
+            updateCompletedTabCount(completedRides.length);
+            if (currentTab === 'completed') {
+              updatePaginationInfo(completedRides.length);
               const currentPage = preorderPagination ? preorderPagination.getCurrentPage() : 1;
               updateTableForCurrentTab(currentPage, ITEMS_PER_PAGE);
             }
@@ -642,6 +684,10 @@ require('modules/head.php');
             populateAssignedTable(paginatedRides);
           } else if (currentTab === 'scheduled') {
             populateScheduledTable(paginatedRides);
+          } else if (currentTab === 'cancelled') {
+            populateCancelledTable(paginatedRides);
+          } else if (currentTab === 'completed') {
+            populateCompletedTable(paginatedRides);
           }
         } catch (error) {
           console.error('Error in updateTableForCurrentTab:', error);
@@ -653,6 +699,10 @@ require('modules/head.php');
             populateAssignedTable(rides);
           } else if (currentTab === 'scheduled') {
             populateScheduledTable(rides);
+          } else if (currentTab === 'cancelled') {
+            populateCancelledTable(rides);
+          } else if (currentTab === 'completed') {
+            populateCompletedTable(rides);
           }
         }
       }
@@ -742,30 +792,38 @@ require('modules/head.php');
         const unassignedTab = document.getElementById('tab-unassigned');
         const assignedTab = document.getElementById('tab-assigned');
         const scheduledTab = document.getElementById('tab-scheduled');
+        const cancelledTab = document.getElementById('tab-cancelled');
+        const completedTab = document.getElementById('tab-finished');
         const unassignedBody = document.getElementById('unassignedRidesBody');
         const assignedBody = document.getElementById('assignedRidesBody');
         const scheduledBody = document.getElementById('scheduledRidesBody');
+        const cancelledBody = document.getElementById('cancelledRidesBody');
+        const completedBody = document.getElementById('completedRidesBody');
+
+        function clearAllTabStyles() {
+          [unassignedTab, assignedTab, scheduledTab, cancelledTab, completedTab].forEach((t) => {
+            if (t) {
+              t.style.color = '#3b3b3b';
+              t.style.borderBottom = 'none';
+            }
+          });
+        }
+
+        function hideAllBodies() {
+          [unassignedBody, assignedBody, scheduledBody, cancelledBody, completedBody].forEach((b) => {
+            if (b) b.style.display = 'none';
+          });
+        }
 
         if (unassignedTab) {
           unassignedTab.addEventListener('click', () => {
             currentTab = 'unassigned';
-            // Update tab styles
             toggleActionColumn(true);
+            clearAllTabStyles();
             unassignedTab.style.color = '#f37a20';
             unassignedTab.style.borderBottom = '3px solid #f37a20';
-            assignedTab.style.color = '#3b3b3b';
-            assignedTab.style.borderBottom = 'none';
-            if (scheduledTab) {
-              scheduledTab.style.color = '#3b3b3b';
-              scheduledTab.style.borderBottom = 'none';
-            }
-            
-            // Show/hide table bodies
+            hideAllBodies();
             if (unassignedBody) unassignedBody.style.display = '';
-            if (assignedBody) assignedBody.style.display = 'none';
-            if (scheduledBody) scheduledBody.style.display = 'none';
-            
-            // Update pagination and table
             const rides = currentRidesData.unassigned || [];
             if (preorderPagination) {
               preorderPagination.update(rides.length, 1);
@@ -777,23 +835,12 @@ require('modules/head.php');
         if (assignedTab) {
           assignedTab.addEventListener('click', () => {
             currentTab = 'assigned';
-            // Update tab styles
             toggleActionColumn(true);
+            clearAllTabStyles();
             assignedTab.style.color = '#f37a20';
             assignedTab.style.borderBottom = '3px solid #f37a20';
-            unassignedTab.style.color = '#3b3b3b';
-            unassignedTab.style.borderBottom = 'none';
-            if (scheduledTab) {
-              scheduledTab.style.color = '#3b3b3b';
-              scheduledTab.style.borderBottom = 'none';
-            }
-            
-            // Show/hide table bodies
+            hideAllBodies();
             if (assignedBody) assignedBody.style.display = '';
-            if (unassignedBody) unassignedBody.style.display = 'none';
-            if (scheduledBody) scheduledBody.style.display = 'none';
-            
-            // Update pagination and table
             const rides = currentRidesData.assigned || [];
             if (preorderPagination) {
               preorderPagination.update(rides.length, 1);
@@ -806,19 +853,46 @@ require('modules/head.php');
           scheduledTab.addEventListener('click', () => {
             currentTab = 'scheduled';
             toggleActionColumn(false);
+            clearAllTabStyles();
             scheduledTab.style.color = '#f37a20';
             scheduledTab.style.borderBottom = '3px solid #f37a20';
-            assignedTab.style.color = '#3b3b3b';
-            assignedTab.style.borderBottom = 'none';
-            unassignedTab.style.color = '#3b3b3b';
-            unassignedTab.style.borderBottom = 'none';
-
+            hideAllBodies();
             if (scheduledBody) scheduledBody.style.display = '';
-            if (assignedBody) assignedBody.style.display = 'none';
-            if (unassignedBody) unassignedBody.style.display = 'none';
-            
-            // Update pagination and table
             const rides = currentRidesData.scheduled || [];
+            if (preorderPagination) {
+              preorderPagination.update(rides.length, 1);
+              updateTableForCurrentTab(1, ITEMS_PER_PAGE);
+            }
+          });
+        }
+
+        if (cancelledTab) {
+          cancelledTab.addEventListener('click', () => {
+            currentTab = 'cancelled';
+            toggleActionColumn(true);
+            clearAllTabStyles();
+            cancelledTab.style.color = '#f37a20';
+            cancelledTab.style.borderBottom = '3px solid #f37a20';
+            hideAllBodies();
+            if (cancelledBody) cancelledBody.style.display = '';
+            const rides = currentRidesData.cancelled || [];
+            if (preorderPagination) {
+              preorderPagination.update(rides.length, 1);
+              updateTableForCurrentTab(1, ITEMS_PER_PAGE);
+            }
+          });
+        }
+
+        if (completedTab) {
+          completedTab.addEventListener('click', () => {
+            currentTab = 'completed';
+            toggleActionColumn(true);
+            clearAllTabStyles();
+            completedTab.style.color = '#f37a20';
+            completedTab.style.borderBottom = '3px solid #f37a20';
+            hideAllBodies();
+            if (completedBody) completedBody.style.display = '';
+            const rides = currentRidesData.completed || [];
             if (preorderPagination) {
               preorderPagination.update(rides.length, 1);
               updateTableForCurrentTab(1, ITEMS_PER_PAGE);
@@ -906,6 +980,138 @@ require('modules/head.php');
         const scheduledTab = document.getElementById('tab-scheduled');
         if (!scheduledTab) return;
         scheduledTab.textContent = `Scheduled (${count})`;
+      }
+
+      async function loadCancelledRides(showLoading = false) {
+        try {
+          const response = await fetch('api/get_rides.php?page=1&limit=1000');
+          if (!response.ok) {
+            throw new Error('Failed to fetch rides from server');
+          }
+          const result = await response.json();
+          if (!result.success) {
+            throw new Error(result.error || 'Failed to fetch rides');
+          }
+          const rides = result && result.data ? result.data : [];
+          const cancelledRides = rides.filter((ride) => {
+            const status = (ride.status || '').toLowerCase();
+            return status === 'cancelled' || status === 'canceled';
+          });
+          currentRidesData.cancelled = cancelledRides;
+          updateCancelledTabCount(cancelledRides.length);
+          if (currentTab === 'cancelled') {
+            updatePaginationInfo(cancelledRides.length);
+            const currentPage = preorderPagination ? preorderPagination.getCurrentPage() : 1;
+            updateTableForCurrentTab(currentPage, ITEMS_PER_PAGE);
+          }
+        } catch (error) {
+          console.error('Error loading cancelled rides:', error);
+          updateCancelledTabCount(0);
+        }
+      }
+
+      function populateCancelledTable(rides) {
+        const tbody = document.getElementById('cancelledRidesBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        if (!rides || rides.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="7" class="text-center py-4 text-muted">No cancelled rides to show</td></tr>';
+          return;
+        }
+        rides.forEach((ride) => {
+          const name = ride.passenger_name || 'N/A';
+          const orderTime = formatOrderTime(ride.created_at);
+          const pickup = ride.pickup_addr || ride.actual_start_addr || 'N/A';
+          const destination = ride.dest_addr || ride.actual_end_addr || 'N/A';
+          const status = ride.status || 'N/A';
+          const fare = formatFare(ride.fare_eur, ride.estimate_fare);
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td class="ps-3">${name}</td>
+            <td>${orderTime}</td>
+            <td>${pickup}</td>
+            <td>${destination}</td>
+            <td>${status}</td>
+            <td class="text-end pe-4">${fare}</td>
+            <td class="text-end pe-4">
+              <a href="orderassigned.php?id=${ride.id}" class="text-decoration-none" style="color: #f37a20;">View Details</a>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      }
+
+      function updateCancelledTabCount(count) {
+        const tab = document.getElementById('tab-cancelled');
+        if (!tab) return;
+        tab.textContent = `Cancelled (${count})`;
+      }
+
+      async function loadCompletedRides(showLoading = false) {
+        try {
+          const response = await fetch('api/get_rides.php?page=1&limit=1000');
+          if (!response.ok) {
+            throw new Error('Failed to fetch rides from server');
+          }
+          const result = await response.json();
+          if (!result.success) {
+            throw new Error(result.error || 'Failed to fetch rides');
+          }
+          const rides = result && result.data ? result.data : [];
+          const completedRides = rides.filter((ride) => {
+            const status = (ride.status || '').toLowerCase();
+            return status === 'completed' || status === 'finished';
+          });
+          currentRidesData.completed = completedRides;
+          updateCompletedTabCount(completedRides.length);
+          if (currentTab === 'completed') {
+            updatePaginationInfo(completedRides.length);
+            const currentPage = preorderPagination ? preorderPagination.getCurrentPage() : 1;
+            updateTableForCurrentTab(currentPage, ITEMS_PER_PAGE);
+          }
+        } catch (error) {
+          console.error('Error loading completed rides:', error);
+          updateCompletedTabCount(0);
+        }
+      }
+
+      function populateCompletedTable(rides) {
+        const tbody = document.getElementById('completedRidesBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        if (!rides || rides.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="7" class="text-center py-4 text-muted">No completed rides to show</td></tr>';
+          return;
+        }
+        rides.forEach((ride) => {
+          const name = ride.passenger_name || 'N/A';
+          const orderTime = formatOrderTime(ride.created_at);
+          const pickup = ride.pickup_addr || ride.actual_start_addr || 'N/A';
+          const destination = ride.dest_addr || ride.actual_end_addr || 'N/A';
+          const status = ride.status || 'N/A';
+          const fare = formatFare(ride.fare_eur, ride.estimate_fare);
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td class="ps-3">${name}</td>
+            <td>${orderTime}</td>
+            <td>${pickup}</td>
+            <td>${destination}</td>
+            <td>${status}</td>
+            <td class="text-end pe-4">${fare}</td>
+            <td class="text-end pe-4">
+              <a href="orderassigned.php?id=${ride.id}" class="text-decoration-none" style="color: #f37a20;">View Details</a>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      }
+
+      function updateCompletedTabCount(count) {
+        const tab = document.getElementById('tab-finished');
+        if (!tab) return;
+        tab.textContent = `Completed (${count})`;
       }
 
     </script>
