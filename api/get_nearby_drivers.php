@@ -42,22 +42,47 @@ function haversineKm($lat1, $lon1, $lat2, $lon2) {
     return $R * $c;
 }
 
+// Only show drivers active within this many minutes (online + recently updated location)
+$activeWithinMinutes = isset($_GET['active_within_min']) ? max(1, min(60, intval($_GET['active_within_min']))) : 10;
+
 try {
     $db = new SupabaseDB(null, true);
 
-    // Fetch drivers (with location); get a large set so we can filter by distance
+    // Fetch drivers (with location); get a large set so we can filter by distance and activity
     $drivers = $db->fetchData('drivers', [
         'order' => 'created_at.desc',
         'limit' => 500
     ]);
 
+    $cutoffTime = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->modify("-{$activeWithinMinutes} minutes");
+    $cutoffIso = $cutoffTime->format('Y-m-d\TH:i:s.u\Z');
+
     $nearby = [];
     foreach ($drivers as $d) {
+        // Must have a valid current location (not just saved home address from the past)
         $dlat = isset($d['current_lat']) ? floatval($d['current_lat']) : null;
         $dlng = isset($d['current_lng']) ? floatval($d['current_lng']) : null;
         if ($dlat === null || $dlng === null || is_nan($dlat) || is_nan($dlng)) {
             continue;
         }
+
+        // Only include drivers who are currently online (recent last_active)
+        $lastActive = isset($d['last_active']) ? trim((string) $d['last_active']) : null;
+        if ($lastActive === null || $lastActive === '') {
+            continue;
+        }
+        if (strtotime($lastActive) < $cutoffTime->getTimestamp()) {
+            continue;
+        }
+
+        // If drivers table has ride_searching column, only include drivers actively accepting rides
+        if (array_key_exists('ride_searching', $d)) {
+            $searching = $d['ride_searching'];
+            if ($searching === false || $searching === 'f' || $searching === 'false' || $searching === 0 || $searching === '0') {
+                continue;
+            }
+        }
+
         $dist = haversineKm($lat, $lng, $dlat, $dlng);
         if ($dist <= $radiusKm) {
             $d['distance_km'] = round($dist, 2);

@@ -869,7 +869,7 @@ require('modules/head.php');
         if (cancelledTab) {
           cancelledTab.addEventListener('click', () => {
             currentTab = 'cancelled';
-            toggleActionColumn(true);
+            toggleActionColumn(false);
             clearAllTabStyles();
             cancelledTab.style.color = '#f37a20';
             cancelledTab.style.borderBottom = '3px solid #f37a20';
@@ -886,7 +886,7 @@ require('modules/head.php');
         if (completedTab) {
           completedTab.addEventListener('click', () => {
             currentTab = 'completed';
-            toggleActionColumn(true);
+            toggleActionColumn(false);
             clearAllTabStyles();
             completedTab.style.color = '#f37a20';
             completedTab.style.borderBottom = '3px solid #f37a20';
@@ -946,7 +946,7 @@ require('modules/head.php');
 
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="7" class="text-center py-4 text-muted">No scheduled rides to show</td></tr>';
+            '<tr><td colspan="6" class="text-center py-4 text-muted">No scheduled rides to show</td></tr>';
           return;
         }
 
@@ -968,9 +968,6 @@ require('modules/head.php');
             <td>${destination}</td>
             <td>${status}</td>
             <td class="text-end pe-4">${fare}</td>
-            <td class="text-end pe-4">
-              <a href="orderassigned.php?id=${ride.id}" class="text-decoration-none" style="color: #f37a20;">View Details</a>
-            </td>
           `;
           tbody.appendChild(row);
         });
@@ -1016,7 +1013,7 @@ require('modules/head.php');
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="7" class="text-center py-4 text-muted">No cancelled rides to show</td></tr>';
+            '<tr><td colspan="6" class="text-center py-4 text-muted">No cancelled rides to show</td></tr>';
           return;
         }
         rides.forEach((ride) => {
@@ -1034,9 +1031,6 @@ require('modules/head.php');
             <td>${destination}</td>
             <td>${status}</td>
             <td class="text-end pe-4">${fare}</td>
-            <td class="text-end pe-4">
-              <a href="orderassigned.php?id=${ride.id}" class="text-decoration-none" style="color: #f37a20;">View Details</a>
-            </td>
           `;
           tbody.appendChild(row);
         });
@@ -1082,7 +1076,7 @@ require('modules/head.php');
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="7" class="text-center py-4 text-muted">No completed rides to show</td></tr>';
+            '<tr><td colspan="6" class="text-center py-4 text-muted">No completed rides to show</td></tr>';
           return;
         }
         rides.forEach((ride) => {
@@ -1100,9 +1094,6 @@ require('modules/head.php');
             <td>${destination}</td>
             <td>${status}</td>
             <td class="text-end pe-4">${fare}</td>
-            <td class="text-end pe-4">
-              <a href="orderassigned.php?id=${ride.id}" class="text-decoration-none" style="color: #f37a20;">View Details</a>
-            </td>
           `;
           tbody.appendChild(row);
         });
