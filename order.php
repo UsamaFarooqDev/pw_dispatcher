@@ -5,6 +5,16 @@ require('modules/head.php');
 ?>
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <style>
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1090; /* Above modals/navbar */
+  }
+</style>
+  </head> 
   <body>
    
      <?php require_once 'modules/navbar.php'; ?>
@@ -531,11 +541,8 @@ require('modules/head.php');
 
       <!-- No drivers found -->
       <div id="searchDriverEmpty" class="text-center d-none">
-        <div class="mb-3">
-          <i class="bi bi-geo-alt-fill text-muted" style="font-size: 2.5rem;"></i>
-        </div>
-        <h4 class="fw-bold mb-2">No available drivers within 5km.</h4>
-        <p class="text-muted mb-4">Try again later or assign a driver manually.</p>
+        <h4 class="fw-bold mb-2">No available drivers within 5km</h4>
+        <p class="fw-semibold text-muted mb-4">Try again later or assign a driver manually.</p>
         <button
           type="button"
           class="btn btn-outline-secondary px-4"
@@ -692,16 +699,29 @@ require('modules/head.php');
       let nearbyDriversList = [];
       let selectedNearbyDriverId = null;
 
-      function showToast(message, isSuccess = false) {
-      const toast = document.getElementById('toastMsg');
-      const toastText = document.getElementById('toastText');
-      if (!toast || !toastText) return;
-      toastText.innerText = message;
-      toast.classList.remove('bg-success', 'bg-danger');
-      toast.style.borderLeft = `4px solid ${isSuccess ? '#28a745' : '#f37a20'}`;
-      const bsToast = new bootstrap.Toast(toast);
-      bsToast.show();
-    }
+    function showToast(message, isSuccess = false) {
+  const toastEl = document.getElementById('toastMsg');
+  const toastText = document.getElementById('toastText');
+
+  if (!toastEl || !toastText) {
+    console.warn('Toast elements not found in DOM');
+    return;
+  }
+
+  toastText.innerHTML = `<span style="font-weight: 500; font-size: 14px;">${message}</span>`;
+  toastEl.classList.remove('bg-success', 'bg-danger');
+  toastEl.style.borderLeft = `4px solid ${isSuccess ? '#28a745' : '#f37a20'}`;
+
+  let bsToast = bootstrap.Toast.getInstance(toastEl);
+  if (!bsToast) {
+    bsToast = new bootstrap.Toast(toastEl, {
+      autohide: true,
+      delay: 4000
+    });
+  }
+
+  bsToast.show();
+}
 
       document.addEventListener('DOMContentLoaded', () => {
         fetchPassengers();
@@ -1103,52 +1123,51 @@ require('modules/head.php');
       }
 
       async function createOrder() {
-        const passengerId = selectedPassengerId;
-        const customerName = document.getElementById('customerNameInput')?.value?.trim() || '';
-        const phoneRaw = document.getElementById('customerPhone')?.value?.trim() || '';
-        const serviceType = document.getElementById('serviceType')?.value || 'Economy';
-        const seats = document.getElementById('seatCount')?.value || '';
-        const pickup = document.getElementById('pickupInput')?.value?.trim() || '';
-        const dropoff = document.getElementById('dropoffInput')?.value?.trim() || '';
-        const rideDateVal = document.getElementById('rideDate')?.value || '';
-        const rideTimeVal = document.getElementById('rideTime')?.value || '';
-        const pickupTimeStr = buildPickupDateTime();
+  const passengerId = selectedPassengerId;
+  const customerName = document.getElementById('customerNameInput')?.value?.trim() || '';
+  const phoneRaw = document.getElementById('customerPhone')?.value?.trim() || '';
+  const serviceType = document.getElementById('serviceType')?.value || 'Economy';
+  const seats = document.getElementById('seatCount')?.value || '';
+  const pickup = document.getElementById('pickupInput')?.value?.trim() || '';
+  const dropoff = document.getElementById('dropoffInput')?.value?.trim() || '';
+  const rideDateVal = document.getElementById('rideDate')?.value || '';
+  const rideTimeVal = document.getElementById('rideTime')?.value || '';
+  const pickupTimeStr = buildPickupDateTime();
+    const phone = phoneRaw
+    ? phoneRaw.startsWith('+353')
+      ? phoneRaw
+      : '+353' + phoneRaw.replace(/^0+/, '')
+    : '';
 
-        const phone = phoneRaw
-          ? phoneRaw.startsWith('+353')
-            ? phoneRaw
-            : '+353' + phoneRaw.replace(/^0+/, '')
-          : '';
+  if (!customerName) {
+    showToast('Please select a customer');
+    return;
+  }
 
-        if (!customerName) {
-          alert('Please select a customer');
-          return;
-        }
+  if (!phone) {
+    showToast('Please enter customer phone');
+    return;
+  }
 
-        if (!phone) {
-          alert('Please enter customer phone');
-          return;
-        }
+  if (!rideDateVal || !rideTimeVal) {
+    showToast('Please select date and time');
+    return;
+  }
 
-        if (!rideDateVal || !rideTimeVal) {
-          alert('Please select date and time');
-          return;
-        }
+  if (!seats) {
+    showToast('Please select seats');
+    return;
+  }
 
-        if (!seats) {
-          alert('Please select seats');
-          return;
-        }
+  if (!pickup || !dropoff) {
+    showToast('Please enter pickup and drop-off locations');
+    return;
+  }
 
-        if (!pickup || !dropoff) {
-          alert('Please enter pickup and drop-off locations');
-          return;
-        }
-
-        if (!currentDistance || !currentDuration || !currentFare || !pickupLatLng || !dropoffLatLng) {
-          alert('Please wait for route/fare calculation to finish.');
-          return;
-        }
+  if (!currentDistance || !currentDuration || !currentFare || !pickupLatLng || !dropoffLatLng) {
+    showToast('Please wait for route/fare calculation to finish.');
+    return;
+  }
 
         const payload = {
           user_id: passengerId,
@@ -1204,5 +1223,24 @@ document
         }
       }
     </script>
+    <div class="toast-container" id="toastContainer"></div>
+    <div 
+  class="toast align-items-center text-white" 
+  role="alert" 
+  aria-live="assertive" 
+  aria-atomic="true"
+  id="toastMsg"
+  style="min-width: 280px; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"
+>
+  <div class="d-flex w-100 p-3">
+    <div id="toastText" class="me-auto"></div>
+    <button 
+      type="button" 
+      class="btn-close btn-close-white ms-2" 
+      data-bs-dismiss="toast" 
+      aria-label="Close"
+    ></button>
+  </div>
+</div>
   </body>
 </html>
