@@ -763,6 +763,9 @@ async function assignDriver() {
     return;
   }
   
+  const serviceTypeEl = document.getElementById('serviceType');
+  const serviceType = serviceTypeEl?.value?.trim() || null;
+
   try {
     const response = await fetch('api/assign_driver.php', {
       method: 'POST',
@@ -775,6 +778,7 @@ async function assignDriver() {
         distance_km: currentDistance,
         duration_min: currentDuration,
         fare_eur: currentFare,
+        service_type: serviceType,
       }),
     });
     
@@ -801,6 +805,5 @@ document
   }
 }
 </script>
-
   </body>
 </html>

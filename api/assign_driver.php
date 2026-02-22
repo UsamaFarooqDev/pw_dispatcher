@@ -47,7 +47,10 @@ try {
     if (isset($input['fare_eur'])) {
         $updateData['fare_eur'] = number_format(floatval($input['fare_eur']), 2, '.', '');
     }
-    
+    if (isset($input['service_type']) && trim((string)$input['service_type']) !== '') {
+        $updateData['ride_type'] = trim((string)$input['service_type']);
+    }
+
     // Update the ride
     $updatedRide = $db->updateData('rides', $input['ride_id'], $updateData);
     

@@ -5,6 +5,16 @@ require('modules/head.php');
 ?>
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <style>
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1090; /* Above modals/navbar */
+  }
+</style>
+  </head> 
   <body>
    
      <?php require_once 'modules/navbar.php'; ?>
@@ -364,6 +374,7 @@ require('modules/head.php');
   </button>
 
   <button
+    type="button"
     class="btn px-3 py-1"
     style="
       color: #f37a20;
@@ -373,8 +384,7 @@ require('modules/head.php');
     "
     onmouseleave="this.style.backgroundColor='#f37a20'; this.style.color='#fff';"
     onmouseenter="this.style.backgroundColor='#fff'; this.style.color='#f37a20';"
-    data-bs-toggle="modal"
-     data-bs-target="#searchDriverModal"
+    id="assignNearestDriverOpenBtn"
   >
     Assign Nearest Driver
   </button>
@@ -486,45 +496,60 @@ require('modules/head.php');
 >
   <div class="modal-dialog modal-dialog-centered">
     <div
-      class="modal-content p-5 text-center"
+      class="modal-content p-5"
       style="border-radius: 12px; max-width: 500px; margin: auto"
     >
-      <!-- Circular Spinner -->
-      <div class="d-flex justify-content-center mb-4">
-        <div
-          class="spinner-border"
-          role="status"
-          style="width: 3rem; height: 3rem; border-width: 0.25em; color: #f37a20;"
-        >
-          <span class="visually-hidden">Loading...</span>
+      <!-- Loading state -->
+      <div id="searchDriverLoading" class="text-center">
+        <div class="d-flex justify-content-center mb-4">
+          <div
+            class="spinner-border"
+            role="status"
+            style="width: 3rem; height: 3rem; border-width: 0.25em; color: #f37a20;"
+          >
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+        <h4 class="fw-bold mb-3">Searching for drivers</h4>
+        <p class="text-muted mb-0">Searching for drivers within 5km…</p>
+      </div>
+
+      <!-- Results: driver list -->
+      <div id="searchDriverResults" class="d-none">
+        <h4 class="fw-bold mb-3 text-center">Select a driver</h4>
+        <p class="text-muted small text-center mb-3">Available drivers within 5km of pickup</p>
+        <div id="searchDriverList" class="mb-4" style="max-height: 280px; overflow-y: auto;"></div>
+        <div class="d-flex justify-content-center gap-3">
+          <button
+            type="button"
+            class="btn px-4"
+            style="background-color: #f37a20; color: white; border-radius: 6px;"
+            id="assignNearestDriverBtn"
+          >
+            Assign
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary px-4"
+            style="border-radius: 6px"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
         </div>
       </div>
 
-      <!-- Message -->
-      <h4 class="fw-bold mb-3">Searching for drivers</h4>
-      <p class="text-muted mb-4">Finding available drivers within 5km of your location...</p>
-
-      <!-- Action Buttons -->
-      <div class="d-flex justify-content-center gap-3 mt-2">
-        <button
-          type="button"
-          class="btn px-4"
-          style="
-            background-color: #f37a20;
-            color: white;
-            border-radius: 6px;
-          "
-          id="assignNearestDriverBtn"
-        >
-          Assign
-        </button>
+      <!-- No drivers found -->
+      <div id="searchDriverEmpty" class="text-center d-none">
+        <h4 class="fw-bold mb-2">No available drivers within 5km</h4>
+        <p class="fw-semibold text-muted mb-4">Try again later or assign a driver manually.</p>
         <button
           type="button"
           class="btn btn-outline-secondary px-4"
           style="border-radius: 6px"
           data-bs-dismiss="modal"
         >
-          Cancel
+          Close
         </button>
       </div>
     </div>
@@ -644,6 +669,19 @@ require('modules/head.php');
   </div>
 </div>
 
+    <!-- Toast for validation messages -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+      <div id="toastMsg" class="toast bg-white shadow" role="alert" aria-live="assertive" aria-atomic="true"
+        style="border-radius: 8px; border: 1px solid #f0f0f0; min-width: 280px;">
+        <div class="toast-header border-0" style="background: transparent;">
+          <i class="bi bi-info-circle-fill me-2" style="color: #f37a20;"></i>
+          <strong class="me-auto" style="color: #f37a20;">Notification</strong>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body text-muted small" id="toastText"></div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9ea0A-mjnD5iHfT9X8Dn5YYH4_KZopLI&libraries=places" async defer></script>
     <script>
@@ -658,6 +696,32 @@ require('modules/head.php');
       let currentDistance = null;
       let currentDuration = null;
       let currentFare = null;
+      let nearbyDriversList = [];
+      let selectedNearbyDriverId = null;
+
+    function showToast(message, isSuccess = false) {
+  const toastEl = document.getElementById('toastMsg');
+  const toastText = document.getElementById('toastText');
+
+  if (!toastEl || !toastText) {
+    console.warn('Toast elements not found in DOM');
+    return;
+  }
+
+  toastText.innerHTML = `<span style="font-weight: 500; font-size: 14px;">${message}</span>`;
+  toastEl.classList.remove('bg-success', 'bg-danger');
+  toastEl.style.borderLeft = `4px solid ${isSuccess ? '#28a745' : '#f37a20'}`;
+
+  let bsToast = bootstrap.Toast.getInstance(toastEl);
+  if (!bsToast) {
+    bsToast = new bootstrap.Toast(toastEl, {
+      autohide: true,
+      delay: 4000
+    });
+  }
+
+  bsToast.show();
+}
 
       document.addEventListener('DOMContentLoaded', () => {
         fetchPassengers();
@@ -667,6 +731,7 @@ require('modules/head.php');
         setupDriverModal();
         setupRouteListeners();
         setupConfirmOrder();
+        setupAssignNearestDriver();
       });
 
       /* ---------------------- Customers ---------------------- */
@@ -797,6 +862,151 @@ require('modules/head.php');
         }
       }
 
+      /* ---------------------- Assign Nearest Driver ---------------------- */
+      function setupAssignNearestDriver() {
+        const openBtn = document.getElementById('assignNearestDriverOpenBtn');
+        const modalEl = document.getElementById('searchDriverModal');
+        const loadingEl = document.getElementById('searchDriverLoading');
+        const resultsEl = document.getElementById('searchDriverResults');
+        const emptyEl = document.getElementById('searchDriverEmpty');
+        const listEl = document.getElementById('searchDriverList');
+        const assignBtn = document.getElementById('assignNearestDriverBtn');
+
+        if (!openBtn || !modalEl) return;
+
+        openBtn.addEventListener('click', () => {
+          const pickup = document.getElementById('pickupInput')?.value?.trim() || '';
+          const dropoff = document.getElementById('dropoffInput')?.value?.trim() || '';
+          if (!pickup || !dropoff) {
+            showToast('Please enter both pickup and drop-off locations before assigning a driver.', false);
+            return;
+          }
+
+          function showModalState(loading, results, empty) {
+            if (loadingEl) loadingEl.classList.toggle('d-none', !loading);
+            if (resultsEl) resultsEl.classList.toggle('d-none', !results);
+            if (emptyEl) emptyEl.classList.toggle('d-none', !empty);
+          }
+
+          function getPickupLatLng(cb) {
+            if (pickupLatLng && typeof pickupLatLng.lat === 'function') {
+              cb(pickupLatLng.lat(), pickupLatLng.lng());
+              return;
+            }
+            if (typeof google === 'undefined' || !google.maps || !google.maps.Geocoder) {
+              cb(null, null);
+              return;
+            }
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ address: pickup }, (results, status) => {
+              if (status === google.maps.GeocoderStatus.OK && results && results[0] && results[0].geometry) {
+                const loc = results[0].geometry.location;
+                cb(loc.lat(), loc.lng());
+              } else {
+                cb(null, null);
+              }
+            });
+          }
+
+          const modal = new bootstrap.Modal(modalEl);
+          modal.show();
+          showModalState(true, false, false);
+          nearbyDriversList = [];
+          selectedNearbyDriverId = null;
+          if (listEl) listEl.innerHTML = '';
+          // Reset empty state to default message
+          if (emptyEl) {
+            const h4 = emptyEl.querySelector('h4');
+            const p = emptyEl.querySelector('.text-muted');
+            if (h4) h4.textContent = 'No available drivers within 5km.';
+            if (p) p.textContent = 'Try again later or assign a driver manually.';
+          }
+
+          getPickupLatLng((lat, lng) => {
+            if (lat == null || lng == null) {
+              showModalState(false, false, true);
+              if (emptyEl) {
+                const h4 = emptyEl.querySelector('h4');
+                const p = emptyEl.querySelector('.text-muted');
+                if (h4) h4.textContent = 'Could not find pickup location';
+                if (p) p.textContent = 'Please select a valid pickup address from the suggestions.';
+              }
+              return;
+            }
+            const url = `api/get_nearby_drivers.php?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}&radius_km=5`;
+            fetch(url)
+              .then((res) => res.json())
+              .then((data) => {
+                if (data.success && data.data && data.data.length > 0) {
+                  nearbyDriversList = data.data;
+                  selectedNearbyDriverId = null;
+                  listEl.innerHTML = '';
+                  data.data.forEach((d) => {
+                    const box = document.createElement('div');
+                    box.className = 'border rounded p-3 mb-2 cursor-pointer';
+                    box.style.cursor = 'pointer';
+                    box.style.borderColor = '#dee2e6';
+                    box.style.transition = 'border-color 0.2s, box-shadow 0.2s';
+                    box.dataset.driverId = d.id;
+                    box.innerHTML = `
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                          <strong class="d-block">${(d.full_name || d.name || 'Driver').escapeHtml()}</strong>
+                          <span class="text-muted small">${(d.vehicle_make || d.vehicle_brand || 'Vehicle').escapeHtml()}</span>
+                        </div>
+                      </div>
+                    `;
+                    box.addEventListener('click', () => {
+                      selectedNearbyDriverId = d.id;
+                      listEl.querySelectorAll('.border').forEach((b) => {
+                        b.style.borderColor = '#dee2e6';
+                        b.style.boxShadow = 'none';
+                      });
+                      box.style.borderColor = '#f37a20';
+                      box.style.boxShadow = '0 0 0 2px rgba(243,122,32,0.3)';
+                    });
+                    listEl.appendChild(box);
+                  });
+                  showModalState(false, true, false);
+                } else {
+                  showModalState(false, false, true);
+                }
+              })
+              .catch(() => {
+                showModalState(false, false, true);
+                const h4 = emptyEl ? emptyEl.querySelector('h4') : null;
+                const p = emptyEl ? emptyEl.querySelector('.text-muted') : null;
+                if (h4) h4.textContent = 'Something went wrong';
+                if (p) p.textContent = 'Try again later or assign a driver manually.';
+              });
+          });
+        });
+
+        if (assignBtn) {
+          assignBtn.addEventListener('click', () => {
+            if (!selectedNearbyDriverId || !nearbyDriversList.length) {
+              showToast('Please select a driver from the list.', false);
+              return;
+            }
+            const driver = nearbyDriversList.find((d) => d.id == selectedNearbyDriverId);
+            if (driver) {
+              selectedDriverId = driver.id;
+              selectedVehicleNumber = driver.vehicle_number || null;
+            }
+            const modal = bootstrap.Modal.getInstance(document.getElementById('searchDriverModal'));
+            modal?.hide();
+          });
+        }
+      }
+
+      if (typeof String.prototype.escapeHtml !== 'function') {
+        String.prototype.escapeHtml = function () {
+          const div = document.createElement('div');
+          div.textContent = this;
+          return div.innerHTML;
+        };
+      }
+
       /* ---------------------- Google Maps ---------------------- */
       function initGoogleMaps() {
         if (typeof google === 'undefined' || !google.maps) {
@@ -913,52 +1123,51 @@ require('modules/head.php');
       }
 
       async function createOrder() {
-        const passengerId = selectedPassengerId;
-        const customerName = document.getElementById('customerNameInput')?.value?.trim() || '';
-        const phoneRaw = document.getElementById('customerPhone')?.value?.trim() || '';
-        const serviceType = document.getElementById('serviceType')?.value || 'Economy';
-        const seats = document.getElementById('seatCount')?.value || '';
-        const pickup = document.getElementById('pickupInput')?.value?.trim() || '';
-        const dropoff = document.getElementById('dropoffInput')?.value?.trim() || '';
-        const rideDateVal = document.getElementById('rideDate')?.value || '';
-        const rideTimeVal = document.getElementById('rideTime')?.value || '';
-        const pickupTimeStr = buildPickupDateTime();
+  const passengerId = selectedPassengerId;
+  const customerName = document.getElementById('customerNameInput')?.value?.trim() || '';
+  const phoneRaw = document.getElementById('customerPhone')?.value?.trim() || '';
+  const serviceType = document.getElementById('serviceType')?.value || 'Economy';
+  const seats = document.getElementById('seatCount')?.value || '';
+  const pickup = document.getElementById('pickupInput')?.value?.trim() || '';
+  const dropoff = document.getElementById('dropoffInput')?.value?.trim() || '';
+  const rideDateVal = document.getElementById('rideDate')?.value || '';
+  const rideTimeVal = document.getElementById('rideTime')?.value || '';
+  const pickupTimeStr = buildPickupDateTime();
+    const phone = phoneRaw
+    ? phoneRaw.startsWith('+353')
+      ? phoneRaw
+      : '+353' + phoneRaw.replace(/^0+/, '')
+    : '';
 
-        const phone = phoneRaw
-          ? phoneRaw.startsWith('+353')
-            ? phoneRaw
-            : '+353' + phoneRaw.replace(/^0+/, '')
-          : '';
+  if (!customerName) {
+    showToast('Please select a customer');
+    return;
+  }
 
-        if (!customerName) {
-          alert('Please select a customer');
-          return;
-        }
+  if (!phone) {
+    showToast('Please enter customer phone');
+    return;
+  }
 
-        if (!phone) {
-          alert('Please enter customer phone');
-          return;
-        }
+  if (!rideDateVal || !rideTimeVal) {
+    showToast('Please select date and time');
+    return;
+  }
 
-        if (!rideDateVal || !rideTimeVal) {
-          alert('Please select date and time');
-          return;
-        }
+  if (!seats) {
+    showToast('Please select seats');
+    return;
+  }
 
-        if (!seats) {
-          alert('Please select seats');
-          return;
-        }
+  if (!pickup || !dropoff) {
+    showToast('Please enter pickup and drop-off locations');
+    return;
+  }
 
-        if (!pickup || !dropoff) {
-          alert('Please enter pickup and drop-off locations');
-          return;
-        }
-
-        if (!currentDistance || !currentDuration || !currentFare || !pickupLatLng || !dropoffLatLng) {
-          alert('Please wait for route/fare calculation to finish.');
-          return;
-        }
+  if (!currentDistance || !currentDuration || !currentFare || !pickupLatLng || !dropoffLatLng) {
+    showToast('Please wait for route/fare calculation to finish.');
+    return;
+  }
 
         const payload = {
           user_id: passengerId,
@@ -1014,5 +1223,24 @@ document
         }
       }
     </script>
+    <div class="toast-container" id="toastContainer"></div>
+    <div 
+  class="toast align-items-center text-white" 
+  role="alert" 
+  aria-live="assertive" 
+  aria-atomic="true"
+  id="toastMsg"
+  style="min-width: 280px; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"
+>
+  <div class="d-flex w-100 p-3">
+    <div id="toastText" class="me-auto"></div>
+    <button 
+      type="button" 
+      class="btn-close btn-close-white ms-2" 
+      data-bs-dismiss="toast" 
+      aria-label="Close"
+    ></button>
+  </div>
+</div>
   </body>
 </html>
