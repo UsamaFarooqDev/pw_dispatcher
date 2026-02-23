@@ -56,6 +56,7 @@ document.addEventListener("DOMContentLoaded", function () {
             // Apply the same active UI as Instant tab
             link.classList.add("active");
             link.style.color = "#f37a20";
+            link.style.boxShadow = "0 0 5px rgba(243, 122, 32, 0.5)";
             link.style.backgroundColor = "#fff2e9";
         }
     });

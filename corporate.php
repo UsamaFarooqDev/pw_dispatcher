@@ -14,8 +14,11 @@ require('modules/head.php');
       class="main-content p-4"
       style="background: #f5f7fa; min-height: 92vh"
     >
+
+       <?php @require('modules/bodyHeader.php'); ?>
+
       <div
-        class="card shadow border-0 mt-1 h-100"
+        class="card shadow border-0 mt-4 h-100"
         style="border-radius: 25px; overflow: hidden"
       >
         <div class="card-body p-3">

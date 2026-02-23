@@ -15,7 +15,7 @@ $page_title = isset($page_titles[$current_page]) ? $page_titles[$current_page] :
 
 $user_name = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : 'John Doe';
 $user_email = isset($_SESSION['user_email']) ? $_SESSION['user_email'] : 'john@powercabs.com';
-$profile_image = isset($_SESSION['profile_image']) ? $_SESSION['profile_image'] : '/assets/profile.svg';
+$profile_image = isset($_SESSION['profile_image']) ? $_SESSION['profile_image'] : '';
 ?>
 
 <nav class="navbar navbar-expand-lg navbar-light bg-white d-flex align-items-center justify-content-between px-3 py-2.5 sticky-top" style="z-index: 1030; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
