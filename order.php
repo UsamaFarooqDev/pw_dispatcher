@@ -683,7 +683,7 @@ require('modules/head.php');
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9ea0A-mjnD5iHfT9X8Dn5YYH4_KZopLI&libraries=places" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9ea0A-mjnD5iHfT9X8Dn5YYH4_KZopLI&libraries=places&callback=initGoogleMaps" async defer></script>
     <script>
       let passengers = [];
       let drivers = [];
@@ -726,7 +726,7 @@ require('modules/head.php');
       document.addEventListener('DOMContentLoaded', () => {
         fetchPassengers();
         fetchDrivers();
-        initGoogleMaps();
+        // initGoogleMaps called by Maps API callback when ready (ensures Places autocomplete works)
         setupCustomerAutocomplete();
         setupDriverModal();
         setupRouteListeners();
@@ -878,7 +878,7 @@ require('modules/head.php');
           const pickup = document.getElementById('pickupInput')?.value?.trim() || '';
           const dropoff = document.getElementById('dropoffInput')?.value?.trim() || '';
           if (!pickup || !dropoff) {
-            showToast('Please enter both pickup and drop-off locations before assigning a driver.', false);
+            alert('Please enter both pickup and drop-off locations before assigning a driver.');
             return;
           }
 
@@ -985,7 +985,7 @@ require('modules/head.php');
         if (assignBtn) {
           assignBtn.addEventListener('click', () => {
             if (!selectedNearbyDriverId || !nearbyDriversList.length) {
-              showToast('Please select a driver from the list.', false);
+              alert('Please select a driver from the list.');
               return;
             }
             const driver = nearbyDriversList.find((d) => d.id == selectedNearbyDriverId);
@@ -1010,11 +1010,14 @@ require('modules/head.php');
       /* ---------------------- Google Maps ---------------------- */
       function initGoogleMaps() {
         if (typeof google === 'undefined' || !google.maps) {
-          setTimeout(initGoogleMaps, 300);
+          setTimeout(initGoogleMaps, 200);
           return;
         }
         const mapEl = document.getElementById('map');
-        if (!mapEl) return;
+        if (!mapEl) {
+          setTimeout(initGoogleMaps, 100);
+          return;
+        }
         map = new google.maps.Map(mapEl, {
           center: { lat: 53.349805, lng: -6.26031 },
           zoom: 12,
@@ -1140,32 +1143,32 @@ require('modules/head.php');
     : '';
 
   if (!customerName) {
-    showToast('Please select a customer');
+    alert('Please select a customer.');
     return;
   }
 
   if (!phone) {
-    showToast('Please enter customer phone');
+    alert('Please enter customer phone.');
     return;
   }
 
   if (!rideDateVal || !rideTimeVal) {
-    showToast('Please select date and time');
+    alert('Please select date and time.');
     return;
   }
 
   if (!seats) {
-    showToast('Please select seats');
+    alert('Please select seats.');
     return;
   }
 
   if (!pickup || !dropoff) {
-    showToast('Please enter pickup and drop-off locations');
+    alert('Please enter pickup and drop-off locations.');
     return;
   }
 
   if (!currentDistance || !currentDuration || !currentFare || !pickupLatLng || !dropoffLatLng) {
-    showToast('Please wait for route/fare calculation to finish.');
+    alert('Please wait for route/fare calculation to finish.');
     return;
   }
 

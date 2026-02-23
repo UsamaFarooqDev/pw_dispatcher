@@ -78,21 +78,15 @@ require('modules/head.php');
               class="bg-white p-4 mb-4 rounded shadow-sm"
             >
               <h6 class="fw-bold mb-3">Customer Details</h6>
-                <div class="position-relative mb-3">
+                <div class="mb-3">
               <label class="form-label fw-semibold small">Passenger Name</label>
-              <input
-                type="text"
-                class="form-control text-muted"
-                placeholder="Type to search passenger"
-                id="customerNameInput"
-                autocomplete="off"
-              />
+              <select
+                class="form-select"
+                id="customerNameSelect"
+              >
+                <option value="">Select passenger from list</option>
+              </select>
               <input type="hidden" id="customerId" />
-              <div
-                id="customerSuggestions"
-                class="list-group position-absolute w-100"
-                style="z-index: 10; max-height: 200px; overflow-y: auto; display: none;"
-              ></div>
             </div>
 
               <div class="mb-3">
@@ -295,7 +289,7 @@ require('modules/head.php');
       </label>
 
       <select class="form-select" id="driverSelect">
-        <option selected disabled>
+        <option value="" selected disabled>
           Select a driver from the list
         </option>
       </select>
@@ -358,7 +352,7 @@ require('modules/head.php');
 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9ea0A-mjnD5iHfT9X8Dn5YYH4_KZopLI&libraries=places,geometry" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9ea0A-mjnD5iHfT9X8Dn5YYH4_KZopLI&libraries=places,geometry&callback=initGoogleMaps" async defer></script>
    <script>
 // Global variables for Google Maps
 let map, directionsService, directionsRenderer;
@@ -366,18 +360,18 @@ let currentRideId = null;
 let currentDistance = null;
 let currentDuration = null;
 let currentFare = null;
+let passengersList = [];
 
-// Wait for Google Maps API to load
+// Wait for Google Maps API to load (called by script callback when API is ready)
 function initGoogleMaps() {
   if (typeof google === 'undefined' || !google.maps) {
-    console.error('Google Maps API not loaded');
+    setTimeout(initGoogleMaps, 200);
     return;
   }
 
-  // Initialize map
   const mapElement = document.getElementById('map');
   if (!mapElement) {
-    console.error('Map element not found');
+    setTimeout(initGoogleMaps, 100);
     return;
   }
 
@@ -389,6 +383,24 @@ function initGoogleMaps() {
   directionsService = new google.maps.DirectionsService();
   directionsRenderer = new google.maps.DirectionsRenderer();
   directionsRenderer.setMap(map);
+
+  // Attach Places Autocomplete when API is ready (fixes suggestions not appearing)
+  const pickupInput = document.getElementById('pickupLocation');
+  const dropoffInput = document.getElementById('dropoffLocation');
+  if (pickupInput && dropoffInput && google.maps.places) {
+    const pickupAutocomplete = new google.maps.places.Autocomplete(pickupInput);
+    const dropoffAutocomplete = new google.maps.places.Autocomplete(dropoffInput);
+    pickupAutocomplete.addListener('place_changed', () => {
+      if (dropoffInput.value) {
+        calculateRouteAndFare(pickupInput.value, dropoffInput.value);
+      }
+    });
+    dropoffAutocomplete.addListener('place_changed', () => {
+      if (pickupInput.value) {
+        calculateRouteAndFare(pickupInput.value, dropoffInput.value);
+      }
+    });
+  }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -449,6 +461,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('assignToMeBtn')?.remove();
   document.getElementById('goBackBtn')?.remove();
 
+  // Load passengers first so dropdown is ready for prefill
+  await loadPassengers();
+  setupPassengerSelect();
+
   // Fetch and prefill ride data if ID is present in URL
   const urlParams = new URLSearchParams(window.location.search);
   const rideId = urlParams.get('id');
@@ -464,16 +480,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (result.success && result.data) {
         const ride = result.data;
         
-        // Prefill Customer Details
-        const customerName = document.getElementById('customerName');
-        if (customerName && ride.passenger_name) {
-          customerName.textContent = ride.passenger_name;
+        // Prefill Customer Details (passenger from dropdown only)
+        const customerNameSelect = document.getElementById('customerNameSelect');
+        if (customerNameSelect && ride.user_id) {
+          customerNameSelect.value = String(ride.user_id);
         }
+        const customerId = document.getElementById('customerId');
+        if (customerId) customerId.value = ride.user_id || '';
 
         const phoneNumber = document.getElementById('phoneNumber');
         if (phoneNumber && ride.passenger_phone) {
           // Remove country code if present, as it's already in the static field
-          let phone = ride.passenger_phone;
+          let phone = String(ride.passenger_phone);
           if (phone.startsWith('+353')) {
             phone = phone.substring(4).trim();
           } else if (phone.startsWith('353')) {
@@ -484,7 +502,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const serviceType = document.getElementById('serviceType');
         if (serviceType && (ride.ride_type || ride.service_type)) {
-          serviceType.value = ride.ride_type || ride.service_type;
+          const value = (ride.ride_type || ride.service_type).trim();
+          const hasOption = Array.from(serviceType.options).some((o) => o.value === value);
+          if (!hasOption && value) {
+            const opt = document.createElement('option');
+            opt.value = value;
+            opt.textContent = value;
+            serviceType.appendChild(opt);
+          }
+          serviceType.value = value;
         }
 
         // Prefill Date and Time from created_at
@@ -560,10 +586,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Initialize Google Maps after a short delay to ensure API is loaded
-  setTimeout(() => {
-    initGoogleMaps();
-  }, 500);
+  // initGoogleMaps is called by Maps API callback when script is ready (autocomplete set up there)
 
   // Load drivers
   loadDrivers();
@@ -590,31 +613,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   if (pickupInput && dropoffInput) {
-    // Use Google Places Autocomplete if available
-    if (typeof google !== 'undefined' && google.maps && google.maps.places) {
-      const pickupAutocomplete = new google.maps.places.Autocomplete(pickupInput);
-      const dropoffAutocomplete = new google.maps.places.Autocomplete(dropoffInput);
-      
-      pickupAutocomplete.addListener('place_changed', () => {
-        if (dropoffInput.value) {
-          calculateRouteAndFare(pickupInput.value, dropoffInput.value);
-        }
-      });
-      
-      dropoffAutocomplete.addListener('place_changed', () => {
-        if (pickupInput.value) {
-          calculateRouteAndFare(pickupInput.value, dropoffInput.value);
-        }
-      });
-    }
-
-    // Also listen for manual input changes
     pickupInput.addEventListener('blur', () => {
       if (pickupInput.value && dropoffInput.value) {
         calculateRouteAndFare(pickupInput.value, dropoffInput.value);
       }
     });
-
     dropoffInput.addEventListener('blur', () => {
       if (pickupInput.value && dropoffInput.value) {
         calculateRouteAndFare(pickupInput.value, dropoffInput.value);
@@ -719,6 +722,51 @@ function calculateFare(distanceInKm, pickupTimeStr) {
   return baseFare + ratePerKm * distanceInKm;
 }
 
+// Load passengers and populate dropdown (select only, no custom typing)
+async function loadPassengers() {
+  try {
+    const response = await fetch('api/get_passengers.php?limit=500');
+    if (!response.ok) return;
+    const result = await response.json();
+    if (result.success && result.data) {
+      passengersList = result.data;
+      const select = document.getElementById('customerNameSelect');
+      if (!select) return;
+      select.innerHTML = '<option value="">Select passenger from list</option>';
+      passengersList.forEach((p) => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name || p.full_name || 'Unknown';
+        select.appendChild(opt);
+      });
+    }
+  } catch (err) {
+    console.error('Error loading passengers', err);
+  }
+}
+
+function setupPassengerSelect() {
+  const select = document.getElementById('customerNameSelect');
+  const phoneInput = document.getElementById('phoneNumber');
+  const customerIdInput = document.getElementById('customerId');
+  if (!select || !phoneInput) return;
+  select.addEventListener('change', () => {
+    const id = select.value;
+    if (!id) {
+      phoneInput.value = '';
+      if (customerIdInput) customerIdInput.value = '';
+      return;
+    }
+    const passenger = passengersList.find((p) => String(p.id) === String(id));
+    if (passenger) {
+      let phone = passenger.phone || passenger.phone_number || '';
+      phone = String(phone).replace(/^\+353/, '').replace(/^353/, '').trim();
+      phoneInput.value = phone;
+      if (customerIdInput) customerIdInput.value = id;
+    }
+  });
+}
+
 // Load drivers from database
 async function loadDrivers() {
   try {
@@ -732,7 +780,7 @@ async function loadDrivers() {
     
     if (result.success && result.data && driverSelect) {
       // Clear existing options except the first one
-      driverSelect.innerHTML = '<option selected disabled>Select a driver from the list</option>';
+      driverSelect.innerHTML = '<option value="" selected disabled>Select a driver from the list</option>';
       
       result.data.forEach((driver) => {
         const driverName = driver.full_name || driver.name || 'N/A';
@@ -748,12 +796,57 @@ async function loadDrivers() {
   }
 }
 
+// Validate required fields (alerts for now; replace with toast later)
+function validateOrderAssignedForm() {
+  const passengerSelect = document.getElementById('customerNameSelect');
+  const phoneInput = document.getElementById('phoneNumber');
+  const rideDate = document.getElementById('rideDate');
+  const rideTime = document.getElementById('rideTime');
+  const pickupInput = document.getElementById('pickupLocation');
+  const dropoffInput = document.getElementById('dropoffLocation');
+
+  if (!passengerSelect?.value?.trim()) {
+    alert('Please select a passenger.');
+    return false;
+  }
+  if (!phoneInput?.value?.trim()) {
+    alert('Please enter a phone number.');
+    return false;
+  }
+  if (!rideDate?.value?.trim()) {
+    alert('Please select a date.');
+    return false;
+  }
+  if (!rideTime?.value?.trim()) {
+    alert('Please select a time.');
+    return false;
+  }
+  if (!pickupInput?.value?.trim()) {
+    alert('Please enter a pickup location.');
+    return false;
+  }
+  if (!dropoffInput?.value?.trim()) {
+    alert('Please enter a drop-off location.');
+    return false;
+  }
+  return true;
+}
+
 // Assign driver to ride
 async function assignDriver() {
+  if (!validateOrderAssignedForm()) {
+    return;
+  }
+
+  if (!currentRideId) {
+    alert('No order selected. Please open this page from an order (e.g. from the orders list) to assign a driver.');
+    return;
+  }
+
   const driverSelect = document.getElementById('driverSelect');
-  const selectedDriverId = driverSelect?.value;
-  
-  if (!selectedDriverId || !currentRideId) {
+  const selectedDriverId = driverSelect?.value?.trim();
+
+  if (!selectedDriverId) {
     alert('Please select a driver');
     return;
   }
