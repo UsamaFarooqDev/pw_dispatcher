@@ -16,10 +16,10 @@ require('modules/head.php');
         <div class="card shadow border-0" style="border-radius: 25px">
           <div class="card-body p-5">
             <!-- Increased padding -->
-            <h3 class="fw-semibold mb-5">Profile Settings</h3>
+            <!-- <h3 class="fw-semibold mb-5">Profile Settings</h3> -->
 
             <!-- Full-Width Profile Section -->
-            <div class="row g-4 mb-5">
+            <div class="row g-4 mb-5 mt-5">
               <div
                 class="col-12 d-flex flex-column align-items-center text-center"
               >

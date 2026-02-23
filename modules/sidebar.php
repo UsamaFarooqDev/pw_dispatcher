@@ -10,27 +10,33 @@
     </div>
 
     <ul class="nav nav-pills flex-column mt-4" id="sidebarMenu">
-      <li class="nav-item">
+      <li class="nav-item mb-2">
         <a href="home.php" class="nav-link sidebar-link d-flex align-items-center py-2 fw-semibold text-body">
-          <i class="bi bi-houses fs-6 me-2"></i> Dashbaord
+          <i class="bi bi-houses fs-6 me-2"></i> Dashboard
         </a>
       </li>
 
-      <li class="nav-item">
+      <li class="nav-item mb-2">
         <a href="preorder.php" class="nav-link sidebar-link d-flex align-items-center py-2 fw-semibold text-body">
           <i class="bi bi-lightning-charge fs-6 me-2"></i> Pre Order
         </a>
       </li>
 
-      <li class="nav-item">
+      <!-- <li class="nav-item">
         <a href="orderassigned.php" class="nav-link sidebar-link d-flex align-items-center py-2 fw-semibold text-body">
           <i class="bi bi-clipboard-check fs-6 me-2"></i> Order Assign
         </a>
+      </li> -->
+
+      <li class="nav-item mb-2">
+        <a href="corporate.php" class="nav-link sidebar-link d-flex align-items-center py-2 fw-semibold text-body">
+          <i class="bi bi-taxi-front fs-6 me-2"></i> Corporate Ride
+        </a>
       </li>
 
-      <li class="nav-item">
-        <a href="corporate.php" class="nav-link sidebar-link d-flex align-items-center py-2 fw-semibold text-body">
-          <i class="bi bi-building fs-6 me-2"></i> Corporate Ride
+        <li class="nav-item mb-2">
+        <a href="profile.php" class="nav-link sidebar-link d-flex align-items-center py-2 fw-semibold text-body">
+          <i class="bi bi-person-lines-fill fs-6 me-2"></i> Profile Setting
         </a>
       </li>
     </ul>
