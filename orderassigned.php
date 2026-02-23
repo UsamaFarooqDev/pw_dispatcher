@@ -23,6 +23,12 @@ require('modules/head.php');
         background-color: #f8f9fa !important;
         border: 1px solid transparent;
       }
+      .toast-container {
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+}
     </style>
   </head>
   <body>
@@ -774,30 +780,45 @@ function validateOrderAssignedForm() {
   const dropoffInput = document.getElementById('dropoffLocation');
 
   if (!passengerSelect?.value?.trim()) {
-    alert('Please select a passenger.');
+    showToast('Please select a passenger.');
     return false;
   }
   if (!phoneInput?.value?.trim()) {
-    alert('Please enter a phone number.');
+    showToast('Please enter a phone number.');
     return false;
   }
   if (!rideDate?.value?.trim()) {
-    alert('Please select a date.');
+    showToast('Please select a date.');
     return false;
   }
   if (!rideTime?.value?.trim()) {
-    alert('Please select a time.');
+    showToast('Please select a time.');
     return false;
   }
   if (!pickupInput?.value?.trim()) {
-    alert('Please enter a pickup location.');
+    showToast('Please enter a pickup location.');
     return false;
   }
   if (!dropoffInput?.value?.trim()) {
-    alert('Please enter a drop-off location.');
+    showToast('Please enter a drop-off location.');
     return false;
   }
   return true;
+}
+
+function showToast(message) {
+  const toastEl = document.getElementById('globalToast');
+  const toastMsg = document.getElementById('toastMessage');
+  if (!toastEl || !toastMsg) return;
+
+  toastMsg.textContent = message;
+  toastEl.className = 'toast align-items-center text-white bg-danger border-0';
+  
+  const bsToast = bootstrap.Toast.getOrCreateInstance(toastEl, {
+    autohide: true,
+    delay: 3000
+  });
+  bsToast.show();
 }
 
 // Assign driver to ride
@@ -807,7 +828,7 @@ async function assignDriver() {
   }
 
   if (!currentRideId) {
-    alert('No order selected. Please open this page from an order (e.g. from the orders list) to assign a driver.');
+    showToast('No order selected. Please open this page from an order (e.g. from the orders list) to assign a driver.');
     return;
   }
 
@@ -815,12 +836,12 @@ async function assignDriver() {
   const selectedDriverId = driverSelect?.value?.trim();
 
   if (!selectedDriverId) {
-    alert('Please select a driver');
+    showToast('Please select a driver');
     return;
   }
   
   if (!currentDistance || !currentDuration || !currentFare) {
-    alert('Please ensure route is calculated. Make sure pickup and drop-off locations are filled.');
+    showToast('Please ensure route is calculated. Make sure pickup and drop-off locations are filled.');
     return;
   }
   
@@ -858,13 +879,23 @@ document
   });
 
     } else {
-      alert('Error assigning driver: ' + (result.error || 'Unknown error'));
+      showToast('Error assigning driver: ' + (result.error || 'Unknown error'));
     }
   } catch (error) {
     console.error('Error assigning driver:', error);
-    alert('Failed to assign driver. Please try again.');
+    showToast('Failed to assign driver. Please try again.');
   }
 }
 </script>
+
+<!-- Global Toast -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;">
+  <div id="globalToast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body" id="toastMessage"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
   </body>
 </html>

@@ -7,12 +7,12 @@ require('modules/head.php');
 <html lang="en">
   <head>
     <style>
-  .toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1090;
-  }
+     .toast-container {
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+}
 </style>
   </head> 
   <body>
@@ -664,18 +664,14 @@ require('modules/head.php');
   </div>
 </div>
 
-    <!-- Toast for validation messages -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
-      <div id="toastMsg" class="toast bg-white shadow" role="alert" aria-live="assertive" aria-atomic="true"
-        style="border-radius: 8px; border: 1px solid #f0f0f0; min-width: 280px;">
-        <div class="toast-header border-0" style="background: transparent;">
-          <i class="bi bi-info-circle-fill me-2" style="color: #f37a20;"></i>
-          <strong class="me-auto" style="color: #f37a20;">Notification</strong>
-          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body text-muted small" id="toastText"></div>
-      </div>
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;">
+  <div id="toastMsg" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body" id="toastText"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>
+  </div>
+</div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9ea0A-mjnD5iHfT9X8Dn5YYH4_KZopLI&libraries=places&callback=initGoogleMaps" async defer></script>
@@ -705,13 +701,13 @@ require('modules/head.php');
 
   toastText.innerHTML = `<span style="font-weight: 500; font-size: 14px;">${message}</span>`;
   toastEl.classList.remove('bg-success', 'bg-danger');
-  toastEl.style.borderLeft = `4px solid ${isSuccess ? '#28a745' : '#f37a20'}`;
+  toastEl.className = 'toast align-items-center text-white bg-danger border-0';
 
   let bsToast = bootstrap.Toast.getInstance(toastEl);
   if (!bsToast) {
     bsToast = new bootstrap.Toast(toastEl, {
       autohide: true,
-      delay: 4000
+      delay: 3000
     });
   }
 
@@ -846,7 +842,7 @@ require('modules/head.php');
         if (confirmBtn) {
           confirmBtn.addEventListener('click', () => {
             if (!selectedDriverId) {
-              alert('Please select a driver');
+              showToast('Please select a driver');
               return;
             }
             const modal = bootstrap.Modal.getInstance(
@@ -873,7 +869,7 @@ require('modules/head.php');
           const pickup = document.getElementById('pickupInput')?.value?.trim() || '';
           const dropoff = document.getElementById('dropoffInput')?.value?.trim() || '';
           if (!pickup || !dropoff) {
-            alert('Please enter both pickup and drop-off locations before assigning a driver.');
+              showToast('Please enter both pickup and drop-off locations before assigning a driver.');
             return;
           }
 
@@ -980,7 +976,7 @@ require('modules/head.php');
         if (assignBtn) {
           assignBtn.addEventListener('click', () => {
             if (!selectedNearbyDriverId || !nearbyDriversList.length) {
-              alert('Please select a driver from the list.');
+              showToast('Please select a driver from the list.');
               return;
             }
             const driver = nearbyDriversList.find((d) => d.id == selectedNearbyDriverId);
@@ -1119,8 +1115,7 @@ require('modules/head.php');
           btn.addEventListener('click', createOrder);
         }
       }
-
-      async function createOrder() {
+async function createOrder() {
   const passengerId = selectedPassengerId;
   const customerName = document.getElementById('customerNameInput')?.value?.trim() || '';
   const phoneRaw = document.getElementById('customerPhone')?.value?.trim() || '';
@@ -1131,39 +1126,40 @@ require('modules/head.php');
   const rideDateVal = document.getElementById('rideDate')?.value || '';
   const rideTimeVal = document.getElementById('rideTime')?.value || '';
   const pickupTimeStr = buildPickupDateTime();
-    const phone = phoneRaw
+
+  const phone = phoneRaw
     ? phoneRaw.startsWith('+353')
       ? phoneRaw
       : '+353' + phoneRaw.replace(/^0+/, '')
     : '';
 
   if (!customerName) {
-    alert('Please select a customer.');
+    showToast('Please select a customer');
     return;
   }
 
   if (!phone) {
-    alert('Please enter customer phone.');
+    showToast('Please enter customer phone');
     return;
   }
 
   if (!rideDateVal || !rideTimeVal) {
-    alert('Please select date and time.');
+    showToast('Please select date and time');
     return;
   }
 
   if (!seats) {
-    alert('Please select seats.');
+    showToast('Please select seats');
     return;
   }
 
   if (!pickup || !dropoff) {
-    alert('Please enter pickup and drop-off locations.');
+    showToast('Please enter pickup and drop-off locations');
     return;
   }
 
   if (!currentDistance || !currentDuration || !currentFare || !pickupLatLng || !dropoffLatLng) {
-    alert('Please wait for route/fare calculation to finish.');
+    showToast('Please wait for route/fare calculation to finish.');
     return;
   }
 
@@ -1213,32 +1209,13 @@ document
   });
 
           } else {
-            alert('Error creating order: ' + (data.error || 'Unknown error'));
+            showToast('Error creating order: ' + (data.error || 'Unknown error'));
           }
         } catch (err) {
           console.error('Order create error', err);
-          alert('Failed to create order.');
+          showToast('Failed to create order.');
         }
       }
     </script>
-    <div class="toast-container" id="toastContainer"></div>
-    <div 
-  class="toast align-items-center text-white" 
-  role="alert" 
-  aria-live="assertive" 
-  aria-atomic="true"
-  id="toastMsg"
-  style="min-width: 280px; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"
->
-  <div class="d-flex w-100 p-3">
-    <div id="toastText" class="me-auto"></div>
-    <button 
-      type="button" 
-      class="btn-close btn-close-white ms-2" 
-      data-bs-dismiss="toast" 
-      aria-label="Close"
-    ></button>
-  </div>
-</div>
   </body>
 </html>
