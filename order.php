@@ -11,7 +11,7 @@ require('modules/head.php');
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 1090; /* Above modals/navbar */
+    z-index: 1090;
   }
 </style>
   </head> 
@@ -23,18 +23,18 @@ require('modules/head.php');
 
     <main class="main-content p-4" style="background: #f5f7fa">
       <div
-        class="d-flex flex-column flex-md-row justify-content-md-between align-items-center my-2 gap-3"
+        class="d-flex flex-column flex-md-row justify-content-md-between align-items-center my-1 gap-3"
       >
         <div
           class="d-flex gap-3 w-100 w-md-auto justify-content-center justify-content-md-start"
         >
           <a
             href="map.php"
-            class="btn glowing-btn fs-6 p-2 px-5 fw-semibold flex-grow-1 flex-md-grow-0"
+            class="btn glowing-btn fs-6 p-2 px-4 fw-semibold flex-grow-1 flex-md-grow-0"
             style="
               background: #f37a20;
               color: #fff;
-              border-radius: 4px;
+              border-radius: 5px;
               box-shadow: 0 0 15px rgba(243, 122, 32, 0.5);
               min-width: 120px;
             "
@@ -388,14 +388,9 @@ require('modules/head.php');
   >
     Assign Nearest Driver
   </button>
-
-</div>
-
-              </div>
-            </div>
-
-            
-
+    </div>
+      </div>
+        </div>
             <div
               class="col-md-6 p-0 position-relative"
               style="

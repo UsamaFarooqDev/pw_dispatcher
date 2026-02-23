@@ -12,19 +12,19 @@ require('modules/head.php');
     <?php @require('modules/sidebar.php'); ?>
 
     <main class="main-content p-4" style="background: #f5f7fa">
-<div class="d-flex flex-column flex-md-row justify-content-md-between align-items-center my-2 gap-3">
+<div class="d-flex flex-column flex-md-row justify-content-md-between align-items-center my-1 gap-3">
   <div class="d-flex gap-3 w-100 w-md-auto justify-content-center justify-content-md-start">
     <a
       href="order.php"
-      class="btn glowing-btn fs-6 p-2 px-5 fw-semibold flex-grow-1 flex-md-grow-0"
-      style="background: #f37a20; color: #fff; border-radius: 4px; box-shadow: 0 0 15px rgba(243, 122, 32, 0.5); min-width: 120px;"
+      class="btn glowing-btn fs-6 p-2 px-4 fw-semibold flex-grow-1 flex-md-grow-0"
+      style="background: #f37a20; color: #fff; border-radius: 5px; box-shadow: 0 0 15px rgba(243, 122, 32, 0.5); min-width: 120px;"
     >
       New Order
     </a>
     <a
       href="map.php"
-      class="btn fs-6 p-2 px-5 fw-semibold flex-grow-1 flex-md-grow-0"
-      style="background: #fff; color: #000; border: 1px solid #000; border-radius: 4px; min-width: 120px;"
+      class="btn fs-6 p-2 px-4 fw-semibold flex-grow-1 flex-md-grow-0"
+      style="background: #fff; color: #000; border: 1px solid #000; border-radius: 5px; min-width: 120px;"
     >
       Open Map
     </a>

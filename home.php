@@ -16,34 +16,10 @@ require('modules/head.php');
    <?php require_once 'modules/navbar.php'; ?>
 
     <?php @require('modules/sidebar.php'); ?>
+
     <main class="main-content p-4" style="background: #f5f7fa">
-<div class="d-flex flex-column flex-md-row justify-content-md-between align-items-center my-2 gap-3">
-  <div class="d-flex gap-3 w-100 w-md-auto justify-content-center justify-content-md-start">
-    <a
-      href="order.php"
-      class="btn glowing-btn fs-6 p-2 px-5 fw-semibold flex-grow-1 flex-md-grow-0"
-      style="background: #f37a20; color: #fff; border-radius: 4px; box-shadow: 0 0 15px rgba(243, 122, 32, 0.5); min-width: 120px;"
-    >
-      New Order
-    </a>
-    <a
-      href="map.php"
-      class="btn fs-6 p-2 px-5 fw-semibold flex-grow-1 flex-md-grow-0"
-      style="background: #fff; color: #000; border: 1px solid #000; border-radius: 4px; min-width: 120px;"
-    >
-      Open Map
-    </a>
-  </div>
-  
-  <div class="w-100 w-md-auto" style="max-width: 300px;">
-    <input
-      type="text"
-      placeholder="Search"
-      class="form-control w-100 border border-secondary px-3 mx-auto mx-md-0"
-      style="border-radius: 14px; color: #3b3b3b; min-height: 36px;"
-    />
-  </div>
-</div>
+
+    <?php @require('modules/bodyHeader.php'); ?>    
 
 <div class="card shadow border-0 mt-4 h-100" style='border-radius: 25px;'>
         <div class="card-body">
@@ -386,7 +362,6 @@ document.addEventListener('DOMContentLoaded', () => {
         </td>
         <td>
           <div class="d-flex align-items-center">
-            <img src="assets/profile.svg" alt="${type}" class="rounded-circle me-2" />
               <div class="fw-medium small">${item.name}</div>
           </div>
         </td>
