@@ -511,28 +511,32 @@ require('modules/head.php');
 
       <!-- Results: driver list -->
       <div id="searchDriverResults" class="d-none">
-        <h4 class="fw-bold mb-3 text-center">Select a driver</h4>
-        <p class="text-muted small text-center mb-3">Available drivers within 5km of pickup</p>
-        <div id="searchDriverList" class="mb-4" style="max-height: 280px; overflow-y: auto;"></div>
-        <div class="d-flex justify-content-center gap-3">
-          <button
-            type="button"
-            class="btn px-4"
-            style="background-color: #f37a20; color: white; border-radius: 6px;"
-            id="assignNearestDriverBtn"
-          >
-            Assign
-          </button>
-          <button
-            type="button"
-            class="btn btn-outline-secondary px-4"
-            style="border-radius: 6px"
-            data-bs-dismiss="modal"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
+  <h4 class="fw-bold mb-3 text-center">Select a driver</h4>
+  <p class="text-muted small text-center mb-4">Available drivers within 5km of pickup</p>
+
+  <div id="searchDriverList" class="mb-4" style="max-height: 280px; overflow-y: auto;">
+    <!-- Driver cards will be injected here dynamically -->
+  </div>
+
+  <div class="d-flex justify-content-center gap-3">
+    <button
+      type="button"
+      class="btn px-4"
+      style="background-color: #f37a20; color: white; border-radius: 6px;"
+      id="assignNearestDriverBtn"
+    >
+      Assign
+    </button>
+    <button
+      type="button"
+      class="btn btn-outline-secondary px-4"
+      style="border-radius: 6px"
+      data-bs-dismiss="modal"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
 
       <!-- No drivers found -->
       <div id="searchDriverEmpty" class="text-center d-none">
