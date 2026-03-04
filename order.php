@@ -213,7 +213,7 @@ require('modules/head.php');
                         >Child Seat</label
                       >
                     </div>
-                    <div class="form-check mb-2">
+                    <!-- <div class="form-check mb-2">
                       <input
                         class="form-check-output"
                         type="checkbox"
@@ -224,8 +224,8 @@ require('modules/head.php');
                         for="nonSmoking"
                         >Non Smoking</label
                       >
-                    </div>
-                    <div class="form-check mb-2">
+                    </div> -->
+                    <!-- <div class="form-check mb-2">
                       <input
                         class="form-check-output"
                         type="checkbox"
@@ -236,7 +236,7 @@ require('modules/head.php');
                         for="smokingAllowed"
                         >Smoking Allowed</label
                       >
-                    </div>
+                    </div> -->
                   </div>
                   <div class="col-md-6">
                     <div class="form-check mb-2">
@@ -263,7 +263,7 @@ require('modules/head.php');
                         >Pets Allowed</label
                       >
                     </div>
-                    <div class="form-check mb-2">
+                    <!-- <div class="form-check mb-2">
                       <input
                         class="form-check-output"
                         type="checkbox"
@@ -274,8 +274,8 @@ require('modules/head.php');
                         for="airConditioning"
                         >Air Conditioning</label
                       >
-                    </div>
-                    <div class="form-check mb-2">
+                    </div> -->
+                    <!-- <div class="form-check mb-2">
                       <input
                         class="form-check-output"
                         type="checkbox"
@@ -286,7 +286,7 @@ require('modules/head.php');
                         for="bikeMount"
                         >Bike Mount</label
                       >
-                    </div>
+                    </div> -->
                     <div class="form-check mb-2">
                       <input
                         class="form-check-output"

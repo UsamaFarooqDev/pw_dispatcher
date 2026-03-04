@@ -53,19 +53,19 @@ require('modules/head.php');
   <th scope="col" class="fw-semibold text-nowrap">Name</th>
   <th scope="col" class="fw-semibold text-nowrap">Email</th>
   <th scope="col" class="fw-semibold text-nowrap">Phone</th>
-  <th scope="col" class="fw-semibold text-nowrap">CNIC</th>
-  <th scope="col" class="fw-semibold text-nowrap">Car Comfort</th>
+  <!-- <th scope="col" class="fw-semibold text-nowrap">CNIC</th> -->
+  <th scope="col" class="fw-semibold text-nowrap">Vehicle</th>
   <th scope="col" class="fw-semibold text-nowrap">Ordered Time</th>
-  <th scope="col" class="fw-semibold text-nowrap">Vehicle Make</th>
-  <th scope="col" class="fw-semibold text-nowrap">Vehicle Model</th>
+  <!-- <th scope="col" class="fw-semibold text-nowrap">Vehicle Make</th> -->
+  <!-- <th scope="col" class="fw-semibold text-nowrap">Vehicle Model</th> -->
   <th scope="col" class="fw-semibold text-nowrap">Vehicle Number</th>
-  <th scope="col" class="fw-semibold text-nowrap">License Number</th>
-  <th scope="col" class="fw-semibold text-nowrap">License Expiry</th>
+  <!-- <th scope="col" class="fw-semibold text-nowrap">License Number</th> -->
+  <!-- <th scope="col" class="fw-semibold text-nowrap">License Expiry</th> -->
   <th scope="col" class="fw-semibold text-nowrap">License</th>
   <th scope="col" class="fw-semibold text-nowrap">Vehicle Reg</th>
   <th scope="col" class="fw-semibold text-nowrap">Insurance</th>
   <th scope="col" class="fw-semibold text-nowrap">Status</th>
-  <th scope="col" class="fw-semibold text-nowrap">Last Active</th>
+  <!-- <th scope="col" class="fw-semibold text-nowrap">Last Active</th> -->
 </tr>
 
       </thead>
@@ -81,13 +81,13 @@ require('modules/head.php');
       <thead>
         <tr class="bg-light">
           <th scope="col" class="fw-semibold text-nowrap">Name</th>
-          <th scope="col" class="fw-semibold text-nowrap">Service Type</th>
-          <th scope="col" class="fw-semibold text-nowrap">Ordered Time</th>
           <th scope="col" class="fw-semibold text-nowrap">Email</th>
           <th scope="col" class="fw-semibold text-nowrap">Phone</th>
+          <th scope="col" class="fw-semibold text-nowrap">Service Type</th>
+          <th scope="col" class="fw-semibold text-nowrap">Ordered Time</th>
           <th scope="col" class="fw-semibold text-nowrap">Email Verified</th>
-          <th scope="col" class="fw-semibold text-nowrap">Created At</th>
-          <th scope="col" class="fw-semibold text-nowrap">Updated At</th>
+          <!-- <th scope="col" class="fw-semibold text-nowrap">Created At</th> -->
+          <!-- <th scope="col" class="fw-semibold text-nowrap">Updated At</th> -->
         </tr>
       </thead>
       <tbody id="customerTableBody">
