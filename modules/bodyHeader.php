@@ -19,6 +19,7 @@
   <div class="w-100 w-md-auto" style="max-width: 300px;">
     <input
       type="text"
+      id="globalSearchInput"
       placeholder="Find rides, assign orders.."
       class="form-control w-100 border border-secondary px-3 mx-auto mx-md-0"
       style="border-radius: 17px; color: #636363; min-height: 36px;"

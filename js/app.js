@@ -51,6 +51,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Setup document preview modal handlers
   setupDocumentPreview();
+
+  // Setup global search (Dashboard page)
+  setupDashboardSearch();
 });
 
 // Setup document preview modal
@@ -290,10 +293,17 @@ function populateDriverTable(drivers) {
           ? `<img src="${driver.insurance_url}" alt="Insurance" class="document-preview" data-image-url="${driver.insurance_url}" data-title="Insurance" style="width:36px;height:36px;object-fit:cover;border-radius:4px;cursor:pointer;" title="Click to view Insurance" />`
           : 'N/A'
       }</td>
+      <td>${
+        typeof driver.total_completed_rides !== 'undefined'
+          ? driver.total_completed_rides
+          : 0
+      }</td>
       <td>${driver.status || 'N/A'}</td>
     `;
     tbody.appendChild(row);
   });
+
+  reapplyDashboardSearchFilter();
 }
 
 function populateCustomerTable(passengers) {
@@ -351,6 +361,8 @@ function populateCustomerTable(passengers) {
         `;
     tbody.appendChild(row);
   });
+
+  reapplyDashboardSearchFilter();
 }
 
 function updateTabCounts() {
@@ -482,4 +494,106 @@ function switchTableView(viewType) {
       : 1;
     loadPassengersData(currentPage, ITEMS_PER_PAGE);
   }
+}
+
+function setupDashboardSearch() {
+  const searchInput = document.getElementById('globalSearchInput');
+  if (!searchInput) return;
+
+  searchInput.addEventListener('input', function () {
+    reapplyDashboardSearchFilter();
+  });
+}
+
+function reapplyDashboardSearchFilter() {
+  const searchInput = document.getElementById('globalSearchInput');
+  if (!searchInput) return;
+
+  const term = searchInput.value.trim().toLowerCase();
+
+  const driverTable = document.getElementById('driverTable');
+  const customerTable = document.getElementById('customerTable');
+
+  if (driverTable && !driverTable.classList.contains('d-none')) {
+    filterDriverTableRows(term);
+  }
+
+  if (customerTable && !customerTable.classList.contains('d-none')) {
+    filterCustomerTableRows(term);
+  }
+}
+
+function filterDriverTableRows(term) {
+  const tbody = document.getElementById('driverTableBody');
+  if (!tbody) return;
+
+  const rows = tbody.querySelectorAll('tr');
+
+  if (!term) {
+    rows.forEach((row) => {
+      row.style.display = '';
+    });
+    return;
+  }
+
+  rows.forEach((row) => {
+    const cells = row.querySelectorAll('td');
+    if (cells.length === 0) {
+      row.style.display = '';
+      return;
+    }
+
+    const name = cells[0].textContent.toLowerCase();
+    const email = (cells[1] && cells[1].textContent.toLowerCase()) || '';
+    const phone = (cells[2] && cells[2].textContent.toLowerCase()) || '';
+    const vehicle = (cells[3] && cells[3].textContent.toLowerCase()) || '';
+    const status =
+      (cells[cells.length - 1] &&
+        cells[cells.length - 1].textContent.toLowerCase()) ||
+      '';
+
+    const matches =
+      name.includes(term) ||
+      email.includes(term) ||
+      phone.includes(term) ||
+      vehicle.includes(term) ||
+      status.includes(term);
+
+    row.style.display = matches ? '' : 'none';
+  });
+}
+
+function filterCustomerTableRows(term) {
+  const tbody = document.getElementById('customerTableBody');
+  if (!tbody) return;
+
+  const rows = tbody.querySelectorAll('tr');
+
+  if (!term) {
+    rows.forEach((row) => {
+      row.style.display = '';
+    });
+    return;
+  }
+
+  rows.forEach((row) => {
+    const cells = row.querySelectorAll('td');
+    if (cells.length < 4) {
+      row.style.display = '';
+      return;
+    }
+
+    const name = cells[0].textContent.toLowerCase();
+    const email = cells[1].textContent.toLowerCase();
+    const phone = cells[2].textContent.toLowerCase();
+    const serviceType = cells[3].textContent.toLowerCase();
+
+    const matches =
+      name.includes(term) ||
+      email.includes(term) ||
+      phone.includes(term) ||
+      serviceType.includes(term);
+
+    row.style.display = matches ? '' : 'none';
+  });
 }
