@@ -64,7 +64,7 @@ require('modules/head.php');
   <th scope="col" class="fw-semibold text-nowrap">License</th>
   <th scope="col" class="fw-semibold text-nowrap">Vehicle Reg</th>
   <th scope="col" class="fw-semibold text-nowrap">Insurance</th>
-  <th scope="col" class="fw-semibold text-nowrap">Total Rides Completed</th>
+  <th scope="col" class="fw-semibold text-nowrap">Rides</th>
   <th scope="col" class="fw-semibold text-nowrap">Status</th>
   <!-- <th scope="col" class="fw-semibold text-nowrap">Last Active</th> -->
 </tr>
