@@ -194,6 +194,7 @@ require('modules/head.php');
           
           // Setup tab switching
           setupTabSwitching();
+          setupPreorderSearch();
         } catch (error) {
           console.error('Error initializing page:', error);
           // Still try to load data even if pagination fails
@@ -595,6 +596,8 @@ require('modules/head.php');
               console.error('Error creating table row:', rowError, ride);
             }
           });
+
+          applyPreorderSearchFilterForCurrentTab();
         } catch (error) {
           console.error('Error in populateUnassignedTable:', error);
           const tbody = document.getElementById('unassignedRidesBody');
@@ -755,6 +758,8 @@ require('modules/head.php');
           `;
           tbody.appendChild(row);
         });
+
+        applyPreorderSearchFilterForCurrentTab();
       }
 
       function updateAssignedTabCount(count) {
@@ -946,6 +951,8 @@ require('modules/head.php');
           `;
           tbody.appendChild(row);
         });
+
+        applyPreorderSearchFilterForCurrentTab();
       }
 
       function updateScheduledTabCount(count) {
@@ -1009,6 +1016,8 @@ require('modules/head.php');
           `;
           tbody.appendChild(row);
         });
+
+        applyPreorderSearchFilterForCurrentTab();
       }
 
       function updateCancelledTabCount(count) {
@@ -1071,6 +1080,74 @@ require('modules/head.php');
             <td class="text-end pe-4">${fare}</td>
           `;
           tbody.appendChild(row);
+        });
+
+        applyPreorderSearchFilterForCurrentTab();
+      }
+
+      function setupPreorderSearch() {
+        const searchInput = document.getElementById('globalSearchInput');
+        if (!searchInput) return;
+
+        searchInput.addEventListener('input', function () {
+          applyPreorderSearchFilterForCurrentTab();
+        });
+      }
+
+      function applyPreorderSearchFilterForCurrentTab() {
+        const searchInput = document.getElementById('globalSearchInput');
+        if (!searchInput) return;
+
+        const term = searchInput.value.trim().toLowerCase();
+
+        let tbodyId = null;
+        if (currentTab === 'unassigned') {
+          tbodyId = 'unassignedRidesBody';
+        } else if (currentTab === 'assigned') {
+          tbodyId = 'assignedRidesBody';
+        } else if (currentTab === 'scheduled') {
+          tbodyId = 'scheduledRidesBody';
+        } else if (currentTab === 'cancelled') {
+          tbodyId = 'cancelledRidesBody';
+        } else if (currentTab === 'completed') {
+          tbodyId = 'completedRidesBody';
+        }
+
+        if (!tbodyId) return;
+
+        const tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+
+        const rows = tbody.querySelectorAll('tr');
+
+        if (!term) {
+          rows.forEach(row => {
+            row.style.display = '';
+          });
+          return;
+        }
+
+        rows.forEach(row => {
+          const cells = row.querySelectorAll('td');
+          if (cells.length < 5) {
+            row.style.display = '';
+            return;
+          }
+
+          const name = cells[0].textContent.toLowerCase();
+          const orderTime = cells[1].textContent.toLowerCase();
+          const pickup = cells[2].textContent.toLowerCase();
+          const destination = cells[3].textContent.toLowerCase();
+          const status = cells[4].textContent.toLowerCase();
+
+          const matches =
+            name.includes(term) ||
+            orderTime.includes(term) ||
+            pickup.includes(term) ||
+            destination.includes(term) ||
+            status.includes(term);
+
+          row.style.display = matches ? '' : 'none';
         });
       }
 

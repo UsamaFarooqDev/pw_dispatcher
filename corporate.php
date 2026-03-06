@@ -170,6 +170,7 @@ require('modules/head.php');
         }
         
         loadRidesData(1, ITEMS_PER_PAGE);
+        setupCorporateSearch();
       });
 
       async function loadRidesData(page = 1, limit = ITEMS_PER_PAGE) {
@@ -282,6 +283,9 @@ require('modules/head.php');
           `;
           tbody.appendChild(row);
         });
+
+        // Re-apply any active search filter after repopulating rows
+        applyCorporateSearchFilter();
       }
 
       function getStatusClass(status) {
@@ -304,6 +308,54 @@ require('modules/head.php');
         return status.split('_').map(word => 
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         ).join(' ');
+      }
+
+      function setupCorporateSearch() {
+        const searchInput = document.getElementById('globalSearchInput');
+        if (!searchInput) return;
+
+        searchInput.addEventListener('input', function () {
+          applyCorporateSearchFilter();
+        });
+      }
+
+      function applyCorporateSearchFilter() {
+        const tbody = document.getElementById('ridesTableBody');
+        const searchInput = document.getElementById('globalSearchInput');
+        if (!tbody || !searchInput) return;
+
+        const term = searchInput.value.trim().toLowerCase();
+        const rows = tbody.querySelectorAll('tr');
+
+        if (!term) {
+          rows.forEach(row => {
+            row.style.display = '';
+          });
+          return;
+        }
+
+        rows.forEach(row => {
+          const cells = row.querySelectorAll('td');
+          if (cells.length < 9) {
+            row.style.display = '';
+            return;
+          }
+
+          const company = cells[1].textContent.toLowerCase();
+          const employee = cells[2].textContent.toLowerCase();
+          const pickup = cells[4].textContent.toLowerCase();
+          const destination = cells[5].textContent.toLowerCase();
+          const statusText = cells[8].textContent.toLowerCase();
+
+          const matches =
+            company.includes(term) ||
+            employee.includes(term) ||
+            pickup.includes(term) ||
+            destination.includes(term) ||
+            statusText.includes(term);
+
+          row.style.display = matches ? '' : 'none';
+        });
       }
 
 

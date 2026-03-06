@@ -29,6 +29,31 @@ try {
         'page' => $page,
         'limit' => $limit
     ]);
+
+    // Enrich each driver with total completed rides (all-time)
+    if (is_array($drivers)) {
+        foreach ($drivers as &$driver) {
+            if (!isset($driver['id'])) {
+                $driver['total_completed_rides'] = 0;
+                continue;
+            }
+
+            try {
+                $completedCount = $db->getCount('rides', [
+                    'filter' => [
+                        'driver_id' => $driver['id'],
+                        'status' => 'completed'
+                    ]
+                ]);
+            } catch (Exception $innerException) {
+                // If count query fails for any reason, default to 0 for this driver
+                $completedCount = 0;
+            }
+
+            $driver['total_completed_rides'] = $completedCount;
+        }
+        unset($driver);
+    }
     
     // Get total count
     $totalCount = $db->getCount('drivers');

@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
       total: 0,
       onPageChange: (page, limit) => {
         loadDriversData(page, limit);
-      }
+      },
     });
 
     passengerPagination = new PaginationManager({
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
       total: 0,
       onPageChange: (page, limit) => {
         loadPassengersData(page, limit);
-      }
+      },
     });
   }
 
@@ -51,6 +51,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Setup document preview modal handlers
   setupDocumentPreview();
+
+  // Setup global search (Dashboard page)
+  setupDashboardSearch();
 });
 
 // Setup document preview modal
@@ -119,7 +122,7 @@ async function loadAllData() {
   // Load initial page for the visible table
   const driverTable = document.getElementById('driverTable');
   const customerTable = document.getElementById('customerTable');
-  
+
   if (driverTable && !driverTable.classList.contains('d-none')) {
     await loadDriversData(1, ITEMS_PER_PAGE);
   } else if (customerTable && !customerTable.classList.contains('d-none')) {
@@ -138,7 +141,9 @@ async function loadDriversData(page = 1, limit = ITEMS_PER_PAGE) {
         '<tr><td colspan="16" class="text-center py-4 text-muted">Loading drivers...</td></tr>';
     }
 
-    const response = await fetch(`api/get_drivers.php?page=${page}&limit=${limit}`);
+    const response = await fetch(
+      `api/get_drivers.php?page=${page}&limit=${limit}`,
+    );
     if (!response.ok) {
       throw new Error('Failed to fetch drivers from server');
     }
@@ -148,15 +153,18 @@ async function loadDriversData(page = 1, limit = ITEMS_PER_PAGE) {
     if (driversData.success && driversData.data) {
       currentData.drivers = driversData.data;
       populateDriverTable(currentData.drivers);
-      
+
       // Update pagination
       if (driverPagination && driversData.pagination) {
         driverPagination.update(driversData.pagination.total, page);
       }
-      
+
       updateTabCounts();
     } else {
-      console.error('Error loading drivers:', driversData.error || 'Unknown error');
+      console.error(
+        'Error loading drivers:',
+        driversData.error || 'Unknown error',
+      );
       currentData.drivers = [];
       if (driverTbody) {
         driverTbody.innerHTML =
@@ -187,7 +195,9 @@ async function loadPassengersData(page = 1, limit = ITEMS_PER_PAGE) {
         '<tr><td colspan="8" class="text-center py-4 text-muted">Loading passengers...</td></tr>';
     }
 
-    const response = await fetch(`api/get_passengers.php?page=${page}&limit=${limit}`);
+    const response = await fetch(
+      `api/get_passengers.php?page=${page}&limit=${limit}`,
+    );
     if (!response.ok) {
       throw new Error('Failed to fetch passengers from server');
     }
@@ -197,13 +207,16 @@ async function loadPassengersData(page = 1, limit = ITEMS_PER_PAGE) {
     if (passengersData.success && passengersData.data) {
       currentData.passengers = passengersData.data;
       populateCustomerTable(currentData.passengers);
-      
+
       // Update pagination
       if (passengerPagination && passengersData.pagination) {
         passengerPagination.update(passengersData.pagination.total, page);
       }
     } else {
-      console.error('Error loading passengers:', passengersData.error || 'Unknown error');
+      console.error(
+        'Error loading passengers:',
+        passengersData.error || 'Unknown error',
+      );
       currentData.passengers = [];
       if (passengerTbody) {
         passengerTbody.innerHTML =
@@ -262,14 +275,9 @@ function populateDriverTable(drivers) {
       </td>
       <td>${driver.email || 'N/A'}</td>
       <td>${driver.phone || 'N/A'}</td>
-      <td>${driver.cnic || 'N/A'}</td>
       <td>${vehicleInfo}</td>
       <td>${formatDate(driver.created_at)}</td>
-      <td class="fs-6">${driver.vehicle_make || 'N/A'}</td>
-      <td>${driver.vehicle_model || 'N/A'}</td>
       <td>${driver.vehicle_number || 'N/A'}</td>
-      <td>${driver.license_number || 'N/A'}</td>
-      <td>${driver.license_expiry || 'N/A'}</td>
       <td>${
         driver.license_url
           ? `<img src="${driver.license_url}" alt="License" class="document-preview" data-image-url="${driver.license_url}" data-title="License" style="width:36px;height:36px;object-fit:cover;border-radius:4px;cursor:pointer;" title="Click to view License" />`
@@ -285,11 +293,17 @@ function populateDriverTable(drivers) {
           ? `<img src="${driver.insurance_url}" alt="Insurance" class="document-preview" data-image-url="${driver.insurance_url}" data-title="Insurance" style="width:36px;height:36px;object-fit:cover;border-radius:4px;cursor:pointer;" title="Click to view Insurance" />`
           : 'N/A'
       }</td>
+      <td>${
+        typeof driver.total_completed_rides !== 'undefined'
+          ? driver.total_completed_rides
+          : 0
+      }</td>
       <td>${driver.status || 'N/A'}</td>
-      <td>${driver.last_active || 'N/A'}</td>
     `;
     tbody.appendChild(row);
   });
+
+  reapplyDashboardSearchFilter();
 }
 
 function populateCustomerTable(passengers) {
@@ -314,8 +328,8 @@ function populateCustomerTable(passengers) {
           ? 'Yes'
           : 'No'
         : 'N/A';
-    const createdAt = passenger.created_at || 'N/A';
-    const updatedAt = passenger.updated_at || 'N/A';
+    // const createdAt = passenger.created_at || 'N/A';
+    // const updatedAt = passenger.updated_at || 'N/A';
 
     const row = document.createElement('tr');
     row.className = 'align-middle';
@@ -330,7 +344,7 @@ function populateCustomerTable(passengers) {
                                 passenger.photo_url || passenger.profile_pic_url
                               }" alt="${passengerName}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;" />`
                             : `<span class="fw-semibold">${getInitials(
-                                passengerName
+                                passengerName,
                               )}</span>`
                         }
                     </div>
@@ -339,16 +353,16 @@ function populateCustomerTable(passengers) {
                     </div>
                 </div>
             </td>
-            <td>${serviceType}</td>
-            <td>${formatDate(orderedTime)}</td>
             <td>${email}</td>
             <td>${phone}</td>
+            <td>${serviceType}</td>
+            <td>${formatDate(orderedTime)}</td>
             <td>${isEmailVerified}</td>
-            <td>${formatDate(createdAt)}</td>
-            <td>${formatDate(updatedAt)}</td>
         `;
     tbody.appendChild(row);
   });
+
+  reapplyDashboardSearchFilter();
 }
 
 function updateTabCounts() {
@@ -457,7 +471,9 @@ function switchTableView(viewType) {
     customerBtn.style.borderColor = '#3b3b3b';
 
     // Load drivers data with pagination
-    const currentPage = driverPagination ? driverPagination.getCurrentPage() : 1;
+    const currentPage = driverPagination
+      ? driverPagination.getCurrentPage()
+      : 1;
     loadDriversData(currentPage, ITEMS_PER_PAGE);
   } else {
     driverTable.classList.remove('d-block');
@@ -473,7 +489,111 @@ function switchTableView(viewType) {
     driverBtn.style.borderColor = '#3b3b3b';
 
     // Load passengers data with pagination
-    const currentPage = passengerPagination ? passengerPagination.getCurrentPage() : 1;
+    const currentPage = passengerPagination
+      ? passengerPagination.getCurrentPage()
+      : 1;
     loadPassengersData(currentPage, ITEMS_PER_PAGE);
   }
+}
+
+function setupDashboardSearch() {
+  const searchInput = document.getElementById('globalSearchInput');
+  if (!searchInput) return;
+
+  searchInput.addEventListener('input', function () {
+    reapplyDashboardSearchFilter();
+  });
+}
+
+function reapplyDashboardSearchFilter() {
+  const searchInput = document.getElementById('globalSearchInput');
+  if (!searchInput) return;
+
+  const term = searchInput.value.trim().toLowerCase();
+
+  const driverTable = document.getElementById('driverTable');
+  const customerTable = document.getElementById('customerTable');
+
+  if (driverTable && !driverTable.classList.contains('d-none')) {
+    filterDriverTableRows(term);
+  }
+
+  if (customerTable && !customerTable.classList.contains('d-none')) {
+    filterCustomerTableRows(term);
+  }
+}
+
+function filterDriverTableRows(term) {
+  const tbody = document.getElementById('driverTableBody');
+  if (!tbody) return;
+
+  const rows = tbody.querySelectorAll('tr');
+
+  if (!term) {
+    rows.forEach((row) => {
+      row.style.display = '';
+    });
+    return;
+  }
+
+  rows.forEach((row) => {
+    const cells = row.querySelectorAll('td');
+    if (cells.length === 0) {
+      row.style.display = '';
+      return;
+    }
+
+    const name = cells[0].textContent.toLowerCase();
+    const email = (cells[1] && cells[1].textContent.toLowerCase()) || '';
+    const phone = (cells[2] && cells[2].textContent.toLowerCase()) || '';
+    const vehicle = (cells[3] && cells[3].textContent.toLowerCase()) || '';
+    const status =
+      (cells[cells.length - 1] &&
+        cells[cells.length - 1].textContent.toLowerCase()) ||
+      '';
+
+    const matches =
+      name.includes(term) ||
+      email.includes(term) ||
+      phone.includes(term) ||
+      vehicle.includes(term) ||
+      status.includes(term);
+
+    row.style.display = matches ? '' : 'none';
+  });
+}
+
+function filterCustomerTableRows(term) {
+  const tbody = document.getElementById('customerTableBody');
+  if (!tbody) return;
+
+  const rows = tbody.querySelectorAll('tr');
+
+  if (!term) {
+    rows.forEach((row) => {
+      row.style.display = '';
+    });
+    return;
+  }
+
+  rows.forEach((row) => {
+    const cells = row.querySelectorAll('td');
+    if (cells.length < 4) {
+      row.style.display = '';
+      return;
+    }
+
+    const name = cells[0].textContent.toLowerCase();
+    const email = cells[1].textContent.toLowerCase();
+    const phone = cells[2].textContent.toLowerCase();
+    const serviceType = cells[3].textContent.toLowerCase();
+
+    const matches =
+      name.includes(term) ||
+      email.includes(term) ||
+      phone.includes(term) ||
+      serviceType.includes(term);
+
+    row.style.display = matches ? '' : 'none';
+  });
 }

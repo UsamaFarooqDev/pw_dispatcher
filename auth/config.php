@@ -158,11 +158,12 @@ function getPageTitle() {
         
         // Build query string for filters
         $queryParams = ['select' => 'id'];
-        if (isset($params['filter'])) {
+        if (isset($params['filter']) && is_array($params['filter'])) {
             // Add filter conditions if provided
             foreach ($params['filter'] as $column => $value) {
                 if ($value !== null && $value !== '') {
-                    $queryParams[] = $column . '=eq.' . urlencode($value);
+                    // Use column name as query key so Supabase receives e.g. driver_id=eq.uuid
+                    $queryParams[$column] = 'eq.' . $value;
                 }
             }
         }
