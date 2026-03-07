@@ -1,7 +1,9 @@
 <?php
 session_start();
 
-// Get ride ID from URL path (localhost/preorder/{ride.id})
+require_once __DIR__ . '/../auth/require_login_redirect.php';
+
+// Get ride ID from URL path (localhost/preorder/{ride.id}) or query (?id=...)
 $rideId = null;
 
 $requestUri = $_SERVER['REQUEST_URI'] ?? '';
@@ -14,6 +16,10 @@ if ($path) {
     if ($preorderIndex !== false && isset($pathParts[$preorderIndex + 1])) {
         $rideId = $pathParts[$preorderIndex + 1];
     }
+}
+// Fallback: ?id= for hosts that don't support rewrite (e.g. preorder/index.php?id=uuid)
+if (!$rideId && !empty($_GET['id'])) {
+    $rideId = $_GET['id'];
 }
 
 if (!$rideId) {
@@ -113,6 +119,10 @@ require('../modules/head.php');
       async function loadRideData() {
         try {
           const response = await fetch(`../api/get_ride.php?id=${encodeURIComponent(rideId)}`);
+          if (response.status === 401) {
+            window.location.href = '/';
+            return;
+          }
           if (!response.ok) {
             throw new Error('Failed to fetch ride data');
           }
@@ -232,6 +242,10 @@ require('../modules/head.php');
 
         try {
           const response = await fetch('../api/get_drivers.php');
+          if (response.status === 401) {
+            window.location.href = '/';
+            return;
+          }
           if (!response.ok) {
             throw new Error('Failed to fetch driver data');
           }
