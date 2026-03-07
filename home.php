@@ -2,7 +2,7 @@
 session_start();
 
 if (empty($_SESSION['user']) || empty($_SESSION['access_token'])) {
-    header('Location: login.php');
+    header('Location: /');
     exit;
 }
 

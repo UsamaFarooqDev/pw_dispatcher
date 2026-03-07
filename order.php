@@ -1,6 +1,7 @@
 <?php
 session_start();
 
+require_once 'auth/require_login_redirect.php';
 require('modules/head.php');
 ?>
 <!DOCTYPE html>

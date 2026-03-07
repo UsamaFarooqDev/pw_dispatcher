@@ -1,6 +1,7 @@
 <?php
 session_start();
 
+require_once 'auth/require_login_redirect.php';
 require('modules/head.php');
 ?>
 <!DOCTYPE html>
@@ -446,6 +447,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (rideId) {
     try {
       const response = await fetch(`api/get_ride.php?id=${encodeURIComponent(rideId)}`);
+      if (response.status === 401) { window.location.href = '/'; return; }
       if (!response.ok) {
         throw new Error('Failed to fetch ride data');
       }
@@ -700,6 +702,7 @@ function calculateFare(distanceInKm, pickupTimeStr) {
 async function loadPassengers() {
   try {
     const response = await fetch('api/get_passengers.php?limit=500');
+    if (response.status === 401) { window.location.href = '/'; return; }
     if (!response.ok) return;
     const result = await response.json();
     if (result.success && result.data) {
@@ -745,6 +748,7 @@ function setupPassengerSelect() {
 async function loadDrivers() {
   try {
     const response = await fetch('api/get_drivers.php');
+    if (response.status === 401) { window.location.href = '/'; return; }
     if (!response.ok) {
       throw new Error('Failed to fetch drivers');
     }
@@ -864,6 +868,7 @@ async function assignDriver() {
       }),
     });
     
+    if (response.status === 401) { window.location.href = '/'; return; }
     const result = await response.json();
     
     if (result.success) {
