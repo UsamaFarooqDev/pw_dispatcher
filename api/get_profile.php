@@ -21,7 +21,7 @@ function refreshAccessToken($refreshToken) {
     
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+    
 
     if ($httpCode !== 200) {
         throw new Exception("Token refresh failed. HTTP: $httpCode");
@@ -62,7 +62,7 @@ try {
     
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+    
 
     // If 401, try refreshing the token
     if ($httpCode === 401 && $refreshToken) {
@@ -88,7 +88,7 @@ try {
         ]);
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        
     }
 
     if ($httpCode !== 200) {

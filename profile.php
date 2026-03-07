@@ -1,6 +1,7 @@
 <?php
 session_start();
 
+require_once 'auth/require_login_redirect.php';
 require('modules/head.php');
 ?>
 <!DOCTYPE html>
@@ -317,6 +318,10 @@ require('modules/head.php');
       async function loadUserProfile() {
         try {
           const res = await fetch('api/get_profile.php');
+          if (res.status === 401) {
+            window.location.href = '/';
+            return;
+          }
           const json = await res.json();
           
           if (json.success && json.data) {

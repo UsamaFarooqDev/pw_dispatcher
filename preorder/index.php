@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+require_once __DIR__ . '/../auth/require_login_redirect.php';
+
 // Get ride ID from URL path (localhost/preorder/{ride.id})
 $rideId = null;
 
@@ -113,6 +115,10 @@ require('../modules/head.php');
       async function loadRideData() {
         try {
           const response = await fetch(`../api/get_ride.php?id=${encodeURIComponent(rideId)}`);
+          if (response.status === 401) {
+            window.location.href = '/';
+            return;
+          }
           if (!response.ok) {
             throw new Error('Failed to fetch ride data');
           }
@@ -232,6 +238,10 @@ require('../modules/head.php');
 
         try {
           const response = await fetch('../api/get_drivers.php');
+          if (response.status === 401) {
+            window.location.href = '/';
+            return;
+          }
           if (!response.ok) {
             throw new Error('Failed to fetch driver data');
           }
