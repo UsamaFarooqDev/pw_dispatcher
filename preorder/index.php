@@ -3,7 +3,7 @@ session_start();
 
 require_once __DIR__ . '/../auth/require_login_redirect.php';
 
-// Get ride ID from URL path (localhost/preorder/{ride.id})
+// Get ride ID from URL path (localhost/preorder/{ride.id}) or query (?id=...)
 $rideId = null;
 
 $requestUri = $_SERVER['REQUEST_URI'] ?? '';
@@ -16,6 +16,10 @@ if ($path) {
     if ($preorderIndex !== false && isset($pathParts[$preorderIndex + 1])) {
         $rideId = $pathParts[$preorderIndex + 1];
     }
+}
+// Fallback: ?id= for hosts that don't support rewrite (e.g. preorder/index.php?id=uuid)
+if (!$rideId && !empty($_GET['id'])) {
+    $rideId = $_GET['id'];
 }
 
 if (!$rideId) {
