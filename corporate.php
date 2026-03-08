@@ -1,6 +1,7 @@
 <?php
 session_start();
 
+require_once 'auth/require_login_redirect.php';
 require('modules/head.php');
 
 ?>
@@ -181,7 +182,8 @@ require('modules/head.php');
           }
 
           const response = await fetch(`api/get_rides.php?page=${page}&limit=${limit}`);
-          
+
+          if (response.status === 401) { window.location.href = '/'; return; }
           if (!response.ok) {
             throw new Error('Failed to fetch rides from server');
           }
@@ -404,6 +406,7 @@ require('modules/head.php');
             })
           });
 
+          if (res.status === 401) { window.location.href = '/'; return; }
           const data = await res.json();
           
           if (data.success) {
@@ -439,6 +442,7 @@ require('modules/head.php');
             body: JSON.stringify({ ride_id: selectedRideId })
           });
 
+          if (res.status === 401) { window.location.href = '/'; return; }
           const data = await res.json();
           
           if (data.success) {

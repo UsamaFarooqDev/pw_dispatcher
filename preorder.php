@@ -1,6 +1,7 @@
 <?php
 session_start();
 
+require_once 'auth/require_login_redirect.php';
 require('modules/head.php');
 ?>
 <!DOCTYPE html>
@@ -249,6 +250,7 @@ require('modules/head.php');
         try {
           // Fetch all rides (use high limit to get all rides for client-side filtering)
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
+          if (response.status === 401) { window.location.href = '/'; return; }
           if (!response.ok) {
             throw new Error('Failed to fetch rides from server');
           }
@@ -422,6 +424,7 @@ require('modules/head.php');
         try {
           // Fetch all rides (use high limit to get all rides for client-side filtering)
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
+          if (response.status === 401) { window.location.href = '/'; return; }
           if (!response.ok) {
             throw new Error('Failed to fetch rides from server');
           }
@@ -689,6 +692,7 @@ require('modules/head.php');
         try {
           // Fetch all rides (use high limit to get all rides for client-side filtering)
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
+          if (response.status === 401) { window.location.href = '/'; return; }
           if (!response.ok) {
             throw new Error('Failed to fetch rides from server');
           }
@@ -885,6 +889,7 @@ require('modules/head.php');
         try {
           // Fetch all rides (use high limit to get all rides for client-side filtering)
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
+          if (response.status === 401) { window.location.href = '/'; return; }
           if (!response.ok) {
             throw new Error('Failed to fetch rides from server');
           }
@@ -964,6 +969,7 @@ require('modules/head.php');
       async function loadCancelledRides(showLoading = false) {
         try {
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
+          if (response.status === 401) { window.location.href = '/'; return; }
           if (!response.ok) {
             throw new Error('Failed to fetch rides from server');
           }
@@ -1029,6 +1035,7 @@ require('modules/head.php');
       async function loadCompletedRides(showLoading = false) {
         try {
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
+          if (response.status === 401) { window.location.href = '/'; return; }
           if (!response.ok) {
             throw new Error('Failed to fetch rides from server');
           }

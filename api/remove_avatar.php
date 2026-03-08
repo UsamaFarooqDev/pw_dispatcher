@@ -45,7 +45,6 @@ try {
             ]);
             $userResponse = curl_exec($userCh);
             $userHttpCode = curl_getinfo($userCh, CURLINFO_HTTP_CODE);
-            curl_close($userCh);
             
             if ($userHttpCode === 200) {
                 $userData = json_decode($userResponse, true);

@@ -117,8 +117,25 @@ document.addEventListener('DOMContentLoaded', function() {
   async function loadNavbarProfile() {
     try {
       const res = await fetch('api/get_profile.php');
+      if (res.status === 401) {
+        const nameEl = document.getElementById('navbarUserName');
+        if (nameEl) {
+          nameEl.textContent = 'Session expired';
+          nameEl.classList.add('text-danger');
+        }
+        window.location.href = '/';
+        return;
+      }
       const json = await res.json();
-      
+      if (!json.success && json.error && (json.error.toLowerCase().includes('session') || json.error.toLowerCase().includes('log in'))) {
+        const nameEl = document.getElementById('navbarUserName');
+        if (nameEl) {
+          nameEl.textContent = 'Session expired';
+          nameEl.classList.add('text-danger');
+        }
+        window.location.href = '/';
+        return;
+      }
       if (json.success && json.data) {
         // Update name and email
         const nameEl = document.getElementById('navbarUserName');

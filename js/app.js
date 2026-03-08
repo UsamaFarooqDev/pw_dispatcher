@@ -144,6 +144,7 @@ async function loadDriversData(page = 1, limit = ITEMS_PER_PAGE) {
     const response = await fetch(
       `api/get_drivers.php?page=${page}&limit=${limit}`,
     );
+    if (response.status === 401) { window.location.href = '/'; return; }
     if (!response.ok) {
       throw new Error('Failed to fetch drivers from server');
     }
@@ -198,6 +199,7 @@ async function loadPassengersData(page = 1, limit = ITEMS_PER_PAGE) {
     const response = await fetch(
       `api/get_passengers.php?page=${page}&limit=${limit}`,
     );
+    if (response.status === 401) { window.location.href = '/'; return; }
     if (!response.ok) {
       throw new Error('Failed to fetch passengers from server');
     }
