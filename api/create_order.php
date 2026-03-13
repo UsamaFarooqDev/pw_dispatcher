@@ -260,15 +260,22 @@ try {
     }
 
 
-    $drivers = $db->findData('drivers', ['id' => $input['driver_id']]);
-    if (empty($drivers)) {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Invalid driver ID. Driver not found.',
-            'data' => null
-        ], JSON_PRETTY_PRINT);
-        exit;
+    $drivers = [];
+    $driverName = null;
+    if (isset($input['driver_id']) && $input['driver_id'] !== null && $input['driver_id'] !== '') {
+        $drivers = $db->findData('drivers', ['id' => $input['driver_id']]);
+        if (!empty($drivers)) {
+            $driverRow = $drivers[0];
+            $driverName = $driverRow['name'] ?? $driverRow['full_name'] ?? null;
+        } else {
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Invalid driver ID. Driver not found.',
+                'data' => null
+            ], JSON_PRETTY_PRINT);
+            exit;
+        }
     }
 
 
@@ -443,6 +450,29 @@ try {
 
     $newRide = $db->insertData('rides', $rideData);
 
+    // When order is created with a driver (Assigned), notify passenger by email
+    if ($hasDriver && !empty($userId)) {
+        $passengers = $db->findData('passengers', ['id' => $userId]);
+        if (!empty($passengers)) {
+            $passengerEmail = $passengers[0]['email'] ?? null;
+            if ($passengerEmail) {
+                require_once __DIR__ . '/../lib/mail_helper.php';
+                $passengerName = $passengers[0]['name'] ?? $passengers[0]['full_name'] ?? $input['customer_name'] ?? 'Passenger';
+                $emailResult = sendRideAssignedEmail(
+                    $passengerEmail,
+                    $passengerName,
+                    $input['pickup_addr'] ?? '',
+                    $input['dest_addr'] ?? '',
+                    $input['service_type'] ?? '',
+                    isset($newRide['fare_eur']) ? $newRide['fare_eur'] : $fareEur,
+                    $driverName
+                );
+                if ($emailResult !== true) {
+                    error_log('Ride-assigned email (create_order) failed: ' . (is_string($emailResult) ? $emailResult : 'unknown'));
+                }
+            }
+        }
+    }
 
     echo json_encode([
         'success' => true,

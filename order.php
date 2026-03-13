@@ -784,7 +784,7 @@ require('modules/head.php');
             const matches = passengers.filter((p) => {
               const name = (p.name || p.full_name || '').toLowerCase();
               return name.includes(term);
-            }).slice(0, 8);
+            });
             render(matches);
           }, 200);
         });

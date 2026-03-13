@@ -53,6 +53,46 @@ try {
 
     // Update the ride
     $updatedRide = $db->updateData('rides', $input['ride_id'], $updateData);
+
+    // Notify passenger by email when ride is assigned (e.g. from Searching → Assigned)
+    $passengerEmail = null;
+    $passengerName = 'Passenger';
+    if (!empty($updatedRide['user_id'])) {
+        $passengers = $db->findData('passengers', ['id' => $updatedRide['user_id']]);
+        if (!empty($passengers)) {
+            $p = $passengers[0];
+            $passengerEmail = $p['email'] ?? null;
+            $passengerName = $p['name'] ?? $p['full_name'] ?? 'Passenger';
+        }
+    }
+    // Look up driver name
+    $driverName = null;
+    if (!empty($updatedRide['driver_id'])) {
+        $drivers = $db->findData('drivers', ['id' => $updatedRide['driver_id']]);
+        if (!empty($drivers)) {
+            $d = $drivers[0];
+            $driverName = $d['name'] ?? $d['full_name'] ?? null;
+        }
+    }
+    if ($passengerEmail) {
+        require_once __DIR__ . '/../lib/mail_helper.php';
+        $pickupAddr = $updatedRide['pickup_addr'] ?? '';
+        $destAddr = $updatedRide['dest_addr'] ?? '';
+        $rideType = $updatedRide['ride_type'] ?? '';
+        $fareEur = $updatedRide['fare_eur'] ?? '';
+        $emailResult = sendRideAssignedEmail(
+            $passengerEmail,
+            $passengerName,
+            $pickupAddr,
+            $destAddr,
+            $rideType,
+            $fareEur,
+            $driverName
+        );
+        if ($emailResult !== true) {
+            error_log('Ride-assigned email failed: ' . (is_string($emailResult) ? $emailResult : 'unknown'));
+        }
+    }
     
     echo json_encode([
         'success' => true,
