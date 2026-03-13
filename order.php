@@ -1050,11 +1050,17 @@ require('modules/head.php');
         const dropoffInput = document.getElementById('dropoffInput');
         const rideDate = document.getElementById('rideDate');
         const rideTime = document.getElementById('rideTime');
+        const serviceType = document.getElementById('serviceType');
         const handler = () => tryCalculateRoute();
         [pickupInput, dropoffInput, rideDate, rideTime].forEach((el) => {
           if (el) el.addEventListener('change', handler);
           if (el) el.addEventListener('blur', handler);
         });
+        if (serviceType) {
+          serviceType.addEventListener('change', () => {
+            recalculateFareForCurrentRoute();
+          });
+        }
       }
 
       function tryCalculateRoute() {
@@ -1118,6 +1124,14 @@ require('modules/head.php');
         };
         const multiplier = multipliers[rideType] ?? 1.0;
         return Math.round((rawFare * multiplier) * 100) / 100;
+      }
+
+      function recalculateFareForCurrentRoute() {
+        if (currentDistance == null || currentDuration == null) return;
+        const pickupTimeStr = buildPickupDateTime();
+        const rideType = document.getElementById('serviceType')?.value || 'Economy';
+        currentFare = calculateFare(currentDistance, currentDuration, pickupTimeStr, rideType);
+        updateSummaryFields();
       }
 
       function updateSummaryFields() {
