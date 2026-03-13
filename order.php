@@ -784,7 +784,7 @@ require('modules/head.php');
             const matches = passengers.filter((p) => {
               const name = (p.name || p.full_name || '').toLowerCase();
               return name.includes(term);
-            }).slice(0, 8);
+            });
             render(matches);
           }, 200);
         });
@@ -1050,11 +1050,17 @@ require('modules/head.php');
         const dropoffInput = document.getElementById('dropoffInput');
         const rideDate = document.getElementById('rideDate');
         const rideTime = document.getElementById('rideTime');
+        const serviceType = document.getElementById('serviceType');
         const handler = () => tryCalculateRoute();
         [pickupInput, dropoffInput, rideDate, rideTime].forEach((el) => {
           if (el) el.addEventListener('change', handler);
           if (el) el.addEventListener('blur', handler);
         });
+        if (serviceType) {
+          serviceType.addEventListener('change', () => {
+            recalculateFareForCurrentRoute();
+          });
+        }
       }
 
       function tryCalculateRoute() {
@@ -1074,7 +1080,7 @@ require('modules/head.php');
             currentDistance = leg.distance.value / 1000;
             currentDuration = Math.round(leg.duration.value / 60);
             const pickupTimeStr = buildPickupDateTime();
-            currentFare = calculateFare(currentDistance, pickupTimeStr);
+            currentFare = calculateFare(currentDistance, currentDuration, pickupTimeStr, document.getElementById('serviceType')?.value || 'Economy');
             updateSummaryFields();
             pickupLatLng = leg.start_location;
             dropoffLatLng = leg.end_location;
@@ -1090,18 +1096,42 @@ require('modules/head.php');
         return now.toISOString().slice(0, 16);
       }
 
-      function calculateFare(distanceKm, pickupTimeStr) {
+      function calculateFare(distanceKm, durationMin, pickupTimeStr, rideType) {
         const pickupDate = new Date(pickupTimeStr);
         const hour = pickupDate.getHours();
-        let baseFare, ratePerKm;
+        const initialFare = 3.0;
+        let baseFare, ratePerKm, ratePerMinute;
         if (hour >= 8 && hour < 20) {
           baseFare = 4.4;
           ratePerKm = 1.32;
+          ratePerMinute = 0.20;
         } else {
           baseFare = 5.4;
           ratePerKm = 1.81;
+          ratePerMinute = 0.30;
         }
-        return baseFare + ratePerKm * distanceKm;
+        const rawFare = initialFare + baseFare + (distanceKm * ratePerKm) + ((durationMin || 0) * ratePerMinute);
+        const multipliers = {
+          'Economy': 1.0,
+          'Economy XL': 1.2,
+          'Business': 1.0,
+          'Business Plus': 1.2,
+          'Limousine': 2.0,
+          'Wheelchair accessible': 1.1,
+          'Wheelchair Taxi': 1.1,
+          'Pets Taxi': 1.15,
+          'Courier / Parcel': 0.9
+        };
+        const multiplier = multipliers[rideType] ?? 1.0;
+        return Math.round((rawFare * multiplier) * 100) / 100;
+      }
+
+      function recalculateFareForCurrentRoute() {
+        if (currentDistance == null || currentDuration == null) return;
+        const pickupTimeStr = buildPickupDateTime();
+        const rideType = document.getElementById('serviceType')?.value || 'Economy';
+        currentFare = calculateFare(currentDistance, currentDuration, pickupTimeStr, rideType);
+        updateSummaryFields();
       }
 
       function updateSummaryFields() {

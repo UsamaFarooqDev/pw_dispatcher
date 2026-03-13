@@ -107,6 +107,43 @@ function getUserByEmail($email) {
     throw new Exception('User not found');
 }
 
+/**
+ * Calculate fare using the same formula as the passenger app (ride_selection.dart).
+ * @param float $distanceKm Distance in km
+ * @param float $durationMin Duration in minutes
+ * @param string $rideType Service/ride type (Economy, Economy XL, Limousine, etc.)
+ * @param string|null $scheduledDateTime Optional 'Y-m-d H:i:s' for day/night rate; if null uses current time
+ * @return float Fare in EUR, rounded to 2 decimals
+ */
+function calcFareFromPassengerFormula($distanceKm, $durationMin, $rideType, $scheduledDateTime = null) {
+    $initialFare = 3.0;
+    $ts = $scheduledDateTime ? strtotime($scheduledDateTime) : time();
+    $hour = (int) date('G', $ts);
+    if ($hour >= 8 && $hour < 20) {
+        $baseFare = 4.4;
+        $ratePerKm = 1.32;
+        $ratePerMinute = 0.20;
+    } else {
+        $baseFare = 5.4;
+        $ratePerKm = 1.81;
+        $ratePerMinute = 0.30;
+    }
+    $rawFare = $initialFare + $baseFare + ($distanceKm * $ratePerKm) + ($durationMin * $ratePerMinute);
+    $multipliers = [
+        'Economy' => 1.0,
+        'Economy XL' => 1.2,
+        'Business' => 1.0,
+        'Business Plus' => 1.2,
+        'Limousine' => 2.0,
+        'Wheelchair accessible' => 1.1,
+        'Wheelchair Taxi' => 1.1,
+        'Pets Taxi' => 1.15,
+        'Courier / Parcel' => 0.9,
+    ];
+    $multiplier = isset($multipliers[$rideType]) ? $multipliers[$rideType] : 1.0;
+    return round((float) ($rawFare * $multiplier), 2);
+}
+
 if (empty($_SESSION['user']) || empty($_SESSION['access_token'])) {
     http_response_code(401);
     echo json_encode([
@@ -223,15 +260,22 @@ try {
     }
 
 
-    $drivers = $db->findData('drivers', ['id' => $input['driver_id']]);
-    if (empty($drivers)) {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Invalid driver ID. Driver not found.',
-            'data' => null
-        ], JSON_PRETTY_PRINT);
-        exit;
+    $drivers = [];
+    $driverName = null;
+    if (isset($input['driver_id']) && $input['driver_id'] !== null && $input['driver_id'] !== '') {
+        $drivers = $db->findData('drivers', ['id' => $input['driver_id']]);
+        if (!empty($drivers)) {
+            $driverRow = $drivers[0];
+            $driverName = $driverRow['name'] ?? $driverRow['full_name'] ?? null;
+        } else {
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Invalid driver ID. Driver not found.',
+                'data' => null
+            ], JSON_PRETTY_PRINT);
+            exit;
+        }
     }
 
 
@@ -281,16 +325,6 @@ try {
     $extraCost = isset($input['extra_cost']) ? floatval($input['extra_cost']) : 0;
     $specialCost = isset($input['special_cost']) ? floatval($input['special_cost']) : 0;
     $fareEur = $baseFare + $extraCost + $specialCost;
-
-
-    if ($fareEur == 0) {
-        $serviceTypeFares = [
-            'Economy' => 20.00,
-            'Business' => 35.00,
-            'Premium' => 50.00
-        ];
-        $fareEur = $serviceTypeFares[$input['service_type']] ?? 20.00;
-    }
 
 
     $metaData = [
@@ -364,6 +398,21 @@ try {
     }
 
 
+    // When no fare was provided, use same formula as passenger app (ride_selection.dart)
+    if ($fareEur == 0) {
+        if ($distanceKm > 0 || $durationMin > 0) {
+            $fareEur = calcFareFromPassengerFormula(
+                $distanceKm,
+                $durationMin,
+                isset($input['service_type']) ? trim((string) $input['service_type']) : 'Economy',
+                $scheduledDateTime
+            );
+        } else {
+            $fareEur = 20.00; // fallback when distance/duration unknown
+        }
+    }
+
+
     // Determine status based on whether driver is provided
     $driverIdInput = isset($input['driver_id']) ? trim((string)$input['driver_id']) : null;
     $hasDriver = !empty($driverIdInput);
@@ -401,6 +450,29 @@ try {
 
     $newRide = $db->insertData('rides', $rideData);
 
+    // When order is created with a driver (Assigned), notify passenger by email
+    if ($hasDriver && !empty($userId)) {
+        $passengers = $db->findData('passengers', ['id' => $userId]);
+        if (!empty($passengers)) {
+            $passengerEmail = $passengers[0]['email'] ?? null;
+            if ($passengerEmail) {
+                require_once __DIR__ . '/../lib/mail_helper.php';
+                $passengerName = $passengers[0]['name'] ?? $passengers[0]['full_name'] ?? $input['customer_name'] ?? 'Passenger';
+                $emailResult = sendRideAssignedEmail(
+                    $passengerEmail,
+                    $passengerName,
+                    $input['pickup_addr'] ?? '',
+                    $input['dest_addr'] ?? '',
+                    $input['service_type'] ?? '',
+                    isset($newRide['fare_eur']) ? $newRide['fare_eur'] : $fareEur,
+                    $driverName
+                );
+                if ($emailResult !== true) {
+                    error_log('Ride-assigned email (create_order) failed: ' . (is_string($emailResult) ? $emailResult : 'unknown'));
+                }
+            }
+        }
+    }
 
     echo json_encode([
         'success' => true,

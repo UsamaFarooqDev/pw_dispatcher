@@ -642,7 +642,7 @@ function calculateRouteAndFare(pickup, dropoff) {
         pickupTimeStr = now.toISOString().slice(0, 16);
       }
       
-      const fareAmount = calculateFare(distanceInKm, pickupTimeStr);
+      const fareAmount = calculateFare(distanceInKm, durationInMin, pickupTimeStr, document.getElementById('serviceType')?.value?.trim() || 'Economy');
       
       // Update fields
       const distanceElem = document.getElementById('distance');
@@ -677,25 +677,35 @@ function calculateRouteAndFare(pickup, dropoff) {
   });
 }
 
-// Calculate fare based on distance and time
-function calculateFare(distanceInKm, pickupTimeStr) {
+// Calculate fare based on distance, duration and time 
+function calculateFare(distanceInKm, durationInMin, pickupTimeStr, rideType) {
   const pickupDate = new Date(pickupTimeStr);
   const hour = pickupDate.getHours();
-  
-  let baseFare, ratePerKm;
-  
-  // Daytime rate (8am to 8pm)
+  const initialFare = 3.0;
+  let baseFare, ratePerKm, ratePerMinute;
   if (hour >= 8 && hour < 20) {
     baseFare = 4.4;
     ratePerKm = 1.32;
-  }
-  // Nighttime rate (8pm to 8am)
-  else {
+    ratePerMinute = 0.20;
+  } else {
     baseFare = 5.4;
     ratePerKm = 1.81;
+    ratePerMinute = 0.30;
   }
-  
-  return baseFare + ratePerKm * distanceInKm;
+  const rawFare = initialFare + baseFare + (distanceInKm * ratePerKm) + ((durationInMin || 0) * ratePerMinute);
+  const multipliers = {
+    'Economy': 1.0,
+    'Economy XL': 1.2,
+    'Business': 1.0,
+    'Business Plus': 1.2,
+    'Limousine': 2.0,
+    'Wheelchair accessible': 1.1,
+    'Wheelchair Taxi': 1.1,
+    'Pets Taxi': 1.15,
+    'Courier / Parcel': 0.9
+  };
+  const multiplier = multipliers[rideType] ?? 1.0;
+  return Math.round((rawFare * multiplier) * 100) / 100;
 }
 
 // Load passengers and populate dropdown (select only, no custom typing)
