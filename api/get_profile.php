@@ -64,8 +64,8 @@ try {
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     
 
-    // If 401, try refreshing the token
-    if ($httpCode === 401 && $refreshToken) {
+    // If 401 or 403 (expired/invalid token), try refreshing the token
+    if (($httpCode === 401 || $httpCode === 403) && $refreshToken) {
         $tokens = refreshAccessToken($refreshToken);
         
         // Update session with new tokens
