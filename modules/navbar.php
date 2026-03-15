@@ -3,11 +3,11 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
 $page_titles = [
     'home'            => 'Home',
-    'corporate'       => 'Corporate Rides',
+    'corporate'       => 'Application Rides',
     'order'           => 'Create New Order',
     'map'             => 'Live Map',
     'orderassigned'   => 'Assigned Orders',
-    'preorder'        => 'Pre-Scheduled Orders',
+    'preorder'        => 'Live Orders',
     'profile'         => 'Profile Management',
 ];
 

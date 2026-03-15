@@ -18,7 +18,7 @@
 
       <li class="nav-item mb-2">
         <a href="preorder.php" class="nav-link sidebar-link d-flex align-items-center py-2 fw-semibold text-body">
-          <i class="bi bi-lightning-charge fs-6 me-2"></i> Pre Order
+          <i class="bi bi-lightning-charge fs-6 me-2"></i> Live Order
         </a>
       </li>
 
@@ -30,7 +30,7 @@
 
       <li class="nav-item mb-2">
         <a href="corporate.php" class="nav-link sidebar-link d-flex align-items-center py-2 fw-semibold text-body">
-          <i class="bi bi-taxi-front fs-6 me-2"></i> Corporate Ride
+          <i class="bi bi-taxi-front fs-6 me-2"></i> App Ride
         </a>
       </li>
 
