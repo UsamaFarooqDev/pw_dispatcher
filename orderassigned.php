@@ -335,6 +335,7 @@ let currentRideId = null;
 let currentDistance = null;
 let currentDuration = null;
 let currentFare = null;
+let hasDbFare = false;
 let passengersList = [];
 
 // Wait for Google Maps API to load (called by script callback when API is ready)
@@ -529,12 +530,15 @@ document.addEventListener('DOMContentLoaded', async () => {
           }, 1000);
         }
 
-        // Prefill Fare Details
+        // Prefill Fare Details (use stored fare from DB for app-booked rides)
         const estimatedFare = document.getElementById('estimatedFare');
         if (estimatedFare) {
           const fare = ride.fare_eur || ride.estimate_fare || null;
           if (fare !== null) {
-            estimatedFare.value = `€${parseFloat(fare).toFixed(2)}`;
+            const numericFare = parseFloat(fare);
+            estimatedFare.value = `€${numericFare.toFixed(2)}`;
+            currentFare = numericFare;
+            hasDbFare = true;
           }
         }
 
@@ -542,6 +546,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const distance = document.getElementById('distance');
         if (distance && ride.distance_km) {
           distance.value = `${ride.distance_km} km`;
+          currentDistance = parseFloat(ride.distance_km);
         }
 
         // Prefill Estimated Time if available
@@ -550,6 +555,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const minutes = ride.duration_min || ride.estimated_duration_minutes;
           const hours = Math.floor(minutes / 60);
           const mins = minutes % 60;
+          currentDuration = minutes;
           if (hours > 0) {
             estimatedTime.value = `${hours}h ${mins}m`;
           } else {
@@ -601,6 +607,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // Recalculate fare when service type changes (similar to passenger app behaviour)
+  const serviceTypeSelect = document.getElementById('serviceType');
+  if (serviceTypeSelect) {
+    serviceTypeSelect.addEventListener('change', () => {
+      if (currentDistance == null || currentDuration == null) {
+        return;
+      }
+      const rideDateInput = document.getElementById('rideDate');
+      const rideTimeInput = document.getElementById('rideTime');
+      let pickupTimeStr = null;
+      if (rideDateInput && rideTimeInput && rideDateInput.value && rideTimeInput.value) {
+        pickupTimeStr = rideDateInput.value + 'T' + rideTimeInput.value;
+      } else {
+        const now = new Date();
+        pickupTimeStr = now.toISOString().slice(0, 16);
+      }
+      const rideType =
+        serviceTypeSelect.value && serviceTypeSelect.value.trim()
+          ? serviceTypeSelect.value.trim()
+          : 'Economy';
+      const newFare = calculateFare(currentDistance, currentDuration, pickupTimeStr, rideType);
+      currentFare = newFare;
+      hasDbFare = false;
+      const estimatedFareElem = document.getElementById('estimatedFare');
+      if (estimatedFareElem) {
+        estimatedFareElem.value = `€${newFare.toFixed(2)}`;
+      }
+    });
+  }
+
   // Setup assign driver button
   const assignBtn = document.getElementById('assignDriverBtn');
   if (assignBtn) {
@@ -629,21 +665,6 @@ function calculateRouteAndFare(pickup, dropoff) {
       const distanceInKm = leg.distance.value / 1000;
       const durationInMin = Math.round(leg.duration.value / 60);
       
-      // Calculate fare based on current date/time
-      const rideDateInput = document.getElementById('rideDate');
-      const rideTimeInput = document.getElementById('rideTime');
-      let pickupTimeStr = null;
-      
-      if (rideDateInput && rideTimeInput && rideDateInput.value && rideTimeInput.value) {
-        pickupTimeStr = rideDateInput.value + 'T' + rideTimeInput.value;
-      } else {
-        // Use current time if not specified
-        const now = new Date();
-        pickupTimeStr = now.toISOString().slice(0, 16);
-      }
-      
-      const fareAmount = calculateFare(distanceInKm, durationInMin, pickupTimeStr, document.getElementById('serviceType')?.value?.trim() || 'Economy');
-      
       // Update fields
       const distanceElem = document.getElementById('distance');
       const estimatedTimeElem = document.getElementById('estimatedTime');
@@ -663,14 +684,38 @@ function calculateRouteAndFare(pickup, dropoff) {
         }
       }
       
-      if (estimatedFareElem) {
-        estimatedFareElem.value = `€${fareAmount.toFixed(2)}`;
+      // Only (re)calculate fare from distance/time when we are not using a DB fare
+      if (!hasDbFare) {
+        const rideDateInput = document.getElementById('rideDate');
+        const rideTimeInput = document.getElementById('rideTime');
+        let pickupTimeStr = null;
+
+        if (rideDateInput && rideTimeInput && rideDateInput.value && rideTimeInput.value) {
+          pickupTimeStr = rideDateInput.value + 'T' + rideTimeInput.value;
+        } else {
+          // Use current time if not specified
+          const now = new Date();
+          pickupTimeStr = now.toISOString().slice(0, 16);
+        }
+
+        const rideType =
+          document.getElementById('serviceType')?.value?.trim() || 'Economy';
+        const fareAmount = calculateFare(
+          distanceInKm,
+          durationInMin,
+          pickupTimeStr,
+          rideType
+        );
+
+        if (estimatedFareElem) {
+          estimatedFareElem.value = `€${fareAmount.toFixed(2)}`;
+        }
+        currentFare = fareAmount;
       }
       
       // Store values for assignment
       currentDistance = distanceInKm;
       currentDuration = durationInMin;
-      currentFare = fareAmount;
     } else {
       console.error('DirectionsService failed:', status);
     }
