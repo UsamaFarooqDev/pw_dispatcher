@@ -14,10 +14,10 @@ require_once $mailerBase . '/PHPMailer.php';
 require_once $mailerBase . '/SMTP.php';
 
 /** SMTP config – same as reminderemail.php (PowerCabs) */
-define('MAIL_HOST', 'mail.powercabs.ie');
-define('MAIL_USERNAME', 'admin@powercabs.ie');
-define('MAIL_PASSWORD', 'Powercabs@_1234');
-define('MAIL_FROM_ADDRESS', 'admin@powercabs.ie');
+define('MAIL_HOST', 'smtp.gmail.com');
+define('MAIL_USERNAME', 'arsalar286@gmail.com');
+define('MAIL_PASSWORD', 'qrpa qtqt qwgr zvus');
+define('MAIL_FROM_ADDRESS', 'arsalar286@gmail.com');
 define('MAIL_FROM_NAME', 'PowerCabs Admin');
 
 /**
