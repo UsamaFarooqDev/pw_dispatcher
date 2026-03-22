@@ -30,6 +30,15 @@ require('modules/head.php');
 .toast {
   pointer-events: auto;
 }
+.btn-loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-loading #btnText {
+  opacity: 0.9;
+}
     </style>
   </head>
   <body>
@@ -236,15 +245,18 @@ require('modules/head.php');
   </div>
 
   <!-- Action Button -->
-  <div class="d-flex">
-    <button
-      class="btn w-100"
-      id="assignDriverBtn"
-      style="background: #f37a20; color: #fff; border-radius: 4px"
-    >
-      Assign Driver
-    </button>
-  </div>
+<div class="d-flex">
+  <button
+    class="btn w-100"
+    id="assignDriverBtn"
+    style="background: #f37a20; color: #fff; border-radius: 4px; position: relative;"
+  >
+    <span id="btnText">Assign Driver</span>
+    <span id="btnSpinner" class="spinner-border spinner-border-sm" 
+          style="display: none; margin-left: 8px; vertical-align: middle;" 
+          role="status" aria-hidden="true"></span>
+  </button>
+</div>
 </div>
 </div>
 
@@ -829,6 +841,24 @@ async function loadDrivers() {
   }
 }
 
+function setButtonLoading(isLoading, customText = null) {
+  const btn = document.getElementById('assignDriverBtn');
+  const btnText = document.getElementById('btnText');
+  const btnSpinner = document.getElementById('btnSpinner');
+  
+  if (isLoading) {
+    btn.classList.add('btn-loading');
+    btn.disabled = true;
+    btnSpinner.style.display = 'inline-block';
+    btnText.textContent = customText || 'Assigning Driver...';
+  } else {
+    btn.classList.remove('btn-loading');
+    btn.disabled = false;
+    btnSpinner.style.display = 'none';
+    btnText.textContent = 'Assign Driver';
+  }
+}
+
 // Validate required fields (alerts for now; replace with toast later)
 function validateOrderAssignedForm() {
   const passengerSelect = document.getElementById('customerNameSelect');
@@ -880,7 +910,29 @@ function showToast(message) {
   bsToast.show();
 }
 
-// Assign driver to ride
+// Function to collect form data
+function getFormData() {
+  return {
+    customerId: document.getElementById('customerId')?.value || '',
+    customerName: document.getElementById('customerNameSelect')?.value || '',
+    phoneNumber: document.getElementById('phoneNumber')?.value || '',
+    serviceType: document.getElementById('serviceType')?.value || '',
+    rideDate: document.getElementById('rideDate')?.value || '',
+    rideTime: document.getElementById('rideTime')?.value || '',
+    pickupLocation: document.getElementById('pickupLocation')?.value || '',
+    dropoffLocation: document.getElementById('dropoffLocation')?.value || '',
+    estimatedFare: document.getElementById('estimatedFare')?.value || '',
+    estimatedTime: document.getElementById('estimatedTime')?.value || '',
+    distance: document.getElementById('distance')?.value || '',
+    creditCard: document.getElementById('creditCard')?.checked || false,
+    extraLuggage: document.getElementById('extraLuggage')?.checked || false,
+    petsAllowed: document.querySelectorAll('#extraLuggage')[1]?.checked || false,
+    delivery: document.querySelectorAll('#extraLuggage')[2]?.checked || false,
+    driverId: document.getElementById('driverSelect')?.value || ''
+  };
+}
+
+// Updated assignDriver function with loading state
 async function assignDriver() {
   if (!validateOrderAssignedForm()) {
     return;
@@ -904,8 +956,11 @@ async function assignDriver() {
     return;
   }
   
-  const serviceTypeEl = document.getElementById('serviceType');
+   const serviceTypeEl = document.getElementById('serviceType');
   const serviceType = serviceTypeEl?.value?.trim() || null;
+
+  // Set loading state before API call
+  setButtonLoading(true, 'Assigning Driver...');
 
   try {
     const response = await fetch('api/assign_driver.php', {
@@ -922,21 +977,27 @@ async function assignDriver() {
         service_type: serviceType,
       }),
     });
+       if (response.status === 401) { 
+      window.location.href = '/'; 
+      return; 
+    }
     
-    if (response.status === 401) { window.location.href = '/'; return; }
     const result = await response.json();
     
     if (result.success) {
-     const modal = new bootstrap.Modal(
-  document.getElementById('driverAssignedModal')
-);
-modal.show();
+      const modal = new bootstrap.Modal(
+        document.getElementById('driverAssignedModal')
+      );
+      modal.show();
 
-document
-  .getElementById('goToPreorderBtn')
-  .addEventListener('click', () => {
-    window.location.href = 'preorder.php';
-  });
+      // Remove existing event listener to prevent multiple redirects
+      const goToPreorderBtn = document.getElementById('goToPreorderBtn');
+      const newBtn = goToPreorderBtn.cloneNode(true);
+      goToPreorderBtn.parentNode.replaceChild(newBtn, goToPreorderBtn);
+      
+      newBtn.addEventListener('click', () => {
+        window.location.href = 'preorder.php';
+      });
 
     } else {
       showToast('Error assigning driver: ' + (result.error || 'Unknown error'));
@@ -944,8 +1005,22 @@ document
   } catch (error) {
     console.error('Error assigning driver:', error);
     showToast('Failed to assign driver. Please try again.');
+  } finally {
+    // Reset button state after API call completes (success or error)
+    setButtonLoading(false);
   }
 }
+
+// Initialize event listener when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+  const assignBtn = document.getElementById('assignDriverBtn');
+  if (assignBtn) {
+    // Remove any existing listeners and add new one
+    assignBtn.replaceWith(assignBtn.cloneNode(true));
+    document.getElementById('assignDriverBtn').addEventListener('click', assignDriver);
+  }
+});
+
 </script>
 
 <!-- Global Toast -->

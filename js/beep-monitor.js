@@ -16,37 +16,81 @@
   const STORAGE_KEY_RIDE_SEARCHING_TIMESTAMPS = 'ride_searching_timestamps';
 
   let beepInterval = null;
-  let audioContext = null;
   let beepingRideIds = new Set();
   let rideSearchingTimestamps = new Map(); // Track when each ride entered searching status
+  let beepAudio = null; // Audio element for playing beep sound
 
-  // Create beep sound using Web Audio API
-  function createBeepSound() {
+  // Initialize audio element with your downloaded beep sound
+  function initBeepAudio() {
+    if (!beepAudio) {
+      beepAudio = new Audio('/assets/ride_alert.mpeg'); // Adjust path to your beep sound file
+      // Optional: Preload the audio
+      beepAudio.preload = 'auto';
+      // Handle audio loading errors
+      beepAudio.onerror = function (e) {
+        console.error('Failed to load beep sound from /assets/beep.mp3', e);
+        // Fallback to Web Audio API if file not found
+        createFallbackBeepSound();
+      };
+    }
+    return beepAudio;
+  }
+
+  // Fallback Web Audio API beep (in case the audio file fails to load)
+  function createFallbackBeepSound() {
     try {
-      if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      if (!window.audioContext) {
+        window.audioContext = new (
+          window.AudioContext || window.webkitAudioContext
+        )();
       }
 
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+      const oscillator = window.audioContext.createOscillator();
+      const gainNode = window.audioContext.createGain();
 
       oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
+      gainNode.connect(window.audioContext.destination);
 
-      oscillator.frequency.value = 800; // Beep frequency in Hz
+      oscillator.frequency.value = 800;
       oscillator.type = 'sine';
 
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      // Fade out slightly at the end for smoother sound
+      gainNode.gain.setValueAtTime(0.3, window.audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(
         0.01,
-        audioContext.currentTime + BEEP_DURATION_SECONDS
+        window.audioContext.currentTime + BEEP_DURATION_SECONDS,
       );
 
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + BEEP_DURATION_SECONDS);
+      oscillator.start(window.audioContext.currentTime);
+      oscillator.stop(window.audioContext.currentTime + BEEP_DURATION_SECONDS);
     } catch (e) {
-      console.error('Error creating beep sound:', e);
+      console.error('Error creating fallback beep sound:', e);
+    }
+  }
+
+  // Play beep sound using the audio file
+  function playBeepSound() {
+    try {
+      const audio = initBeepAudio();
+
+      // Reset audio to beginning if it's already playing
+      if (audio.currentTime > 0 && !audio.paused) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+
+      // Play the beep sound
+      const playPromise = audio.play();
+
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.error('Error playing beep sound:', error);
+          // Fallback to Web Audio API if play fails (e.g., due to user interaction policies)
+          createFallbackBeepSound();
+        });
+      }
+    } catch (e) {
+      console.error('Error playing beep sound:', e);
+      createFallbackBeepSound();
     }
   }
 
@@ -56,11 +100,11 @@
     }
     // Play beep at specified interval
     beepInterval = setInterval(() => {
-      createBeepSound();
+      playBeepSound();
     }, BEEP_INTERVAL_MS);
     // Only play immediately if not resuming from page load
     if (!skipImmediateBeep) {
-      createBeepSound();
+      playBeepSound();
     }
     saveBeepingState();
   }
@@ -83,7 +127,7 @@
       }
       // Load ride searching timestamps
       const timestampsStored = localStorage.getItem(
-        STORAGE_KEY_RIDE_SEARCHING_TIMESTAMPS
+        STORAGE_KEY_RIDE_SEARCHING_TIMESTAMPS,
       );
       if (timestampsStored) {
         const timestamps = JSON.parse(timestampsStored);
@@ -107,17 +151,17 @@
     try {
       localStorage.setItem(
         STORAGE_KEY_BEEPING_RIDES,
-        JSON.stringify(Array.from(beepingRideIds))
+        JSON.stringify(Array.from(beepingRideIds)),
       );
       localStorage.setItem(
         STORAGE_KEY_BEEP_ACTIVE,
-        beepInterval ? 'true' : 'false'
+        beepInterval ? 'true' : 'false',
       );
       // Save ride searching timestamps
       const timestampsObj = Object.fromEntries(rideSearchingTimestamps);
       localStorage.setItem(
         STORAGE_KEY_RIDE_SEARCHING_TIMESTAMPS,
-        JSON.stringify(timestampsObj)
+        JSON.stringify(timestampsObj),
       );
     } catch (e) {
       console.error('Error saving beeping state:', e);
@@ -202,7 +246,7 @@
         return;
       }
       const shouldBeep = Array.from(beepingRideIds).some((rideId) =>
-        shouldStartBeepingForRide(rideId)
+        shouldStartBeepingForRide(rideId),
       );
 
       if (shouldBeep) {
@@ -210,8 +254,8 @@
       } else {
         const earliestTimestamp = Math.min(
           ...Array.from(beepingRideIds).map(
-            (id) => rideSearchingTimestamps.get(id) || Date.now()
-          )
+            (id) => rideSearchingTimestamps.get(id) || Date.now(),
+          ),
         );
         const timeSinceEarliest = Date.now() - earliestTimestamp;
         const remainingDelay = Math.max(0, BEEP_DELAY_MS - timeSinceEarliest);

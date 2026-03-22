@@ -214,30 +214,6 @@ require('modules/head.php');
                         >Child Seat</label
                       >
                     </div>
-                    <!-- <div class="form-check mb-2">
-                      <input
-                        class="form-check-output"
-                        type="checkbox"
-                        id="nonSmoking"
-                      />
-                      <label
-                        class="form-check-label small text-muted"
-                        for="nonSmoking"
-                        >Non Smoking</label
-                      >
-                    </div> -->
-                    <!-- <div class="form-check mb-2">
-                      <input
-                        class="form-check-output"
-                        type="checkbox"
-                        id="smokingAllowed"
-                      />
-                      <label
-                        class="form-check-label small text-muted"
-                        for="smokingAllowed"
-                        >Smoking Allowed</label
-                      >
-                    </div> -->
                   </div>
                   <div class="col-md-6">
                     <div class="form-check mb-2">
@@ -264,30 +240,6 @@ require('modules/head.php');
                         >Pets Allowed</label
                       >
                     </div>
-                    <!-- <div class="form-check mb-2">
-                      <input
-                        class="form-check-output"
-                        type="checkbox"
-                        id="airConditioning"
-                      />
-                      <label
-                        class="form-check-label small text-muted"
-                        for="airConditioning"
-                        >Air Conditioning</label
-                      >
-                    </div> -->
-                    <!-- <div class="form-check mb-2">
-                      <input
-                        class="form-check-output"
-                        type="checkbox"
-                        id="bikeMount"
-                      />
-                      <label
-                        class="form-check-label small text-muted"
-                        for="bikeMount"
-                        >Bike Mount</label
-                      >
-                    </div> -->
                     <div class="form-check mb-2">
                       <input
                         class="form-check-output"
@@ -1150,6 +1102,35 @@ require('modules/head.php');
           btn.addEventListener('click', createOrder);
         }
       }
+
+      // Function to set button loading state
+function setButtonLoading(isLoading, customText = null) {
+  const btn = document.getElementById('confirmOrderBtn');
+  const originalText = btn.innerHTML;
+  
+  if (isLoading) {
+    // Store original text if not already stored
+    if (!btn.hasAttribute('data-original-text')) {
+      btn.setAttribute('data-original-text', originalText);
+    }
+    
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+    btn.style.cursor = 'not-allowed';
+    btn.innerHTML = `
+      <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+      ${customText || 'Confirming...'}
+    `;
+  } else {
+    btn.disabled = false;
+    btn.style.opacity = '';
+    btn.style.cursor = '';
+    const original = btn.getAttribute('data-original-text') || 'Confirm Order';
+    btn.innerHTML = original;
+    btn.removeAttribute('data-original-text');
+  }
+}
+
 async function createOrder() {
   const passengerId = selectedPassengerId;
   const customerName = document.getElementById('customerNameInput')?.value?.trim() || '';
@@ -1224,12 +1205,21 @@ async function createOrder() {
           vehicle_number: selectedVehicleNumber || null,
         };
 
+          // Set loading state before API call
+  setButtonLoading(true, 'Creating Order...');
+
         try {
           const res = await fetch('api/create_order.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
           });
+
+if (res.status === 401) {
+      window.location.href = '/';
+      return;
+    }
+
           const data = await res.json();
           if (data.success) {
             const modal = new bootstrap.Modal(
@@ -1237,11 +1227,14 @@ async function createOrder() {
 );
 modal.show();
 
-document
-  .getElementById('goToOrdersBtn')
-  .addEventListener('click', () => {
-    window.location.href = 'order.php';
-  });
+      // Remove existing event listener to prevent multiple redirects
+      const goToOrdersBtn = document.getElementById('goToOrdersBtn');
+      const newBtn = goToOrdersBtn.cloneNode(true);
+      goToOrdersBtn.parentNode.replaceChild(newBtn, goToOrdersBtn);
+      
+      newBtn.addEventListener('click', () => {
+        window.location.href = 'order.php';
+      });
 
           } else {
             showToast('Error creating order: ' + (data.error || 'Unknown error'));
@@ -1249,7 +1242,10 @@ document
         } catch (err) {
           console.error('Order create error', err);
           showToast('Failed to create order.');
-        }
+        } finally {
+    // Reset button state after API call completes (success or error)
+    setButtonLoading(false);
+  }
       }
     </script>
   </body>
