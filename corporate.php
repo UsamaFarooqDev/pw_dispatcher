@@ -11,143 +11,132 @@ require('modules/head.php');
      <?php require_once 'modules/navbar.php'; ?>
 
     <?php @require('modules/sidebar.php'); ?>
-    <main
-      class="main-content p-4"
-      style="background: #f5f7fa; min-height: 92vh"
-    >
 
-       <?php @require('modules/bodyHeader.php'); ?>
+    <main class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
 
-      <div
-        class="card shadow border-0 mt-4 h-100"
-        style="border-radius: 25px; overflow: hidden"
-      >
-        <div class="card-body p-3">
-          <div class="table-responsive bg-white" style="min-height: 400px">
-            <table class="table mb-0" style="vertical-align: middle">
-              <thead class="bg-light">
-                <tr>
-                  <th scope="col">Ride ID</th>
-                  <th scope="col">Company</th>
-                  <th scope="col">Employee</th>
-                  <th scope="col">Email</th>
-                  <th scope="col">Pickup</th>
-                  <th scope="col">Destination</th>
-                  <th scope="col">Payment</th>
-                  <th scope="col">Fare</th>
-                  <th scope="col">Status</th>
-                  <th scope="col" class="text-end pe-4">Action</th>
-                </tr>
-              </thead>
-              <tbody id="ridesTableBody">
-                <!-- Data will be injected here by JS -->
-              </tbody>
-            </table>
-          </div>
+  <?php @require('modules/bodyHeader.php'); ?>
 
-          <div class="p-3 border-top">
-            <div id="corporatePaginationContainer"></div>
-          </div>
-        </div>
-      </div>
-    </main>
+  <div class="rounded-3 border mt-4 overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
 
-    <div
-      class="modal fade"
-      id="editModal"
-      tabindex="-1"
-      aria-hidden="true"
-      data-bs-backdrop="static"
-    >
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 p-4 border-0 shadow">
-          <div class="modal-header border-0 pb-0">
-            <h5 class="modal-title fw-bold">Update Ride Status</h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body pt-2">
-            <div class="mb-3">
-              <label class="form-label fw-medium small text-muted"
-                >Status</label
-              >
-              <select
-                id="rideStatusSelect"
-                class="form-select py-1.5"
-                style="border-radius: 5px; border: 1px solid #ddd"
-              >
-                <option value="searching">Searching</option>
-                <option value="assigned">Assigned</option>
-                <option value="upcoming">Upcoming</option>
-              </select>
-            </div>
-          </div>
-          <div class="modal-footer border-0 pt-0 pb-3">
-            <button
-              type="button"
-              class="btn btn-outline-secondary rounded-2 px-4"
-              data-bs-dismiss="modal"
-            >
-              Cancel
-            </button>
-          <button
-  type="button"
-  class="btn fw-semibold rounded-2 px-4"
-  id="saveRideStatusBtn"
-  style="background: #f37a20; color: white"
->
-              Save
-            </button>
-          </div>
-        </div>
-      </div>
+    <div class="table-responsive" style="min-height:400px;">
+      <table class="table mb-0" style="border-collapse:collapse;">
+        <thead>
+          <tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
+            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Ride ID</th>
+            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Company</th>
+            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Employee</th>
+            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Email</th>
+            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
+            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
+            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
+            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
+            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+            <th class="fw-semibold text-nowrap px-4 py-2 text-end" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="ridesTableBody"></tbody>
+      </table>
     </div>
 
-    <div
-      class="modal fade"
-      id="deleteModal"
-      tabindex="-1"
-      aria-hidden="true"
-      data-bs-backdrop="static"
-    >
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 p-4 border-0 shadow">
-          <div class="modal-body text-center py-4">
-            <div class="mb-3">
-              <i
-                class="bi bi-exclamation-circle text-warning"
-                style="font-size: 2.8rem"
-              ></i>
-            </div>
-            <h3 class="fw-bold mb-2">Delete Corporate Ride?</h3>
-            <p class="text-muted medium mb-0">
-              This ride will be permanently removed.<br />Are you sure?
-            </p>
-          </div>
-          <div class="modal-footer justify-content-center border-0 pb-3">
-            <button
-              type="button"
-              class="btn btn-outline-secondary rounded-2 px-4"
-              data-bs-dismiss="modal"
-            >
-              Cancel
-            </button>
-            <button
-  type="button"
-  class="btn fw-semibold rounded-2 px-4"
-  id="confirmDeleteRideBtn"
-  style="background: #f37a20; color: white"
->
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
+    <div class="px-4 py-3" style="border-top:1px solid #EBEBEB;">
+      <div id="corporatePaginationContainer"></div>
     </div>
+
+  </div>
+
+</main>
+
+<style>
+  #ridesTableBody tr {
+    border-bottom: 1px solid #F4F4F5;
+    transition: background 0.12s;
+  }
+  #ridesTableBody tr:hover { background: #FAFAFA; }
+  #ridesTableBody td {
+    padding: 14px 24px;
+    font-size: 0.845rem;
+    color: #18181B;
+    vertical-align: middle;
+    border: none;
+  }
+</style>
+
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 p-4" style="border-radius:14px; max-width:440px; margin:auto; box-shadow:0 20px 50px rgba(0,0,0,0.15);">
+
+      <div class="d-flex align-items-center justify-content-between mb-3 pb-2" style="border-bottom:1px solid #EBEBEB;">
+        <div>
+          <h5 class="fw-bold mb-0" style="color:#18181B; font-size:0.9375rem;">Update Ride Status</h5>
+          <p class="mb-0 mt-1" style="font-size:0.78rem; color:#A1A1AA;">Select a new status for this ride</p>
+        </div>
+        <button type="button" class="btn d-flex align-items-center justify-content-center p-0" data-bs-dismiss="modal"
+          style="width:30px; height:30px; border-radius:7px; border:1.5px solid #EBEBEB; background:#fff; color:#71717A;"
+          onmouseover="this.style.background='#FFF3E8'; this.style.color='#f37a20'; this.style.borderColor='#f37a20';"
+          onmouseout="this.style.background='#fff'; this.style.color='#71717A'; this.style.borderColor='#EBEBEB';">
+          <i class="bi bi-x-lg" style="font-size:12px;"></i>
+        </button>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Status</label>
+        <select id="rideStatusSelect" class="form-select"
+          style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; color:#18181B; background:#FAFAFA;"
+          onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+          onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';">
+          <option value="searching">Searching</option>
+          <option value="assigned">Assigned</option>
+          <option value="upcoming">Upcoming</option>
+        </select>
+      </div>
+
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn fw-semibold px-4"
+          style="height:38px; background:#fff; color:#18181B; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem;"
+          onmouseover="this.style.borderColor='#18181B';"
+          onmouseout="this.style.borderColor='#EBEBEB';"
+          data-bs-dismiss="modal">Cancel
+        </button>
+        <button type="button" class="btn fw-semibold px-5" id="saveRideStatusBtn"
+          style="height:38px; background:#f37a20; color:#fff; border:none; border-radius:8px; font-size:0.845rem;"
+          onmouseover="this.style.background='#d96010';"
+          onmouseout="this.style.background='#f37a20';">Save
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 p-4 text-center" style="border-radius:14px; max-width:420px; margin:auto; box-shadow:0 20px 50px rgba(0,0,0,0.15);">
+
+      <div class="d-flex align-items-center justify-content-center mx-auto mb-3"
+        style="width:56px; height:56px; background:#FFF7ED; border-radius:50%;">
+        <i class="bi bi-exclamation-triangle" style="font-size:1.5rem; color:#F97316;"></i>
+      </div>
+      <h5 class="fw-bold mb-1" style="color:#18181B;">Delete Corporate Ride?</h5>
+      <p class="mb-4" style="font-size:0.845rem; color:#71717A;">This ride will be permanently removed and cannot be recovered.</p>
+
+      <div class="d-flex justify-content-center gap-2">
+        <button type="button" class="btn fw-semibold px-4"
+          style="height:38px; background:#fff; color:#18181B; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem;"
+          onmouseover="this.style.borderColor='#18181B';"
+          onmouseout="this.style.borderColor='#EBEBEB';"
+          data-bs-dismiss="modal">Cancel
+        </button>
+        <button type="button" class="btn fw-semibold px-4" id="confirmDeleteRideBtn"
+          style="height:38px; background:#E11D48; color:#fff; border:none; border-radius:8px; font-size:0.845rem;"
+          onmouseover="this.style.background='#BE123C';"
+          onmouseout="this.style.background='#E11D48';">
+          <i class="bi bi-trash3 me-1" style="font-size:13px;"></i>Delete
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/pagination.js"></script>

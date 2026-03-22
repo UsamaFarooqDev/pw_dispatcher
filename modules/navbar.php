@@ -18,51 +18,48 @@ $user_email = isset($_SESSION['user_email']) ? $_SESSION['user_email'] : 'john@p
 $profile_image = isset($_SESSION['profile_image']) ? $_SESSION['profile_image'] : '';
 ?>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-white d-flex align-items-center justify-content-between px-3 py-2.5 sticky-top" style="z-index: 1030; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-  <div class="d-flex align-items-center w-100">
+<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top px-4" style="height:52px; box-shadow: 0 1px 0 #EBEBEB, 0 4px 20px rgba(0,0,0,0.05); z-index:1030;">
+  <div class="d-flex align-items-center w-100 gap-2">
+
     <button
-      class="navbar-toggler me-2 d-md-none btn p-1"
+      class="btn p-0 d-flex align-items-center justify-content-center d-md-none"
       type="button"
       id="sidebarToggle"
-      style="border: none; outline: none; background: transparent;"
+      style="width:36px; height:36px; border:none; background:transparent; color:#71717A; border-radius:8px;"
     >
-      <span class="navbar-toggler-icon" style="width: 18px; height: 18px;"></span>
+      <span class="navbar-toggler-icon" style="width:18px; height:18px;"></span>
     </button>
 
-    <h5 class="navbar-title m-0 fw-bold ms-lg-230" id="pageTitle">
-      <?php echo htmlspecialchars($page_title); ?>
-    </h5>
+    <div class="d-flex align-items-center gap-2">
+      <h5 class="m-0 fw-bold navbar-title ms-lg-230" id="pageTitle" style="font-size:1.3rem; color:#18181B; letter-spacing:-0.01em; white-space:nowrap;">
+        <?php echo htmlspecialchars($page_title); ?>
+      </h5>
+    </div>
+
 
     <div class="dropdown ms-auto">
-      <div 
-        class="d-flex align-items-center text-decoration-none" 
-        data-bs-toggle="dropdown" 
+      <div
+        class="d-flex align-items-center gap-2 text-decoration-none"
+        data-bs-toggle="dropdown"
         aria-expanded="false"
-        style="cursor: pointer; min-width: 0;"
+        style="cursor:pointer; padding:5px 10px 5px 5px; border-radius:100px; border:1.5px solid transparent; transition:all 0.15s;"
+        onmouseover="this.style.background='#FAFAFA'; this.style.borderColor='#EBEBEB';"
+        onmouseout="this.style.background='transparent'; this.style.borderColor='transparent';"
       >
-        <div id="navbarAvatarContainer" class="position-relative" style="width: 32px; height: 32px; flex-shrink: 0;">
+        <div class="position-relative" style="width:34px; height:34px; flex-shrink:0;">
           <img
             id="navbarAvatarImg"
             src=""
             alt="Profile"
             class="rounded-circle position-absolute top-0 start-0"
-            style="width: 32px; height: 32px; object-fit: cover; display: none; z-index: 2;"
+            style="width:34px; height:34px; object-fit:cover; display:none; z-index:2;"
           />
           <div
             id="navbarAvatarInitials"
             class="d-flex align-items-center justify-content-center rounded-circle position-absolute top-0 start-0"
-            style="
-              width: 32px;
-              height: 32px;
-              background-color: #f37a20;
-              color: white;
-              font-size: 12px;
-              font-weight: bold;
-              z-index: 1;
-            "
+            style="width:34px; height:34px; background:linear-gradient(135deg,#f37a20,#d96010); color:#fff; font-size:12px; font-weight:700; z-index:1; letter-spacing:0.03em;"
           >
-            <?php 
-              // Fallback initials from session or default
+            <?php
               $initials = 'JD';
               if (!empty($user_name)) {
                 $parts = explode(' ', trim($user_name));
@@ -78,19 +75,44 @@ $profile_image = isset($_SESSION['profile_image']) ? $_SESSION['profile_image'] 
             ?>
           </div>
         </div>
-        <div class="d-none d-md-flex flex-column ms-2 me-2 overflow-hidden">
-          <span id="navbarUserName" class="fw-bold text-truncate" style="font-size: 0.875rem;">
+
+        <div class="d-none d-md-flex flex-column overflow-hidden" style="line-height:1.25;">
+          <span id="navbarUserName" class="fw-semibold text-truncate" style="font-size:0.8125rem; color:#18181B; max-width:120px;">
             <?php echo htmlspecialchars($user_name); ?>
           </span>
+          <span style="font-size:0.6875rem; color:#A1A1AA; font-weight:500;">Dispatcher</span>
         </div>
-        <i class="bi bi-chevron-down text-muted d-none d-md-inline"></i>
+
+        <i class="bi bi-chevron-down d-none d-md-inline" style="font-size:11px; color:#A1A1AA;"></i>
       </div>
-      <ul class="dropdown-menu dropdown-menu-end">
-        <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person me-2"></i>Profile</a></li>
-        <li><hr class="dropdown-divider"></li>
-         <li><a id="logoutBtn" class="dropdown-item" href="#"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+
+      <ul class="dropdown-menu dropdown-menu-end mt-1 p-1" style="min-width:210px; border:1px solid #EBEBEB; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.10);">
+        <li>
+          <div class="px-3 py-2 mb-1" style="border-bottom:1px solid #EBEBEB;">
+            <div class="fw-bold" style="font-size:0.875rem; color:#18181B;"><?php echo htmlspecialchars($user_name); ?></div>
+            <div style="font-size:0.72rem; color:#A1A1AA;"><?php echo htmlspecialchars($user_email ?? ''); ?></div>
+          </div>
+        </li>
+        <li>
+          <a class="dropdown-item d-flex align-items-center gap-2 rounded-2 py-2" href="profile.php"
+            style="font-size:0.8375rem; font-weight:500; color:#52525B;"
+            onmouseover="this.style.background='#FFF3E8'; this.style.color='#f37a20';"
+            onmouseout="this.style.background='transparent'; this.style.color='#52525B';">
+            <i class="bi bi-person-circle" style="font-size:15px;"></i>My Profile
+          </a>
+        </li>
+        <li><hr class="dropdown-divider my-1" style="border-color:#EBEBEB;"></li>
+        <li>
+          <a id="logoutBtn" class="dropdown-item d-flex align-items-center gap-2 rounded-2 py-2" href="#"
+            style="font-size:0.8375rem; font-weight:500; color:#52525B;"
+            onmouseover="this.style.background='#FFF1F2'; this.style.color='#E11D48';"
+            onmouseout="this.style.background='transparent'; this.style.color='#52525B';">
+            <i class="bi bi-box-arrow-right" style="font-size:15px;"></i>Sign Out
+          </a>
+        </li>
       </ul>
     </div>
+
   </div>
 </nav>
 

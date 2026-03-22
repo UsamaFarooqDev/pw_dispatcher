@@ -22,606 +22,399 @@ require('modules/head.php');
 
     <?php @require('modules/sidebar.php'); ?>
 
-    <main class="main-content p-4" style="background: #f5f7fa">
-      <div
-        class="d-flex flex-column flex-md-row justify-content-md-between align-items-center my-1 gap-3"
-      >
-        <div
-          class="d-flex gap-3 w-100 w-md-auto justify-content-center justify-content-md-start"
-        >
-          <a
-            href="map.php"
-            class="btn glowing-btn fs-6 p-2 px-4 fw-semibold flex-grow-1 flex-md-grow-0"
-            style="
-              background: #f37a20;
-              color: #fff;
-              border-radius: 5px;
-              box-shadow: 0 0 15px rgba(243, 122, 32, 0.5);
-              min-width: 120px;
-            "
-          >
-            Open Map
-          </a>
+<main class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
+  <div class="rounded-3 border overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+    <div class="p-4">
+
+      <div class="mb-1 pb-2" style="border-bottom:1px solid #EBEBEB;">
+        <span class="fw-bold" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Passenger Details</span>
+      </div>
+
+      <div class="row g-3 mt-1 mb-3">
+        <div class="col-md-6 position-relative">
+          <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Passenger Name</label>
+          <input type="text" class="form-control" placeholder="Type to search passenger"
+            id="customerNameInput" autocomplete="off"
+            style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; color:#18181B; background:#FAFAFA;"
+            onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+            onblur="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA'; this.style.boxShadow='none';" />
+          <input type="hidden" id="customerId" />
+          <div id="customerSuggestions" class="list-group position-absolute w-100"
+            style="z-index:10; max-height:200px; overflow-y:auto; display:none; border:1.5px solid #EBEBEB; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.10); top:100%; margin-top:4px;"></div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Phone Number</label>
+          <div class="input-group" style="height:38px;">
+            <span class="input-group-text" style="background:#FAFAFA; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; font-size:0.845rem; color:#71717A; height:38px;">+353</span>
+            <input type="tel" class="form-control" id="customerPhone"
+              style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px; background:#FAFAFA;"
+              onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+              onblur="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA'; this.style.boxShadow='none';" />
+          </div>
         </div>
       </div>
 
-      <div
-        class="container-fluid p-0 my-4"
-        style="display: flex; background-color: #f8f9fa"
-      >
-        <div
-          class="col-md-12 bg-white p-4 d-flex flex-column"
-          style="
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            overflow-y: auto;
-          "
-        >
-          <div class="row mb-3">
-            <div class="col-md-6 position-relative">
-              <label class="form-label fw-semibold small">Passenger Name</label>
-              <input
-                type="text"
-                class="form-control text-muted"
-                placeholder="Type to search passenger"
-                id="customerNameInput"
-                autocomplete="off"
-              />
-              <input type="hidden" id="customerId" />
-              <div
-                id="customerSuggestions"
-                class="list-group position-absolute w-100"
-                style="z-index: 10; max-height: 200px; overflow-y: auto; display: none;"
-              ></div>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small">Phone Number</label>
-              <div class="input-group">
-                <span class="input-group-text bg-white text-muted border-end-0">+353</span>
-                <input
-                  type="tel"
-                  class="form-control text-muted border-start-0"
-                  id="customerPhone"
-                  placeholder=""
-                />
-              </div>
-            </div>
-          </div>
-
-          <div class="row mb-3">
-            <div class="col-md-3">
-              <label class="form-label fw-semibold small">Service Type</label>
-                <select class="form-select text-muted" id="serviceType">
-             <option value="Economy">Economy</option>
-                     <option value="Economy XL">Economy XL</option>
-                      <option value="Business">Business</option>
-                   <option value="Business Plus">Business Plus</option>
-                         <option value="Limousine">Limousine</option>
-                               <option value="Wheelchair accessible">Wheelchair accessible</option>
-                          </select>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label fw-semibold small">Seats</label>
-              <select class="form-select text-muted" id="seatCount">
-                <option value="">Select seats</option>
-                <option>1</option>
-                <option>2</option>
-                <option>3</option>
-                <option>4</option>
-                <option>5</option>
-                <option>6</option>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label fw-semibold small">Date</label>
-              <input type="date" class="form-control text-muted" id="rideDate" />
-            </div>
-            <div class="col-md-3">
-              <label class="form-label fw-semibold small">Time</label>
-              <input type="time" class="form-control text-muted" id="rideTime" />
-            </div>
-          </div>
-
-          <div class="container-fluid p-0" style="display: flex">
-            <div
-              class="col-md-6 bg-white p-2 d-flex flex-column"
-              style="
-                border-radius: 12px;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.09);
-                overflow-y: auto;
-              "
-            >
-              <div class="mb-3">
-                <label class="form-label fw-semibold small">Pickup</label>
-                <div class="input-group">
-                  <span class="input-group-text bg-white">
-                    <i class="bi bi-geo-alt" style="color: #f37a20"></i>
-                  </span>
-                  <input
-                    type="text"
-                    class="form-control text-muted"
-                    id="pickupInput"
-                    placeholder="Enter pickup location"
-                  />
-                </div>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label fw-semibold small">Drop Off</label>
-                <div class="input-group">
-                  <span class="input-group-text bg-white">
-                    <i class="bi bi-geo-alt" style="color: #f37a20"></i>
-                  </span>
-                  <input
-                    type="text"
-                    class="form-control text-muted"
-                    id="dropoffInput"
-                    placeholder="Enter drop-off location"
-                  />
-                </div>
-              </div>
-              <div class="row g-2 mb-3">
-                <div class="col-md-4">
-                  <label class="form-label fw-semibold small">Estimated Fare</label>
-                  <input type="text" class="form-control" id="estimatedFare" readonly />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label fw-semibold small">Distance (km)</label>
-                  <input type="text" class="form-control" id="distanceKm" readonly />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label fw-semibold small">Time (min)</label>
-                  <input type="text" class="form-control" id="travelTime" readonly />
-                </div>
-              </div>
-              <div class="mb-3">
-                <h6 class="fw-bold mb-3">Extras</h6>
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <div class="form-check mb-2">
-                      <input
-                        class="form-check-output"
-                        type="checkbox"
-                        id="creditCard"
-                      />
-                      <label
-                        class="form-check-label small text-muted"
-                        for="creditCard"
-                        >Accept Credit Card</label
-                      >
-                    </div>
-                    <div class="form-check mb-2">
-                      <input
-                        class="form-check-output"
-                        type="checkbox"
-                        id="personWithDisabilities"
-                      />
-                      <label
-                        class="form-check-label small text-muted"
-                        for="personWithDisabilities"
-                        >Person With Disabilities</label
-                      >
-                    </div>
-                    <div class="form-check mb-2">
-                      <input
-                        class="form-check-output"
-                        type="checkbox"
-                        id="childSeat"
-                      />
-                      <label
-                        class="form-check-label small text-muted"
-                        for="childSeat"
-                        >Child Seat</label
-                      >
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="form-check mb-2">
-                      <input
-                        class="form-check-output"
-                        type="checkbox"
-                        id="extraLuggage"
-                      />
-                      <label
-                        class="form-check-label small text-muted"
-                        for="extraLuggage"
-                        >Extra Luggage Space</label
-                      >
-                    </div>
-                    <div class="form-check mb-2">
-                      <input
-                        class="form-check-output"
-                        type="checkbox"
-                        id="petsAllowed"
-                      />
-                      <label
-                        class="form-check-label small text-muted"
-                        for="petsAllowed"
-                        >Pets Allowed</label
-                      >
-                    </div>
-                    <div class="form-check mb-2">
-                      <input
-                        class="form-check-output"
-                        type="checkbox"
-                        id="delivery"
-                      />
-                      <label
-                        class="form-check-label small text-muted"
-                        for="delivery"
-                        >Delivery</label
-                      >
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="mb-3">
-                <h6 class="fw-bold mb-2">Special Cost</h6>
-                <p class="text-muted small mb-2">
-                  To set special cost, fill these fields
-                </p>
-
-                <div class="row g-2 mb-3">
-                  <div class="col-md-6">
-                    <label class="form-label fw-semibold small">Cost</label>
-                    <div class="input-group">
-                      <span class="input-group-text text-muted bg-white"
-                        >EUR</span
-                      >
-                      <input
-                        type="number"
-                        class="form-control text-muted"
-                        placeholder=""
-                      />
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label fw-semibold small"
-                      >Km Included</label
-                    >
-                    <div class="input-group">
-                      <span class="input-group-text text-muted bg-white"
-                        >Km</span
-                      >
-                      <input
-                        type="number"
-                        class="form-control text-muted"
-                        placeholder=""
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label fw-semibold small"
-                    >Minutes Included</label
-                  >
-                  <div class="input-group">
-                    <span class="input-group-text text-muted bg-white"
-                      >min</span
-                    >
-                    <input
-                      type="number"
-                      class="form-control text-muted"
-                      placeholder=""
-                    />
-                  </div>
-                </div>
-
-      <div class="mt-3 mb-1 d-flex gap-3 flex-wrap">
-  <button
-    class="btn px-3 py-1"
-    style="
-      color: #f37a20;
-      border: 1px solid #f37a20;
-      background-color: #fff;
-      transition: all 0.3s ease;
-    "
-    onmouseenter="this.style.backgroundColor='#f37a20'; this.style.color='#fff';"
-    onmouseleave="this.style.backgroundColor='#fff'; this.style.color='#f37a20';"
-    data-bs-toggle="modal"
-    data-bs-target="#assignDriverModal"
-  >
-    Assign Driver Manually
-  </button>
-
-  <button
-    type="button"
-    class="btn px-3 py-1"
-    style="
-      color: #f37a20;
-      border: 1px solid #f37a20;
-      background-color: #fff;
-      transition: all 0.3s ease;
-    "
-    onmouseleave="this.style.backgroundColor='#f37a20'; this.style.color='#fff';"
-    onmouseenter="this.style.backgroundColor='#fff'; this.style.color='#f37a20';"
-    id="assignNearestDriverOpenBtn"
-  >
-    Assign Nearest Driver
-  </button>
-    </div>
-      </div>
-        </div>
-            <div
-              class="col-md-6 p-0 position-relative"
-              style="
-                border-radius: 12px;
-                overflow: hidden;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-                margin-left: 1rem;
-                background-color: #f8f9fa;
-              "
-            >
-              <div id="map" style="width: 100%; height: 100%; border: 0;"></div>
-            </div>
-          </div>
-
-          <div
-            class="mt-auto pt-3 d-flex justify-content-between align-items-center"
-          >
-            <button
-              type="button"
-              class="btn btn-link fw-semibold p-0"
-              style="font-size: 0.875rem; color: #f37a20"
-              data-bs-toggle="modal"
-              data-bs-target="#clearFieldsModal"
-            >
-              Clear Fields
-            </button>
-            <button
-              class="btn btn-md text-white px-4"
-              style="color: white; background-color: #f37a20"
-              id="confirmOrderBtn"
-            >
-              Confirm Order
-            </button>
-          </div>
-        </div>
-
-        <div
-          class="modal fade"
-          id="clearFieldsModal"
-          tabindex="-1"
-          aria-hidden="true"
-        >
-          <div class="modal-dialog modal-dialog-centered">
-            <div
-              class="modal-content p-5 text-center"
-              style="border-radius: 12px; max-width: 450px; margin: auto"
-            >
-              <div
-                class="d-flex justify-content-center align-items-center mx-auto mb-3"
-                style="
-                  width: 60px;
-                  height: 60px;
-                  border: 4px solid #f37a20;
-                  border-radius: 50%;
-                "
-              >
-                <i
-                  class="bi bi-exclamation-lg"
-                  style="font-size: 3rem; color: #f37a20"
-                ></i>
-              </div>
-
-              <h5 class="fw-bold mb-4">Are you sure to clear all fields?</h5>
-              <div class="d-flex justify-content-center gap-3">
-                <button
-                  type="button"
-                  class="btn px-4"
-                  style="
-                    background-color: #f37a20;
-                    color: white;
-                    border-radius: 6px;
-                  "
-                  onclick="clearAllFields()"
-                >
-                  Yes, I am sure
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-outline-secondary px-4"
-                  style="border-radius: 6px"
-                  data-bs-dismiss="modal"
-                >
-                  Back to Dashboard
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Searching Driver Modal -->
-<div
-  class="modal fade"
-  id="searchDriverModal"
-  tabindex="-1"
-  aria-hidden="true"
-  data-bs-backdrop="static"
-  data-bs-keyboard="false"
->
-  <div class="modal-dialog modal-dialog-centered">
-    <div
-      class="modal-content p-5"
-      style="border-radius: 12px; max-width: 500px; margin: auto"
-    >
-      <!-- Loading state -->
-      <div id="searchDriverLoading" class="text-center">
-        <div class="d-flex justify-content-center mb-4">
-          <div
-            class="spinner-border"
-            role="status"
-            style="width: 3rem; height: 3rem; border-width: 0.25em; color: #f37a20;"
-          >
-            <span class="visually-hidden">Loading...</span>
-          </div>
-        </div>
-        <h4 class="fw-bold mb-3">Searching for drivers</h4>
-        <p class="text-muted mb-0">Searching for drivers within 5km…</p>
+      <div class="mb-1 pb-2 mt-4" style="border-bottom:1px solid #EBEBEB;">
+        <span class="fw-bold" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Ride Details</span>
       </div>
 
-      <!-- Results: driver list -->
-      <div id="searchDriverResults" class="d-none">
-  <h4 class="fw-bold mb-3 text-center">Select a driver</h4>
-  <p class="text-muted small text-center mb-4">Available drivers within 5km of pickup</p>
+      <div class="row g-3 mt-1 mb-4">
+        <div class="col-md-3">
+          <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Service Type</label>
+          <select class="form-select" id="serviceType"
+            style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; color:#18181B; background:#FAFAFA;"
+            onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+            onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';">
+            <option value="Economy">Economy</option>
+            <option value="Economy XL">Economy XL</option>
+            <option value="Business">Business</option>
+            <option value="Business Plus">Business Plus</option>
+            <option value="Limousine">Limousine</option>
+            <option value="Wheelchair accessible">Wheelchair Accessible</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Seats</label>
+          <select class="form-select" id="seatCount"
+            style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; color:#18181B; background:#FAFAFA;"
+            onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+            onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';">
+            <option value="">Select seats</option>
+            <option>1</option><option>2</option><option>3</option>
+            <option>4</option><option>5</option><option>6</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Date</label>
+          <input type="date" class="form-control" id="rideDate"
+            style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#FAFAFA;"
+            onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+            onblur="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA'; this.style.boxShadow='none';" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Time</label>
+          <input type="time" class="form-control" id="rideTime"
+            style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#FAFAFA;"
+            onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+            onblur="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA'; this.style.boxShadow='none';" />
+        </div>
+      </div>
 
-  <div id="searchDriverList" class="mb-4" style="max-height: 280px; overflow-y: auto;">
-    <!-- Driver cards will be injected here dynamically -->
-  </div>
+      <div class="row g-3">
 
-  <div class="d-flex justify-content-center gap-3">
-    <button
-      type="button"
-      class="btn px-4"
-      style="background-color: #f37a20; color: white; border-radius: 6px;"
-      id="assignNearestDriverBtn"
-    >
-      Assign
-    </button>
-    <button
-      type="button"
-      class="btn btn-outline-secondary px-4"
-      style="border-radius: 6px"
-      data-bs-dismiss="modal"
-    >
-      Cancel
-    </button>
-  </div>
-</div>
+        <div class="col-md-6">
+          <div class="rounded-3 p-3 h-100" style="border:1.5px solid #EBEBEB; background:#FAFAFA;">
 
-      <!-- No drivers found -->
-      <div id="searchDriverEmpty" class="text-center d-none">
-        <h4 class="fw-bold mb-2">No available drivers within 5km</h4>
-        <p class="fw-semibold text-muted mb-4">Try again later or assign a driver manually.</p>
-        <button
-          type="button"
-          class="btn btn-outline-secondary px-4"
-          style="border-radius: 6px"
-          data-bs-dismiss="modal"
-        >
-          Close
+            <div class="mb-3">
+              <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Pickup</label>
+              <div class="input-group" style="height:38px;">
+                <span class="input-group-text" style="background:#fff; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; height:38px;">
+                  <i class="bi bi-geo-alt-fill" style="color:#f37a20; font-size:14px;"></i>
+                </span>
+                <input type="text" class="form-control" id="pickupInput" placeholder="Enter pickup location"
+                  style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px; background:#fff;"
+                  onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+                  onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';" />
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Drop Off</label>
+              <div class="input-group" style="height:38px;">
+                <span class="input-group-text" style="background:#fff; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; height:38px;">
+                  <i class="bi bi-geo-alt" style="color:#f37a20; font-size:14px;"></i>
+                </span>
+                <input type="text" class="form-control" id="dropoffInput" placeholder="Enter drop-off location"
+                  style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px; background:#fff;"
+                  onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+                  onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';" />
+              </div>
+            </div>
+
+            <div class="row g-2 mb-4">
+              <div class="col-4">
+                <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Est. Fare</label>
+                <input type="text" class="form-control" id="estimatedFare" readonly
+                  style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#fff; color:#18181B; font-weight:600;" />
+              </div>
+              <div class="col-4">
+                <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Distance (km)</label>
+                <input type="text" class="form-control" id="distanceKm" readonly
+                  style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#fff; color:#18181B;" />
+              </div>
+              <div class="col-4">
+                <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Time (min)</label>
+                <input type="text" class="form-control" id="travelTime" readonly
+                  style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#fff; color:#18181B;" />
+              </div>
+            </div>
+
+            <div class="mb-3" style="border-top:1px solid #EBEBEB;"></div>
+
+            <div class="mb-3">
+              <span class="fw-bold d-block mb-2" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Extras</span>
+              <div class="row g-1">
+                <div class="col-6 d-flex flex-column gap-2">
+                  <div class="d-flex align-items-center gap-2 rounded-2 px-2 py-1" style="background:#fff; border:1.5px solid #EBEBEB;">
+                    <input class="form-check-input m-0 flex-shrink-0" type="checkbox" id="creditCard" style="accent-color:#f37a20; width:15px; height:15px;" />
+                    <label class="form-check-label" for="creditCard" style="font-size:0.8rem; color:#52525B; cursor:pointer;">Accept Credit Card</label>
+                  </div>
+                  <div class="d-flex align-items-center gap-2 rounded-2 px-2 py-1" style="background:#fff; border:1.5px solid #EBEBEB;">
+                    <input class="form-check-input m-0 flex-shrink-0" type="checkbox" id="personWithDisabilities" style="accent-color:#f37a20; width:15px; height:15px;" />
+                    <label class="form-check-label" for="personWithDisabilities" style="font-size:0.8rem; color:#52525B; cursor:pointer;">Person With Disabilities</label>
+                  </div>
+                  <div class="d-flex align-items-center gap-2 rounded-2 px-2 py-1" style="background:#fff; border:1.5px solid #EBEBEB;">
+                    <input class="form-check-input m-0 flex-shrink-0" type="checkbox" id="childSeat" style="accent-color:#f37a20; width:15px; height:15px;" />
+                    <label class="form-check-label" for="childSeat" style="font-size:0.8rem; color:#52525B; cursor:pointer;">Child Seat</label>
+                  </div>
+                </div>
+                <div class="col-6 d-flex flex-column gap-2">
+                  <div class="d-flex align-items-center gap-2 rounded-2 px-2 py-1" style="background:#fff; border:1.5px solid #EBEBEB;">
+                    <input class="form-check-input m-0 flex-shrink-0" type="checkbox" id="extraLuggage" style="accent-color:#f37a20; width:15px; height:15px;" />
+                    <label class="form-check-label" for="extraLuggage" style="font-size:0.8rem; color:#52525B; cursor:pointer;">Extra Luggage Space</label>
+                  </div>
+                  <div class="d-flex align-items-center gap-2 rounded-2 px-2 py-1" style="background:#fff; border:1.5px solid #EBEBEB;">
+                    <input class="form-check-input m-0 flex-shrink-0" type="checkbox" id="petsAllowed" style="accent-color:#f37a20; width:15px; height:15px;" />
+                    <label class="form-check-label" for="petsAllowed" style="font-size:0.8rem; color:#52525B; cursor:pointer;">Pets Allowed</label>
+                  </div>
+                  <div class="d-flex align-items-center gap-2 rounded-2 px-2 py-1" style="background:#fff; border:1.5px solid #EBEBEB;">
+                    <input class="form-check-input m-0 flex-shrink-0" type="checkbox" id="delivery" style="accent-color:#f37a20; width:15px; height:15px;" />
+                    <label class="form-check-label" for="delivery" style="font-size:0.8rem; color:#52525B; cursor:pointer;">Delivery</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3" style="border-top:1px solid #EBEBEB;"></div>
+
+            <div class="mb-3">
+              <span class="fw-bold d-block mb-1" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Special Cost</span>
+              <p class="mb-3" style="font-size:0.78rem; color:#A1A1AA;">Leave blank to use default fare calculation</p>
+              <div class="row g-2 mb-2">
+                <div class="col-6">
+                  <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Cost</label>
+                  <div class="input-group" style="height:38px;">
+                    <span class="input-group-text" style="background:#FAFAFA; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; font-size:0.8rem; color:#71717A; height:38px;">EUR</span>
+                    <input type="number" class="form-control" style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px;"
+                      onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+                      onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';" />
+                  </div>
+                </div>
+                <div class="col-6">
+                  <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Km Included</label>
+                  <div class="input-group" style="height:38px;">
+                    <span class="input-group-text" style="background:#FAFAFA; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; font-size:0.8rem; color:#71717A; height:38px;">km</span>
+                    <input type="number" class="form-control" style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px;"
+                      onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+                      onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';" />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Minutes Included</label>
+                <div class="input-group" style="height:38px;">
+                  <span class="input-group-text" style="background:#FAFAFA; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; font-size:0.8rem; color:#71717A; height:38px;">min</span>
+                  <input type="number" class="form-control" style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px;"
+                    onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+                    onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';" />
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap mt-3">
+              <button class="btn d-flex align-items-center gap-2 fw-semibold px-3"
+                style="height:36px; font-size:0.8125rem; color:#f37a20; border:1.5px solid #f37a20; background:#fff; border-radius:8px;"
+                onmouseover="this.style.background='#FFF3E8';"
+                onmouseout="this.style.background='#fff';"
+                data-bs-toggle="modal" data-bs-target="#assignDriverModal">
+                <i class="bi bi-person-check" style="font-size:14px;"></i> Assign Driver Manually
+              </button>
+              <button type="button" class="btn d-flex align-items-center gap-2 fw-semibold px-3"
+                style="height:36px; font-size:0.8125rem; color:#f37a20; border:1.5px solid #f37a20; background:#fff; border-radius:8px;"
+                onmouseover="this.style.background='#FFF3E8';"
+                onmouseout="this.style.background='#fff';"
+                id="assignNearestDriverOpenBtn">
+                <i class="bi bi-geo" style="font-size:14px;"></i> Assign Nearest Driver
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="rounded-3 overflow-hidden h-100" style="border:1.5px solid #EBEBEB; min-height:480px;">
+            <div id="map" style="width:100%; height:100%; min-height:480px; border:0;"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-4 pt-3" style="border-top:1px solid #EBEBEB;">
+        <button type="button" class="btn d-flex align-items-center gap-1 fw-semibold p-0"
+          style="font-size:0.845rem; color:#A1A1AA; background:transparent; border:none;"
+          onmouseover="this.style.color='#E11D48';"
+          onmouseout="this.style.color='#A1A1AA';"
+          data-bs-toggle="modal" data-bs-target="#clearFieldsModal">
+          <i class="bi bi-trash3" style="font-size:14px;"></i> Clear Fields
+        </button>
+        <button class="btn d-flex align-items-center gap-2 fw-semibold px-5"
+          style="height:40px; background:#f37a20; color:#fff; border:none; border-radius:8px; font-size:0.875rem; box-shadow:0 4px 14px rgba(243,122,32,0.35);"
+          onmouseover="this.style.background='#d96010';"
+          onmouseout="this.style.background='#f37a20';"
+          id="confirmOrderBtn">
+          <i class="bi bi-check2-circle" style="font-size:15px;"></i> Confirm Order
         </button>
       </div>
+
     </div>
   </div>
-</div>
 
-        <!-- Assign Driver Manually Modal -->
-        <div
-          class="modal fade"
-          id="assignDriverModal"
-          tabindex="-1"
-          aria-hidden="true"
-        >
-          <div class="modal-dialog modal-dialog-centered">
-            <div
-              class="modal-content p-5"
-              style="border-radius: 12px; max-width: 500px; margin: auto"
-            >
-              <div class="text-center mb-2">
-                <h3 class="fw-bold">Assign Driver Manually</h3>
-                <p class="text-muted medium mb-4">
-                  To manually assign driver, fill these fields
-                </p>
-              </div>
-
-              <div class="modal-body p-0">
-                <div class="mb-3">
-                  <label class="form-label fw-semibold small">Driver</label>
-                  <select class="form-select" id="driverSelectModal">
-                    <option selected disabled>Select driver</option>
-                  </select>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label fw-semibold small">Driver Phone</label>
-                  <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0">+353</span>
-                    <input
-                      type="tel"
-                      class="form-control border-start-0"
-                      id="driverPhoneModal"
-                      readonly
-                    />
-                  </div>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label fw-semibold small">Vehicle Number</label>
-                  <select class="form-select" id="vehicleSelectModal">
-                    <option selected disabled>Select vehicle</option>
-                  </select>
-                </div>
-
-                <div class="d-flex justify-content-center gap-3 mt-4">
-                  <button
-                    type="button"
-                    class="btn px-4"
-                    style="
-                      background-color: #f37a20;
-                      color: white;
-                      border-radius: 6px;
-                    "
-                    id="confirmAssignDriverBtn"
-                  >
-                    Confirm
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary px-4"
-                    style="border-radius: 6px"
-                    data-bs-dismiss="modal"
-                  >
-                    Back to Dashboard
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+  <div class="modal fade" id="clearFieldsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 p-4 text-center" style="border-radius:14px; max-width:420px; margin:auto; box-shadow:0 20px 50px rgba(0,0,0,0.15);">
+        <div class="d-flex align-items-center justify-content-center mx-auto mb-3"
+          style="width:56px; height:56px; background:#FFF3E8; border-radius:50%;">
+          <i class="bi bi-exclamation-lg" style="font-size:1.75rem; color:#f37a20;"></i>
+        </div>
+        <h5 class="fw-bold mb-1" style="color:#18181B;">Clear all fields?</h5>
+        <p class="mb-4" style="font-size:0.845rem; color:#71717A;">This will reset the entire order form. This action cannot be undone.</p>
+        <div class="d-flex justify-content-center gap-2">
+          <button type="button" class="btn fw-semibold px-4"
+            style="height:38px; background:#f37a20; color:#fff; border:none; border-radius:8px; font-size:0.845rem;"
+            onmouseover="this.style.background='#d96010';"
+            onmouseout="this.style.background='#f37a20';"
+            onclick="clearAllFields()">Yes, clear it
+          </button>
+          <button type="button" class="btn fw-semibold px-4"
+            style="height:38px; background:#fff; color:#18181B; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem;"
+            onmouseover="this.style.borderColor='#18181B';"
+            onmouseout="this.style.borderColor='#EBEBEB';"
+            data-bs-dismiss="modal">Cancel
+          </button>
         </div>
       </div>
-    </main>
+    </div>
+  </div>
 
-    <!-- Order Created Success Modal -->
-<div
-  class="modal fade"
-  id="orderCreatedModal"
-  tabindex="-1"
-  aria-hidden="true"
-  data-bs-backdrop="static"
->
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content rounded-4 p-4 border-0 shadow">
-      <div class="modal-body text-center py-4">
+  <div class="modal fade" id="searchDriverModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 p-4" style="border-radius:14px; max-width:480px; margin:auto; box-shadow:0 20px 50px rgba(0,0,0,0.15);">
+
+        <div id="searchDriverLoading" class="text-center py-3">
+          <div class="d-flex justify-content-center mb-4">
+            <div class="spinner-border" role="status" style="width:2.5rem; height:2.5rem; border-width:3px; color:#f37a20;">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+          <h5 class="fw-bold mb-2" style="color:#18181B;">Searching for drivers</h5>
+          <p style="font-size:0.845rem; color:#71717A;" class="mb-0">Finding available drivers within 5km…</p>
+        </div>
+
+        <div id="searchDriverResults" class="d-none">
+          <h5 class="fw-bold mb-1 text-center" style="color:#18181B;">Select a Driver</h5>
+          <p class="text-center mb-3" style="font-size:0.8rem; color:#A1A1AA;">Available within 5km of pickup</p>
+          <div id="searchDriverList" class="mb-4" style="max-height:280px; overflow-y:auto;"></div>
+          <div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn fw-semibold px-5"
+              style="height:38px; background:#f37a20; color:#fff; border:none; border-radius:8px; font-size:0.845rem;"
+              id="assignNearestDriverBtn">Assign
+            </button>
+            <button type="button" class="btn fw-semibold px-4"
+              style="height:38px; background:#fff; color:#18181B; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem;"
+              data-bs-dismiss="modal">Cancel
+            </button>
+          </div>
+        </div>
+
+        <div id="searchDriverEmpty" class="text-center d-none py-3">
+          <div class="d-flex align-items-center justify-content-center mx-auto mb-3"
+            style="width:52px; height:52px; background:#FFF1F2; border-radius:50%;">
+            <i class="bi bi-person-x" style="font-size:1.5rem; color:#E11D48;"></i>
+          </div>
+          <h5 class="fw-bold mb-2" style="color:#18181B;">No drivers nearby</h5>
+          <p class="mb-4" style="font-size:0.845rem; color:#71717A;">No available drivers within 5km. Try again or assign manually.</p>
+          <button type="button" class="btn fw-semibold px-4"
+            style="height:38px; background:#fff; color:#18181B; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem;"
+            data-bs-dismiss="modal">Close
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="assignDriverModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 p-4" style="border-radius:14px; max-width:480px; margin:auto; box-shadow:0 20px 50px rgba(0,0,0,0.15);">
+        <div class="mb-4">
+          <h5 class="fw-bold mb-1" style="color:#18181B;">Assign Driver Manually</h5>
+          <p style="font-size:0.8rem; color:#A1A1AA; margin:0;">Select a driver and vehicle to assign this order</p>
+        </div>
         <div class="mb-3">
-          <i
-            class="bi bi-check-circle-fill text-success"
-            style="font-size: 2.8rem"
-          ></i>
+          <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Driver</label>
+          <select class="form-select" id="driverSelectModal"
+            style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem;"
+            onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+            onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';">
+            <option selected disabled>Select driver</option>
+          </select>
         </div>
-        <h3 class="fw-bold mb-2">Order Created</h3>
-        <p class="text-muted mb-0">
-          The order has been created successfully.
-        </p>
+        <div class="mb-3">
+          <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Driver Phone</label>
+          <div class="input-group" style="height:38px;">
+            <span class="input-group-text" style="background:#FAFAFA; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; font-size:0.8rem; color:#71717A; height:38px;">+353</span>
+            <input type="tel" class="form-control" id="driverPhoneModal" readonly
+              style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px; background:#FAFAFA;" />
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Vehicle Number</label>
+          <select class="form-select" id="vehicleSelectModal"
+            style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem;"
+            onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+            onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';">
+            <option selected disabled>Select vehicle</option>
+          </select>
+        </div>
+        <div class="d-flex justify-content-end gap-2">
+          <button type="button" class="btn fw-semibold px-4"
+            style="height:38px; background:#fff; color:#18181B; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem;"
+            onmouseover="this.style.borderColor='#18181B';"
+            onmouseout="this.style.borderColor='#EBEBEB';"
+            data-bs-dismiss="modal">Cancel
+          </button>
+          <button type="button" class="btn fw-semibold px-5"
+            style="height:38px; background:#f37a20; color:#fff; border:none; border-radius:8px; font-size:0.845rem;"
+            onmouseover="this.style.background='#d96010';"
+            onmouseout="this.style.background='#f37a20';"
+            id="confirmAssignDriverBtn">Confirm
+          </button>
+        </div>
       </div>
-      <div class="modal-footer justify-content-center border-0 pb-3">
-        <button
-          type="button"
-          class="btn fw-semibold rounded-2 px-4"
-          style="background: #f37a20; color: white"
-          id="goToOrdersBtn"
-          data-bs-dismiss="modal"
-        >
-          OK
+    </div>
+  </div>
+
+  <div class="modal fade" id="orderCreatedModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 p-4 text-center" style="border-radius:14px; max-width:400px; margin:auto; box-shadow:0 20px 50px rgba(0,0,0,0.15);">
+        <div class="d-flex align-items-center justify-content-center mx-auto mb-3"
+          style="width:60px; height:60px; background:#F0FDF4; border-radius:50%;">
+          <i class="bi bi-check2-circle" style="font-size:1.8rem; color:#22C55E;"></i>
+        </div>
+        <h5 class="fw-bold mb-1" style="color:#18181B;">Order Created</h5>
+        <p class="mb-4" style="font-size:0.845rem; color:#71717A;">The order has been successfully created and is now live.</p>
+        <button type="button" class="btn fw-semibold px-5 mx-auto"
+          style="height:38px; background:#f37a20; color:#fff; border:none; border-radius:8px; font-size:0.875rem;"
+          onmouseover="this.style.background='#d96010';"
+          onmouseout="this.style.background='#f37a20';"
+          id="goToOrdersBtn" data-bs-dismiss="modal">OK
         </button>
       </div>
     </div>
   </div>
-</div>
+</main>
 
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;">
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1090;">
   <div id="toastMsg" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
     <div class="d-flex">
       <div class="toast-body" id="toastText"></div>

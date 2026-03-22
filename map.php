@@ -12,123 +12,152 @@ require('modules/head.php');
 
     <?php @require('modules/sidebar.php'); ?>
 
-    <main class="main-content p-4" style="background: #f5f7fa">
-<div class="d-flex flex-column flex-md-row justify-content-md-between align-items-center my-1 gap-3">
-  <div class="d-flex gap-3 w-100 w-md-auto justify-content-center justify-content-md-start">
-    <a
-      href="order.php"
-      class="btn glowing-btn fs-6 p-2 px-4 fw-semibold flex-grow-1 flex-md-grow-0"
-      style="background: #f37a20; color: #fff; border-radius: 5px; box-shadow: 0 0 15px rgba(243, 122, 32, 0.5); min-width: 120px;"
-    >
-      New Order
-    </a>
-    <a
-      href="map.php"
-      class="btn fs-6 p-2 px-4 fw-semibold flex-grow-1 flex-md-grow-0"
-      style="background: #fff; color: #000; border: 1px solid #000; border-radius: 5px; min-width: 120px;"
-    >
-      Open Map
-    </a>
+    <main class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
+
+  <?php @require('modules/bodyHeader.php'); ?>
+
+  <div class="d-flex gap-3 mt-4" style="height:calc(100vh - 140px);">
+
+    <div class="position-relative flex-grow-1 rounded-3 overflow-hidden" style="border:1.5px solid #EBEBEB; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <div id="map" style="width:100%; height:100%; border:0;"></div>
+
+      <div class="position-absolute bottom-0 start-0 m-3 d-flex gap-2">
+        <button class="btn fw-semibold d-flex align-items-center gap-1"
+          style="height:34px; background:#fff; color:#52525B; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.8rem; box-shadow:0 2px 8px rgba(0,0,0,0.08);"
+          onmouseover="this.style.borderColor='#f37a20'; this.style.color='#f37a20';"
+          onmouseout="this.style.borderColor='#EBEBEB'; this.style.color='#52525B';">
+          <i class="bi bi-sign-merge-right" style="font-size:13px;"></i> Traffic
+        </button>
+        <button class="btn fw-semibold d-flex align-items-center gap-1"
+          style="height:34px; background:#fff; color:#52525B; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.8rem; box-shadow:0 2px 8px rgba(0,0,0,0.08);"
+          onmouseover="this.style.borderColor='#f37a20'; this.style.color='#f37a20';"
+          onmouseout="this.style.borderColor='#EBEBEB'; this.style.color='#52525B';">
+          <i class="bi bi-thermometer-half" style="font-size:13px;"></i> Heatmap
+        </button>
+      </div>
+    </div>
+
+    <div class="d-flex flex-column rounded-3 overflow-hidden" style="width:270px; flex-shrink:0; background:#fff; border:1.5px solid #EBEBEB; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow-y:auto;">
+      <div class="p-3 d-flex flex-column gap-4">
+
+        <div class="position-relative">
+          <i class="bi bi-search position-absolute top-50 translate-middle-y" style="left:11px; font-size:12px; color:#A1A1AA; pointer-events:none;"></i>
+          <input type="text" id="driverSearchInput" placeholder="Search drivers…" class="form-control"
+            style="height:36px; border:1.5px solid #EBEBEB; border-radius:8px; padding-left:32px; font-size:0.8125rem; background:#FAFAFA; color:#18181B;"
+            onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+            onblur="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA'; this.style.boxShadow='none';" />
+        </div>
+
+        <div>
+          <div class="mb-2 pb-1" style="border-bottom:1px solid #EBEBEB;">
+            <span class="fw-bold" style="font-size:0.775rem; letter-spacing:0.04em; text-transform:uppercase; color:#A1A1AA;">Drivers</span>
+          </div>
+
+          <div class="d-flex align-items-center justify-content-between rounded-2 px-3 py-2 mb-2" style="background:#FAFAFA; border:1.5px solid #EBEBEB;">
+            <div class="d-flex align-items-center gap-2">
+              <span style="width:8px; height:8px; border-radius:50%; background:#EF4444; flex-shrink:0;"></span>
+              <span style="font-size:0.845rem; color:#18181B; font-weight:500;">Busy</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span id="busyCount" style="font-size:0.78rem; color:#71717A; font-weight:600; min-width:16px; text-align:right;">0</span>
+              <div class="form-check form-switch m-0 p-0" style="min-height:auto;">
+                <input class="form-check-input m-0 orange-switch" type="checkbox" id="busyToggle" checked style="width:34px; height:18px; cursor:pointer;" />
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex align-items-center justify-content-between rounded-2 px-3 py-2" style="background:#FAFAFA; border:1.5px solid #EBEBEB;">
+            <div class="d-flex align-items-center gap-2">
+              <span style="width:8px; height:8px; border-radius:50%; background:#22C55E; flex-shrink:0;"></span>
+              <span style="font-size:0.845rem; color:#18181B; font-weight:500;">Available</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span id="availableCount" style="font-size:0.78rem; color:#71717A; font-weight:600; min-width:16px; text-align:right;">1</span>
+              <div class="form-check form-switch m-0 p-0" style="min-height:auto;">
+                <input class="form-check-input m-0 orange-switch" type="checkbox" id="availableToggle" checked style="width:34px; height:18px; cursor:pointer;" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="mb-2 pb-1" style="border-bottom:1px solid #EBEBEB;">
+            <span class="fw-bold" style="font-size:0.775rem; letter-spacing:0.04em; text-transform:uppercase; color:#A1A1AA;">Service Types</span>
+          </div>
+
+          <div class="d-flex flex-column gap-2">
+
+            <div class="d-flex align-items-center justify-content-between rounded-2 px-3 py-2" style="background:#FAFAFA; border:1.5px solid #EBEBEB;">
+              <div class="d-flex align-items-center gap-2">
+                <span style="width:10px; height:10px; background:#EF4444; border-radius:3px; flex-shrink:0;"></span>
+                <span style="font-size:0.845rem; color:#18181B; font-weight:500;">Economy</span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span style="font-size:0.78rem; color:#71717A; font-weight:600; min-width:16px; text-align:right;">0</span>
+                <div class="form-check form-switch m-0 p-0" style="min-height:auto;">
+                  <input class="form-check-input m-0 orange-switch" type="checkbox" id="economyToggle" checked style="width:34px; height:18px; cursor:pointer;" />
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between rounded-2 px-3 py-2" style="background:#FAFAFA; border:1.5px solid #EBEBEB;">
+              <div class="d-flex align-items-center gap-2">
+                <span style="width:10px; height:10px; background:#3B82F6; border-radius:3px; flex-shrink:0;"></span>
+                <span style="font-size:0.845rem; color:#18181B; font-weight:500;">Business</span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span style="font-size:0.78rem; color:#71717A; font-weight:600; min-width:16px; text-align:right;">0</span>
+                <div class="form-check form-switch m-0 p-0" style="min-height:auto;">
+                  <input class="form-check-input m-0 orange-switch" type="checkbox" id="businessToggle" checked style="width:34px; height:18px; cursor:pointer;" />
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between rounded-2 px-3 py-2" style="background:#FAFAFA; border:1.5px solid #EBEBEB;">
+              <div class="d-flex align-items-center gap-2">
+                <span style="width:10px; height:10px; background:#22C55E; border-radius:3px; flex-shrink:0;"></span>
+                <span style="font-size:0.845rem; color:#18181B; font-weight:500;">Limo</span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span style="font-size:0.78rem; color:#71717A; font-weight:600; min-width:16px; text-align:right;">0</span>
+                <div class="form-check form-switch m-0 p-0" style="min-height:auto;">
+                  <input class="form-check-input m-0 orange-switch" type="checkbox" id="limoToggle" checked style="width:34px; height:18px; cursor:pointer;" />
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between rounded-2 px-3 py-2" style="background:#FAFAFA; border:1.5px solid #EBEBEB;">
+              <div class="d-flex align-items-center gap-2">
+                <span style="width:10px; height:10px; background:#18181B; border-radius:3px; flex-shrink:0;"></span>
+                <span style="font-size:0.845rem; color:#18181B; font-weight:500;">Premium Black</span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span style="font-size:0.78rem; color:#71717A; font-weight:600; min-width:16px; text-align:right;">1</span>
+                <div class="form-check form-switch m-0 p-0" style="min-height:auto;">
+                  <input class="form-check-input m-0 orange-switch" type="checkbox" id="premiumToggle" checked style="width:34px; height:18px; cursor:pointer;" />
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div>
-</div>
 
-<div class="container-fluid p-2" style="height: 100vh; display: flex;">
+</main>
 
-  <div class="col-md-9 p-3 position-relative" style="background-color: #f8f9fa; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-    <div class="w-100 h-100 rounded-3 overflow-hidden shadow-sm">
-      <div id="map" style="width: 100%; height: 100%;"></div>
-    </div>
-
-    <div class="position-absolute bottom-0 start-0 m-3">
-      <div class="btn-group shadow-sm" role="group">
-        <button class="btn btn-light btn-sm rounded-start">Traffic</button>
-        <button class="btn btn-light btn-sm rounded-end">Heatmap</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filter Panel (Right) -->
-  <div class="col-md-3 bg-white p-3 border-start shadow-sm" style="max-height: 100vh; overflow-y: auto; border-radius: 0 12px 12px 0;">
-    
-    <!-- Search Bar -->
-    <div class="input-group mb-3">
-      <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-      <input type="text" id="driverSearchInput" class="form-control border-start-0 rounded-end" placeholder="Search for drivers" aria-label="Search">
-    </div>
-
-    <!-- Drivers Section -->
-    <div class="mb-4">
-      <h6 class="fw-bold mb-3">Drivers</h6>
-      
-      <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white border rounded" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-  <span class="text-muted">Busy</span>
-  <div class="form-check form-switch">
-    <input class="form-check-input orange-switch" type="checkbox" id="busyToggle" checked>
-    <label class="form-check-label text-muted" for="busyToggle">0</label>
-  </div>
-</div>
-      
-      <!-- Available -->
-      <div class="d-flex justify-content-between align-items-center p-2 bg-white border rounded" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-        <span class="text-muted">Available</span>
-        <div class="form-check form-switch">
-           <input class="form-check-input orange-switch" type="checkbox" id="busyToggle" checked>
-          <label class="form-check-label text-muted" for="availableToggle">1</label>
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <h6 class="fw-bold mb-3">Service Types</h6>
-      <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white border rounded" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-        <div class="d-flex align-items-center">
-              <span class="me-2" style="width: 16px; height: 16px; background-color: #dc3545; border-radius: 2px;"></span>
-          <span>Economy</span>
-        </div>
-        <div class="form-check form-switch">
-          <input class="form-check-input orange-switch" type="checkbox" id="busyToggle" checked>
-          <label class="form-check-label text-muted" for="economyToggle">0</label>
-        </div>
-      </div>
-      
-      <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white border rounded" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-        <div class="d-flex align-items-center">
-             <span class="me-2" style="width: 16px; height: 16px; background-color: #007bff; border-radius: 2px;"></span>
-          <span>Business</span>
-        </div>
-        <div class="form-check form-switch">
-           <input class="form-check-input orange-switch" type="checkbox" id="busyToggle" checked>
-          <label class="form-check-label text-muted" for="businessToggle">0</label>
-        </div>
-      </div>
-      
-      <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white border rounded" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-        <div class="d-flex align-items-center">
-           <span class="me-2" style="width: 16px; height: 16px; background-color: #28a745; border-radius: 2px;"></span>
-          <span>Limo</span>
-        </div>
-        <div class="form-check form-switch">
-        <input class="form-check-input orange-switch" type="checkbox" id="busyToggle" checked>
-          <label class="form-check-label text-muted" for="limoToggle">0</label>
-        </div>
-      </div>
-      
-      <div class="d-flex justify-content-between align-items-center p-2 bg-white border rounded" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-        <div class="d-flex align-items-center">
-           <span class="me-2" style="width: 16px; height: 16px; background-color: #212529; border-radius: 2px;"></span>
-          <span>Premium Black</span>
-        </div>
-        <div class="form-check form-switch">
-          <input class="form-check-input orange-switch" type="checkbox" id="busyToggle" checked>
-          <label class="form-check-label text-muted" for="premiumToggle">1</label>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-    </div>
-</div>
-    </main>
+<style>
+  .orange-switch:checked {
+    background-color: #f37a20 !important;
+    border-color: #f37a20 !important;
+  }
+  .orange-switch:focus {
+    box-shadow: 0 0 0 3px rgba(243,122,32,0.15) !important;
+  }
+</style>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9ea0A-mjnD5iHfT9X8Dn5YYH4_KZopLI&libraries=geometry" async defer></script>
     <script>

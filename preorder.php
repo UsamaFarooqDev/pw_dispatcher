@@ -12,128 +12,153 @@ require('modules/head.php');
 
     <?php @require('modules/sidebar.php'); ?>
 
-    <main class="main-content p-4" style="background: #f5f7fa">
+    <main class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
 
-    <?php @require('modules/bodyHeader.php'); ?>
+  <?php @require('modules/bodyHeader.php'); ?>
 
-      <div class="card shadow border-0 mt-4" style='border-radius: 25px;'>
-        <div class="card-body">
-          <div class="container-fluid p-3">
-  <!-- Tab Navigation -->
-  <div class="d-flex flex-wrap align-items-center gap-2 mb-3 border-bottom pb-2">
-    <button
-      class="btn btn-link text-decoration-none px-2 py-1 fs-6 fw-medium"
-      style="color: #3b3b3b;"
-      id="tab-on-trip"
-      disabled
-    >
-      On Trip (0)
-    </button>
-    <span class="text-muted">›</span>
-      <button
-      class="btn btn-link text-decoration-none px-2 py-1 fs-6 fw-medium"
-      style="color: #f37a20; border-bottom: 3px solid #f37a20;"
-      id="tab-unassigned"
-    >
-      Unassigned (0)
-    </button>
-    <span class="text-muted">›</span>
-     <button
-      class="btn btn-link text-decoration-none px-2 py-1 fs-6 fw-medium"
-      style="color: #3b3b3b;"
-      id="tab-assigned"
-    >
-      Assigned (0)
-    </button>
-    <span class="text-muted">›</span>
-     <button
-      class="btn btn-link text-decoration-none px-2 py-1 fs-6 fw-medium"
-      style="color: #3b3b3b;"
-      id="tab-scheduled"
-    >
-    Scheduled (0)
-    </button>
-    <span class="text-muted">›</span>
-     <button
-      class="btn btn-link text-decoration-none px-2 py-1 fs-6 fw-medium"
-      style="color: #3b3b3b;"
-      id="tab-cancelled"
-    >
-      Cancelled (0)
-    </button>
-    <span class="text-muted">›</span>
-      <button
-      class="btn btn-link text-decoration-none px-2 py-1 fs-6 fw-medium"
-      style="color: #3b3b3b;"
-      id="tab-finished"
-    >
-      Completed (0)
-    </button>
-    <span class="text-muted">›</span>
-    <button
-      class="btn btn-link text-decoration-none px-2 py-1 fs-6 fw-medium"
-      style="color: #3b3b3b;"
-      id="tab-unpaid"
-      disabled
-    >
-      Unpaid (0)
-    </button>
-    <span class="text-muted">›</span>
-      <button
-      class="btn btn-link text-decoration-none px-2 py-1 fs-6 fw-medium"
-      style="color: #3b3b3b;"
-      id="tab-all-mine"
-      disabled
-    >
-      All Mine (0)
-    </button>
-    <span class="text-muted">›</span>
+  <div class="rounded-3 border mt-4 overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);">
+    <div class="p-4">
+
+      <div class="d-flex flex-wrap align-items-center gap-1 mb-4" style="border-bottom:1px solid #EBEBEB; padding-bottom:0;">
+
+        <button class="btn btn-sm fw-semibold d-flex align-items-center gap-1 tab-btn active-tab" id="tab-unassigned"
+          style="font-size:0.8125rem; color:#f37a20; background:transparent; border:none; border-bottom:2px solid transparent; border-radius:0; padding:8px 14px 10px;">
+          <span class="d-flex align-items-center justify-content-center" style="width:18px; height:18px; background:#FFF3E8; border-radius:4px; font-size:10px;">
+            <i class="bi bi-hourglass-split"></i>
+          </span>
+          Unassigned <span class="ms-1 px-2 rounded-pill fw-bold" style="background:#FFF3E8; color:#f37a20; font-size:0.7rem;" id="count-unassigned">0</span>
+        </button>
+
+        <button class="btn btn-sm fw-semibold d-flex align-items-center gap-1 tab-btn" id="tab-assigned"
+          style="font-size:0.8125rem; color:#71717A; background:transparent; border:none; border-bottom:2px solid transparent; border-radius:0; padding:8px 14px 10px;"
+          onmouseover="if(!this.classList.contains('active-tab')){this.style.color='#18181B';}"
+          onmouseout="if(!this.classList.contains('active-tab')){this.style.color='#71717A';}">
+          <span class="d-flex align-items-center justify-content-center" style="width:18px; height:18px; background:#F4F4F5; border-radius:4px; font-size:10px;">
+            <i class="bi bi-person-check"></i>
+          </span>
+          Assigned <span class="ms-1 px-2 rounded-pill fw-bold" style="background:#F4F4F5; color:#71717A; font-size:0.7rem;" id="count-assigned">0</span>
+        </button>
+
+        <button class="btn btn-sm fw-semibold d-flex align-items-center gap-1 tab-btn" id="tab-on-trip"
+          style="font-size:0.8125rem; color:#71717A; background:transparent; border:none; border-bottom:2px solid transparent; border-radius:0; padding:8px 14px 10px;"
+          onmouseover="if(!this.classList.contains('active-tab')){this.style.color='#18181B';}"
+          onmouseout="if(!this.classList.contains('active-tab')){this.style.color='#71717A';}">
+          <span class="d-flex align-items-center justify-content-center" style="width:18px; height:18px; background:#F4F4F5; border-radius:4px; font-size:10px;">
+            <i class="bi bi-car-front"></i>
+          </span>
+          On Trip <span class="ms-1 px-2 rounded-pill fw-bold" style="background:#F4F4F5; color:#71717A; font-size:0.7rem;" id="count-on-trip">0</span>
+        </button>
+
+        <button class="btn btn-sm fw-semibold d-flex align-items-center gap-1 tab-btn" id="tab-scheduled"
+          style="font-size:0.8125rem; color:#71717A; background:transparent; border:none; border-bottom:2px solid transparent; border-radius:0; padding:8px 14px 10px;"
+          onmouseover="if(!this.classList.contains('active-tab')){this.style.color='#18181B';}"
+          onmouseout="if(!this.classList.contains('active-tab')){this.style.color='#71717A';}">
+          <span class="d-flex align-items-center justify-content-center" style="width:18px; height:18px; background:#F4F4F5; border-radius:4px; font-size:10px;">
+            <i class="bi bi-calendar-check"></i>
+          </span>
+          Scheduled <span class="ms-1 px-2 rounded-pill fw-bold" style="background:#F4F4F5; color:#71717A; font-size:0.7rem;" id="count-scheduled">0</span>
+        </button>
+
+        <button class="btn btn-sm fw-semibold d-flex align-items-center gap-1 tab-btn" id="tab-cancelled"
+          style="font-size:0.8125rem; color:#71717A; background:transparent; border:none; border-bottom:2px solid transparent; border-radius:0; padding:8px 14px 10px;"
+          onmouseover="if(!this.classList.contains('active-tab')){this.style.color='#18181B';}"
+          onmouseout="if(!this.classList.contains('active-tab')){this.style.color='#71717A';}">
+          <span class="d-flex align-items-center justify-content-center" style="width:18px; height:18px; background:#F4F4F5; border-radius:4px; font-size:10px;">
+            <i class="bi bi-x-circle"></i>
+          </span>
+          Cancelled <span class="ms-1 px-2 rounded-pill fw-bold" style="background:#F4F4F5; color:#71717A; font-size:0.7rem;" id="count-cancelled">0</span>
+        </button>
+
+        <button class="btn btn-sm fw-semibold d-flex align-items-center gap-1 tab-btn" id="tab-finished"
+          style="font-size:0.8125rem; color:#71717A; background:transparent; border:none; border-bottom:2px solid transparent; border-radius:0; padding:8px 14px 10px;"
+          onmouseover="if(!this.classList.contains('active-tab')){this.style.color='#18181B';}"
+          onmouseout="if(!this.classList.contains('active-tab')){this.style.color='#71717A';}">
+          <span class="d-flex align-items-center justify-content-center" style="width:18px; height:18px; background:#F4F4F5; border-radius:4px; font-size:10px;">
+            <i class="bi bi-check-circle"></i>
+          </span>
+          Completed <span class="ms-1 px-2 rounded-pill fw-bold" style="background:#F4F4F5; color:#71717A; font-size:0.7rem;" id="count-finished">0</span>
+        </button>
+
+        <button class="btn btn-sm fw-semibold d-flex align-items-center gap-1 tab-btn" id="tab-unpaid"
+          style="font-size:0.8125rem; color:#71717A; background:transparent; border:none; border-bottom:2px solid transparent; border-radius:0; padding:8px 14px 10px;"
+          onmouseover="if(!this.classList.contains('active-tab')){this.style.color='#18181B';}"
+          onmouseout="if(!this.classList.contains('active-tab')){this.style.color='#71717A';}">
+          <span class="d-flex align-items-center justify-content-center" style="width:18px; height:18px; background:#F4F4F5; border-radius:4px; font-size:10px;">
+            <i class="bi bi-credit-card"></i>
+          </span>
+          Unpaid <span class="ms-1 px-2 rounded-pill fw-bold" style="background:#F4F4F5; color:#71717A; font-size:0.7rem;" id="count-unpaid">0</span>
+        </button>
+
+        <button class="btn btn-sm fw-semibold d-flex align-items-center gap-1 tab-btn" id="tab-all-mine"
+          style="font-size:0.8125rem; color:#71717A; background:transparent; border:none; border-bottom:2px solid transparent; border-radius:0; padding:8px 14px 10px;"
+          onmouseover="if(!this.classList.contains('active-tab')){this.style.color='#18181B';}"
+          onmouseout="if(!this.classList.contains('active-tab')){this.style.color='#71717A';}">
+          <span class="d-flex align-items-center justify-content-center" style="width:18px; height:18px; background:#F4F4F5; border-radius:4px; font-size:10px;">
+            <i class="bi bi-collection"></i>
+          </span>
+          All Mine <span class="ms-1 px-2 rounded-pill fw-bold" style="background:#F4F4F5; color:#71717A; font-size:0.7rem;" id="count-all-mine">0</span>
+        </button>
+
+      </div>
+
+      <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
+        <table class="table mb-0" style="border-collapse:collapse;">
+          <thead>
+            <tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;" id="actionHeader">Action</th>
+            </tr>
+          </thead>
+          <tbody id="unassignedRidesBody"></tbody>
+          <tbody id="assignedRidesBody" style="display:none;"></tbody>
+          <tbody id="scheduledRidesBody" style="display:none;"></tbody>
+          <tbody id="cancelledRidesBody" style="display:none;"></tbody>
+          <tbody id="completedRidesBody" style="display:none;"></tbody>
+        </table>
+      </div>
+
+      <div id="preorderPaginationContainer" class="mt-3"></div>
+
+    </div>
   </div>
 
-  <div class="table-responsive bg-white rounded shadow-sm mb-3">
-    <table class="table table-borderless mb-0">
-      <thead>
-        <tr class="bg-light">
-          <th scope="col" class="fw-semibold ps-3">Name</th>
-          <th scope="col" class="fw-semibold">Order Time</th>
-          <th scope="col" class="fw-semibold">Pickup</th>
-          <th scope="col" class="fw-semibold">Destination</th>
-          <th scope="col" class="fw-semibold text-end">Status</th>
-          <th scope="col" class="fw-semibold text-end pe-4">Fare</th>
-          <th scope="col" class="fw-semibold text-end pe-4" id="actionHeader">Action</th>
-        </tr>
-      </thead>
-    </table>
-  </div>
+</main>
 
-  <div class="table-responsive bg-white rounded" style="min-height: 310px">
-    <table class="table mb-0">
-      <tbody id="unassignedRidesBody">
-        <!-- Dynamic unassigned rides -->
-      </tbody>
-      <tbody id="assignedRidesBody" style="display: none;">
-        <!-- Dynamic assigned rides -->
-      </tbody>
-      <tbody id="scheduledRidesBody" style="display: none;">
-        <!-- Dynamic scheduled rides -->
-      </tbody>
-      <tbody id="cancelledRidesBody" style="display: none;">
-        <!-- Dynamic cancelled rides -->
-      </tbody>
-      <tbody id="completedRidesBody" style="display: none;">
-        <!-- Dynamic completed rides -->
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Pagination -->
-  <div id="preorderPaginationContainer" class="mt-3"></div>
-  </div>
-</div>
-</div>
-</div>
-</div>
-    </main>
+<style>
+  .tab-btn.active-tab {
+    color: #f37a20 !important;
+    border-bottom: 2px solid #f37a20 !important;
+  }
+  .tab-btn.active-tab span:first-child {
+    background: #FFF3E8 !important;
+    color: #f37a20 !important;
+  }
+  .tab-btn.active-tab .rounded-pill {
+    background: #FFF3E8 !important;
+    color: #f37a20 !important;
+  }
+  #unassignedRidesBody tr, #assignedRidesBody tr,
+  #scheduledRidesBody tr, #cancelledRidesBody tr, #completedRidesBody tr {
+    border-bottom: 1px solid #F4F4F5;
+    transition: background 0.12s;
+  }
+  #unassignedRidesBody tr:hover, #assignedRidesBody tr:hover,
+  #scheduledRidesBody tr:hover, #cancelledRidesBody tr:hover,
+  #completedRidesBody tr:hover { background: #FAFAFA; }
+  #unassignedRidesBody td, #assignedRidesBody td,
+  #scheduledRidesBody td, #cancelledRidesBody td, #completedRidesBody td {
+    padding: 14px 24px;
+    font-size: 0.845rem;
+    color: #18181B;
+    vertical-align: middle;
+    border: none;
+  }
+</style>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/pagination.js"></script>
     <script>
