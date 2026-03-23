@@ -295,7 +295,6 @@ require('modules/head.php');
 
   <!-- Fetch corporate rides from Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="/auth/config.php"></script>
 <script>
 
   // ── MODAL FIX: manual init in case BS loads late ──────
@@ -483,39 +482,44 @@ require('modules/head.php');
 
     // ── LOAD CORPORATE RIDES TABLE ────────────────────
     const CORP_PAGE_SIZE = 15;
+    let currentPage = 1;
+    let currentSearch = '';
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
 
     async function loadCorporateRides(page = 1) {
+      currentPage = page;
       const tbody = document.getElementById('corporateRidesBody');
       tbody.innerHTML = `<tr><td colspan="8" class="text-center py-5" style="border:none; color:#A1A1AA; font-size:0.845rem;">
         <i class="bi bi-arrow-repeat d-block mb-2" style="font-size:1.4rem; color:#EBEBEB;"></i>Loading…</td></tr>`;
-
-      const from = (page - 1) * CORP_PAGE_SIZE;
-      const to   = from + CORP_PAGE_SIZE - 1;
       
       try {
-        const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/corporate_rides?select=*&order=created_at.desc`,
-          {
-            headers: {
-              'apikey':        SUPABASE_ANON_KEY,
-              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-              'Range':         `${from}-${to}`,
-              'Prefer':        'count=exact'
-            }
-          }
-        );
-
-        const total = (() => {
-          const cr = res.headers.get('content-range');
-          return cr ? parseInt(cr.split('/')[1]) : 0;
-        })();
-
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: String(CORP_PAGE_SIZE),
+          search: currentSearch
+        });
+        const res = await fetch(`api/get_corporate_rides.php?${params.toString()}`);
         const data = await res.json();
 
-        if (!Array.isArray(data) || data.length === 0) {
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Failed to load records');
+        }
+
+        const rows = Array.isArray(data.data) ? data.data : [];
+        const total = Number(data.pagination?.total ?? 0);
+
+        if (rows.length === 0) {
           tbody.innerHTML = `<tr><td colspan="8" class="text-center py-5" style="border:none;">
             <i class="bi bi-building d-block mb-2" style="font-size:1.5rem; color:#EBEBEB;"></i>
-            <span style="font-size:0.845rem; color:#A1A1AA;">No corporate rides found</span>
+            <span style="font-size:0.845rem; color:#A1A1AA;">No corporate rides found${currentSearch ? ' for this search' : ''}</span>
           </td></tr>`;
           document.getElementById('corporateRidesPagination').innerHTML = '';
           return;
@@ -530,24 +534,35 @@ require('modules/head.php');
           on_trip:   { bg:'#FFF7ED', color:'#EA580C', label:'On Trip'   },
         };
 
-        tbody.innerHTML = data.map(ride => {
-          const s    = statusConfig[ride.status] ?? { bg:'#F4F4F5', color:'#71717A', label: ride.status ?? '—' };
-          const date = ride.created_at
-            ? new Date(ride.created_at).toLocaleDateString('en-IE', { day:'2-digit', month:'short', year:'numeric' })
+        tbody.innerHTML = rows.map(ride => {
+          const normalizedStatusKey = String(ride.status ?? '')
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, '_');
+          const s = statusConfig[normalizedStatusKey] ?? { bg:'#F4F4F5', color:'#71717A', label: ride.status ?? '—' };
+          const dateSource = ride.pickupTime ?? ride.date ?? ride.created_at ?? null;
+          const date = dateSource
+            ? new Date(dateSource).toLocaleDateString('en-IE', { day:'2-digit', month:'short', year:'numeric' })
             : '—';
+          const company = ride.company_name ?? ride.company ?? '—';
+          const employee = ride.employee_name ?? ride.employee ?? ride.passenger_name ?? '—';
+          const pickup = ride.pickup ?? ride.pickup_location ?? '—';
+          const destination = ride.destination ?? ride.dropoff ?? ride.destination_location ?? '—';
+          const payment = ride.payment_method ?? ride.payment_source ?? ride.payment ?? '—';
+          const fare = ride.fare ?? ride.price ?? null;
 
           return `<tr>
-            <td style="color:#71717A; font-size:0.8rem; white-space:nowrap;">${date}</td>
-            <td class="fw-semibold">${ride.company_name ?? '—'}</td>
-            <td>${ride.employee_name ?? '—'}</td>
-            <td style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${ride.pickup ?? ''}">${ride.pickup ?? '—'}</td>
-            <td style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${ride.destination ?? ''}">${ride.destination ?? '—'}</td>
-            <td>${ride.payment_method ?? '—'}</td>
-            <td class="fw-semibold">${ride.fare ? '€' + Number(ride.fare).toFixed(2) : '—'}</td>
+            <td class="fw-semibold">${escapeHtml(company)}</td>
+            <td>${escapeHtml(employee)}</td>
+            <td style="color:#71717A; font-size:0.8rem; white-space:nowrap;">${escapeHtml(date)}</td>
+            <td style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(pickup)}">${escapeHtml(pickup)}</td>
+            <td style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(destination)}">${escapeHtml(destination)}</td>
+            <td>${escapeHtml(payment)}</td>
+            <td class="fw-semibold">${fare ? 'EUR ' + Number(fare).toFixed(2) : '—'}</td>
             <td>
               <span class="rounded-pill px-2 py-1 fw-semibold"
                 style="font-size:0.72rem; background:${s.bg}; color:${s.color}; white-space:nowrap;">
-                ${s.label}
+                ${escapeHtml(s.label)}
               </span>
             </td>
           </tr>`;
@@ -596,6 +611,13 @@ require('modules/head.php');
 
     // Expose for pagination buttons
     window.corpGoTo = (page) => loadCorporateRides(page);
+
+    let searchDebounce = null;
+    document.getElementById('globalSearchInput')?.addEventListener('input', (event) => {
+      currentSearch = event.target.value.trim();
+      if (searchDebounce) clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => loadCorporateRides(1), 250);
+    });
 
     // Initial load
     loadCorporateRides(1);

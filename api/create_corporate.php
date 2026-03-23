@@ -63,13 +63,46 @@ if (strlen($body['password']) < 8) {
 // ── PULL CREDENTIALS FROM YOUR CONFIG ────────────────
 // Adjust these variable names to match what config.php exposes
 $supabaseUrl    = defined('SUPABASE_URL')          ? SUPABASE_URL          : $_ENV['SUPABASE_URL'];
-$supabaseKey    = defined('SUPABASE_SERVICE_KEY')  ? SUPABASE_SERVICE_KEY  : $_ENV['SUPABASE_SERVICE_KEY'];
+$supabaseKey    = defined('SUPABASE_SERVICE_ROLE_KEY') ? SUPABASE_SERVICE_ROLE_KEY : ($_ENV['SUPABASE_SERVICE_ROLE_KEY'] ?? SUPABASE_ANON_KEY);
 // If your config uses a different constant name, replace above — e.g. SUPABASE_SECRET_KEY
 
 $email = strtolower(trim($body['email']));
 
+/**
+ * Generate a unique corporate CID like CORPCI1234.
+ */
+function generateCorporateCid($supabaseUrl, $supabaseKey, $maxAttempts = 20) {
+    for ($i = 0; $i < $maxAttempts; $i++) {
+        $candidate = 'CORPCI' . str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+        $checkUrl = $supabaseUrl . '/rest/v1/corporate?cid=eq.' . urlencode($candidate) . '&select=id&limit=1';
+
+        $ch = curl_init($checkUrl);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER     => [
+                'apikey: ' . $supabaseKey,
+                'Authorization: Bearer ' . $supabaseKey,
+                'Content-Type: application/json',
+            ],
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_TIMEOUT        => 30,
+        ]);
+        $response = curl_exec($ch);
+        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        if ($status === 200) {
+            $rows = json_decode($response, true);
+            if (empty($rows)) {
+                return $candidate;
+            }
+        }
+    }
+    throw new Exception('Failed to generate unique corporate CID');
+}
+
 // ── DUPLICATE CHECK via direct REST call ──────────────
-$checkUrl = $supabaseUrl . '/rest/v1/corporate?email=eq.' . urlencode($email) . '&select=id&limit=1';
+$checkUrl = $supabaseUrl . '/rest/v1/corporate?email=ilike.' . urlencode($email) . '&select=id,email&limit=1';
 
 $ch = curl_init($checkUrl);
 curl_setopt_array($ch, [
@@ -79,23 +112,51 @@ curl_setopt_array($ch, [
         'Authorization: Bearer ' . $supabaseKey,
         'Content-Type: application/json',
     ],
+    CURLOPT_SSL_VERIFYPEER => false,
+    CURLOPT_SSL_VERIFYHOST => false,
+    CURLOPT_TIMEOUT        => 30,
 ]);
 $checkResponse = curl_exec($ch);
 $checkStatus   = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
 
 if ($checkStatus === 200) {
     $existing = json_decode($checkResponse, true);
-    if (!empty($existing)) {
-        http_response_code(409);
-        echo json_encode(['success' => false, 'error' => 'An account with this email already exists']);
-        exit;
+    if (is_array($existing) && !empty($existing)) {
+        $existingEmail = strtolower(trim($existing[0]['email'] ?? ''));
+        if ($existingEmail === $email) {
+            http_response_code(409);
+            echo json_encode(['success' => false, 'error' => 'An account with this email already exists']);
+            exit;
+        }
     }
+}
+
+if ($checkStatus >= 400) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error'   => 'Failed to verify existing account before insert.',
+        'http_status' => $checkStatus,
+        'debug_response' => $checkResponse
+    ]);
+    exit;
+}
+
+if ($checkStatus !== 200) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error'   => 'Unexpected response while checking duplicate email.',
+        'http_status' => $checkStatus
+    ]);
+    exit;
 }
 
 // ── INSERT via direct REST call ───────────────────────
 $payload = [
+    'cid'              => generateCorporateCid($supabaseUrl, $supabaseKey),
     'company_name'     => trim($body['company_name']),
+    'name'             => trim($body['company_name']),
     'tax_number'       => trim($body['tax_number']),
     'office_address'   => trim($body['office_address']),
     'appointed_person' => trim($body['appointed_person']),
@@ -107,7 +168,7 @@ $payload = [
     'invoice_email'    => strtolower(trim($body['invoice_email'])),
     'special_notes_company'    => trim($body['special_notes_company']   ?? ''),
     'special_notes_powercabs'  => trim($body['special_notes_powercabs'] ?? ''),
-    'password'         => password_hash(trim($body['password']), PASSWORD_BCRYPT),
+    'pass'             => password_hash(trim($body['password']), PASSWORD_BCRYPT),
     'created_at'       => date('c'),
 ];
 
@@ -124,11 +185,14 @@ curl_setopt_array($ch, [
         'Content-Type: application/json',
         'Prefer: return=representation',
     ],
+    CURLOPT_SSL_VERIFYPEER => false,
+    CURLOPT_SSL_VERIFYHOST => false,
+    CURLOPT_TIMEOUT        => 30,
 ]);
 $insertResponse = curl_exec($ch);
 $insertStatus   = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlError      = curl_error($ch);
-curl_close($ch);
+
 
 // 201 = created successfully
 if ($insertStatus === 201) {
@@ -142,22 +206,35 @@ if ($insertStatus === 201) {
 
 // ── Handle Supabase-specific errors ───────────────────
 $responseBody = json_decode($insertResponse, true);
-$supabaseMsg  = $responseBody['message'] ?? $responseBody['error'] ?? null;
+$supabaseMsg  = strtolower((string)($responseBody['message'] ?? $responseBody['error'] ?? ''));
 
-// Duplicate key from DB level (e.g. unique constraint on email)
-if ($insertStatus === 409 || str_contains($supabaseMsg ?? '', 'duplicate')) {
+// Duplicate/unique conflicts: report correct field instead of always "email"
+if ($insertStatus === 409 || str_contains($supabaseMsg, 'duplicate')) {
     http_response_code(409);
-    echo json_encode(['success' => false, 'error' => 'An account with this email already exists']);
+    if (str_contains($supabaseMsg, 'email')) {
+        http_response_code(409);
+        echo json_encode(['success' => false, 'error' => 'An account with this email already exists']);
+        exit;
+    }
+    if (str_contains($supabaseMsg, 'cid')) {
+        echo json_encode(['success' => false, 'error' => 'Generated corporate ID conflicted. Please try again.']);
+        exit;
+    }
+    echo json_encode([
+        'success' => false,
+        'error' => 'Duplicate record conflict in corporate table.',
+        'details' => $responseBody['message'] ?? $responseBody['error'] ?? null
+    ]);
     exit;
 }
 
 // Column does not exist in your table
-if (str_contains($supabaseMsg ?? '', 'column')) {
+if (str_contains($supabaseMsg, 'column')) {
     http_response_code(500);
     echo json_encode([
         'success' => false,
         'error'   => 'Database column mismatch: ' . $supabaseMsg . '. Check your corporate table columns match the payload.',
-        'debug'   => $payload  // remove this line in production
+        'debug'   => array_merge($payload, ['pass' => '[hashed-password]'])  // remove this line in production
     ]);
     exit;
 }
