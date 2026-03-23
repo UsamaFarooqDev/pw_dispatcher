@@ -2,7 +2,8 @@
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
 $page_titles = [
-    'home'            => 'Home',
+    'home'            => 'Dashboard',
+    'fleetRegistry'   => 'Fleet Registry',
     'corporate'       => 'Application Rides',
     'order'           => 'Create New Order',
     'map'             => 'Live Map',

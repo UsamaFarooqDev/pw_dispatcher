@@ -8,287 +8,297 @@ if (empty($_SESSION['user']) || empty($_SESSION['access_token'])) {
 
 $user = $_SESSION['user'];
 require('modules/head.php');
+
+require_once __DIR__ . '/auth/config.php';
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
-  <body>
-   <?php require_once 'modules/navbar.php'; ?>
+<body>
+  
+  <?php @require('modules/sidebar.php'); ?>
+  <?php require_once 'modules/navbar.php'; ?>
 
-    <?php @require('modules/sidebar.php'); ?>
+  <main class="main-content p-4" style="background:#F4F4F5; min-height:92vh;">
 
-    <main class="main-content p-4" style="background: #f4f4f5; min-height: 100vh;">
-
-    <?php @require('modules/bodyHeader.php'); ?>    
-
-    <div class="rounded-3 border mt-4 overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);">
-      <div class="p-4">
-        <div class="d-flex align-items-center gap-2 mb-4 p-1 rounded-2 d-inline-flex" style="background:#F4F4F5;">
-          <button
-            id="driverViewBtn"
-            class="btn btn-sm fw-semibold d-flex align-items-center gap-2 px-3"
-            style="border-radius:6px; height:32px; font-size:0.9125rem; background:#fff; color:#18181B; border:none; box-shadow:0 1px 3px rgba(0,0,0,0.08);"
-            onclick="switchTableView('driver')"
-          >
-            <i class="bi bi-person-badge" style="font-size:13px;"></i> Drivers
-          </button>
-          <button
-            id="customerViewBtn"
-            class="btn btn-sm fw-semibold d-flex align-items-center gap-2 px-3"
-            style="border-radius:6px; height:32px; font-size:0.9125rem; background:transparent; color:#71717A; border:none;"
-            onclick="switchTableView('customer')"
-          >
-            <i class="bi bi-people" style="font-size:13px;"></i> Passengers
-          </button>
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+      <div>
+        <div style="font-size:0.75rem; color:#A1A1AA; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; margin-bottom:3px;">
+          <?php echo date('l, d F Y'); ?>
         </div>
+        <h4 class="fw-bold m-0" style="font-size:1.3rem; color:#18181B; letter-spacing:-0.02em;">
+          Good <?php echo (date('H')<12)?'Morning':((date('H')<17)?'Afternoon':'Evening'); ?>, <?php echo htmlspecialchars(explode(' ',$user_name)[0] ?? 'Dispatcher'); ?> 👋
+        </h4>
+      </div>
+      <div class="d-flex align-items-center gap-2 px-3 py-2 rounded-2" style="background:#fff; border:1.5px solid #EBEBEB; font-size:0.8rem; color:#52525B; font-weight:600;">
+        <span style="width:8px; height:8px; border-radius:50%; background:#22C55E; flex-shrink:0; box-shadow:0 0 0 3px rgba(34,197,94,0.15);"></span>
+        System Online
+      </div>
+    </div>
 
-        <div id="driverTable" class="d-block mb-3" style="min-height:362px;">
-          <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB;">
-            <table class="table mb-0" style="border-collapse:collapse;">
-              <thead>
-                <tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
-                  <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
-                  <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Email</th>
-                  <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Phone</th>
-                  <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Vehicle</th>
-                  <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Ordered Time</th>
-                  <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Vehicle No.</th>
-                  <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">License</th>
-                  <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Vehicle Reg</th>
-                  <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Insurance</th>
-                  <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Rides</th>
-                  <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
-                </tr>
-              </thead>
-              <tbody id="driverTableBody"></tbody>
-            </table>
+    <div class="row g-3 mb-3">
+
+      <div class="col-sm-6 col-xl-3">
+        <div class="rounded-3 p-4 h-100 position-relative overflow-hidden" style="background:linear-gradient(135deg,#f37a20 0%,#c95e0a 100%); box-shadow:0 8px 24px rgba(243,122,32,0.30);">
+          <div class="position-absolute" style="top:-18px; right:-18px; width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.10);"></div>
+          <div class="position-absolute" style="bottom:-30px; right:20px; width:70px; height:70px; border-radius:50%; background:rgba(255,255,255,0.07);"></div>
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="d-flex align-items-center justify-content-center rounded-2" style="width:40px; height:40px; background:rgba(255,255,255,0.20);">
+              <i class="bi bi-person-badge-fill" style="color:#fff; font-size:18px;"></i>
+            </div>
+            <span class="rounded-pill px-2 py-1 fw-bold" style="font-size:0.7rem; background:rgba(255,255,255,0.20); color:#fff;">Total</span>
+          </div>
+          <div style="font-size:2.2rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statTotalDrivers">0</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.80); font-weight:500; margin-top:6px;">Registered Drivers</div>
+        </div>
+      </div>
+
+      <div class="col-sm-6 col-xl-3">
+        <div class="rounded-3 p-4 h-100 position-relative overflow-hidden" style="background:#18181B; box-shadow:0 8px 24px rgba(0,0,0,0.18);">
+          <div class="position-absolute" style="top:-18px; right:-18px; width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.04);"></div>
+          <div class="position-absolute" style="bottom:-30px; right:20px; width:70px; height:70px; border-radius:50%; background:rgba(255,255,255,0.03);"></div>
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="d-flex align-items-center justify-content-center rounded-2" style="width:40px; height:40px; background:rgba(255,255,255,0.10);">
+              <i class="bi bi-people-fill" style="color:#fff; font-size:18px;"></i>
+            </div>
+            <span class="rounded-pill px-2 py-1 fw-bold" style="font-size:0.7rem; background:rgba(255,255,255,0.10); color:rgba(255,255,255,0.80);">Total</span>
+          </div>
+          <div style="font-size:2.2rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statTotalPassengers">0</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.55); font-weight:500; margin-top:6px;">Registered Passengers</div>
+        </div>
+      </div>
+
+      <div class="col-sm-6 col-xl-3">
+        <div class="rounded-3 p-4 h-100 position-relative overflow-hidden" style="background:#fff; border:1.5px solid #EBEBEB; box-shadow:0 4px 16px rgba(0,0,0,0.05);">
+          <div class="position-absolute" style="top:-18px; right:-18px; width:100px; height:100px; border-radius:50%; background:#F4F4F5;"></div>
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="d-flex align-items-center justify-content-center rounded-2" style="width:40px; height:40px; background:#FFF3E8;">
+              <i class="bi bi-car-front-fill" style="color:#f37a20; font-size:18px;"></i>
+            </div>
+            <span class="rounded-pill px-2 py-1 fw-bold" style="font-size:0.7rem; background:#F4F4F5; color:#71717A;">All Time</span>
+          </div>
+          <div style="font-size:2.2rem; font-weight:800; color:#18181B; letter-spacing:-0.04em; line-height:1;" id="statTotalRides">0</div>
+          <div style="font-size:0.8rem; color:#A1A1AA; font-weight:500; margin-top:6px;">Application Rides</div>
+        </div>
+      </div>
+
+      <div class="col-sm-6 col-xl-3">
+        <div class="rounded-3 p-4 h-100 position-relative overflow-hidden" style="background:#fff; border:1.5px solid #EBEBEB; box-shadow:0 4px 16px rgba(0,0,0,0.05);">
+          <div class="position-absolute" style="top:-18px; right:-18px; width:100px; height:100px; border-radius:50%; background:#F4F4F5;"></div>
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="d-flex align-items-center justify-content-center rounded-2" style="width:40px; height:40px; background:#F0FDF4;">
+              <i class="bi bi-calendar-check-fill" style="color:#22C55E; font-size:18px;"></i>
+            </div>
+            <span class="rounded-pill px-2 py-1 fw-bold d-flex align-items-center gap-1" style="font-size:0.7rem; background:#F0FDF4; color:#22C55E;">
+              <span style="width:5px; height:5px; border-radius:50%; background:#22C55E;"></span>All Time
+            </span>
+          </div>
+          <div style="font-size:2.2rem; font-weight:800; color:#18181B; letter-spacing:-0.04em; line-height:1;" id="statTodayRides">0</div>
+          <div style="font-size:0.8rem; color:#A1A1AA; font-weight:500; margin-top:6px;">Corporate Rides</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="rounded-3 mb-3 p-4 position-relative overflow-hidden" style="background:linear-gradient(145deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%); box-shadow:0 8px 32px rgba(0,0,0,0.20);">
+
+      <div class="position-absolute" style="top:-60px; right:-60px; width:260px; height:260px; border-radius:50%; border:50px solid rgba(255,255,255,0.04);"></div>
+      <div class="position-absolute" style="top:20px; right:40px; width:140px; height:140px; border-radius:50%; border:28px solid rgba(255,255,255,0.03);"></div>
+      <div class="position-absolute" style="bottom:-80px; left:-40px; width:240px; height:240px; border-radius:50%; border:45px solid rgba(255,255,255,0.03);"></div>
+      <div class="position-absolute" style="bottom:10px; left:160px; width:100px; height:100px; border-radius:50%; border:20px solid rgba(243,122,32,0.08);"></div>
+
+      <div class="d-flex align-items-center justify-content-between mb-4" style="position:relative; z-index:2;">
+        <div class="d-flex align-items-center gap-2">
+          <div class="d-flex align-items-center justify-content-center rounded-2" style="width:30px; height:30px; background:rgba(243,122,32,0.25); border:1px solid rgba(243,122,32,0.30);">
+            <i class="bi bi-pie-chart-fill" style="color:#f37a20; font-size:13px;"></i>
+          </div>
+          <span class="fw-bold" style="font-size:0.875rem; color:#fff; letter-spacing:0.01em;">Ride Status Breakdown</span>
+        </div>
+        <span style="font-size:0.75rem; color:rgba(255,255,255,0.40); font-weight:500;">Live counts</span>
+      </div>
+
+      <div class="row g-3" style="position:relative; z-index:2;">
+
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="rounded-3 p-3 text-center h-100 position-relative overflow-hidden"
+            style="background:rgba(255,255,255,0.06); border:1px solid rgba(243,122,32,0.30); backdrop-filter:blur(8px);">
+            <div class="position-absolute" style="top:-20px; right:-20px; width:70px; height:70px; border-radius:50%; background:rgba(243,122,32,0.08);"></div>
+            <div class="d-flex align-items-center justify-content-center mx-auto mb-2 rounded-2 position-relative" style="width:38px; height:38px; background:rgba(243,122,32,0.18); border:1px solid rgba(243,122,32,0.30);">
+              <i class="bi bi-hourglass-split" style="color:#f37a20; font-size:16px;"></i>
+            </div>
+            <div style="font-size:1.8rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statUnassigned">0</div>
+            <div style="font-size:0.72rem; color:rgba(255,255,255,0.55); font-weight:500; margin-top:5px; letter-spacing:0.02em;">Unassigned</div>
           </div>
         </div>
 
-        <div id="customerTable" class="d-none mb-3" style="min-height:362px;">
-          <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB;">
-            <table class="table mb-0" style="border-collapse:collapse;">
-              <thead>
-                <tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
-                  <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
-                  <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Email</th>
-                  <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Phone</th>
-                  <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Service Type</th>
-                  <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Ordered Time</th>
-                  <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Email Verified</th>
-                </tr>
-              </thead>
-              <tbody id="customerTableBody"></tbody>
-            </table>
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="rounded-3 p-3 text-center h-100 position-relative overflow-hidden"
+            style="background:rgba(255,255,255,0.06); border:1px solid rgba(59,130,246,0.30); backdrop-filter:blur(8px);">
+            <div class="position-absolute" style="top:-20px; right:-20px; width:70px; height:70px; border-radius:50%; background:rgba(59,130,246,0.08);"></div>
+            <div class="d-flex align-items-center justify-content-center mx-auto mb-2 rounded-2 position-relative" style="width:38px; height:38px; background:rgba(59,130,246,0.18); border:1px solid rgba(59,130,246,0.30);">
+              <i class="bi bi-person-check-fill" style="color:#60A5FA; font-size:16px;"></i>
+            </div>
+            <div style="font-size:1.8rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statAssigned">0</div>
+            <div style="font-size:0.72rem; color:rgba(255,255,255,0.55); font-weight:500; margin-top:5px; letter-spacing:0.02em;">Assigned</div>
           </div>
         </div>
 
-        <div id="paginationContainer" class="mt-3"></div>
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="rounded-3 p-3 text-center h-100 position-relative overflow-hidden"
+            style="background:rgba(255,255,255,0.06); border:1px solid rgba(249,115,22,0.30); backdrop-filter:blur(8px);">
+            <div class="position-absolute" style="top:-20px; right:-20px; width:70px; height:70px; border-radius:50%; background:rgba(249,115,22,0.08);"></div>
+            <div class="d-flex align-items-center justify-content-center mx-auto mb-2 rounded-2 position-relative" style="width:38px; height:38px; background:rgba(249,115,22,0.18); border:1px solid rgba(249,115,22,0.30);">
+              <i class="bi bi-car-front-fill" style="color:#FB923C; font-size:16px;"></i>
+            </div>
+            <div style="font-size:1.8rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statOnTrip">0</div>
+            <div style="font-size:0.72rem; color:rgba(255,255,255,0.55); font-weight:500; margin-top:5px; letter-spacing:0.02em;">On Trip</div>
+          </div>
+        </div>
 
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="rounded-3 p-3 text-center h-100 position-relative overflow-hidden"
+            style="background:rgba(255,255,255,0.06); border:1px solid rgba(139,92,246,0.30); backdrop-filter:blur(8px);">
+            <div class="position-absolute" style="top:-20px; right:-20px; width:70px; height:70px; border-radius:50%; background:rgba(139,92,246,0.08);"></div>
+            <div class="d-flex align-items-center justify-content-center mx-auto mb-2 rounded-2 position-relative" style="width:38px; height:38px; background:rgba(139,92,246,0.18); border:1px solid rgba(139,92,246,0.30);">
+              <i class="bi bi-calendar-event-fill" style="color:#A78BFA; font-size:16px;"></i>
+            </div>
+            <div style="font-size:1.8rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statScheduled">0</div>
+            <div style="font-size:0.72rem; color:rgba(255,255,255,0.55); font-weight:500; margin-top:5px; letter-spacing:0.02em;">Scheduled</div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="rounded-3 p-3 text-center h-100 position-relative overflow-hidden"
+            style="background:rgba(255,255,255,0.06); border:1px solid rgba(34,197,94,0.30); backdrop-filter:blur(8px);">
+            <div class="position-absolute" style="top:-20px; right:-20px; width:70px; height:70px; border-radius:50%; background:rgba(34,197,94,0.08);"></div>
+            <div class="d-flex align-items-center justify-content-center mx-auto mb-2 rounded-2 position-relative" style="width:38px; height:38px; background:rgba(34,197,94,0.18); border:1px solid rgba(34,197,94,0.30);">
+              <i class="bi bi-check-circle-fill" style="color:#4ADE80; font-size:16px;"></i>
+            </div>
+            <div style="font-size:1.8rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statCompleted">0</div>
+            <div style="font-size:0.72rem; color:rgba(255,255,255,0.55); font-weight:500; margin-top:5px; letter-spacing:0.02em;">Completed</div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl-2">
+          <div class="rounded-3 p-3 text-center h-100 position-relative overflow-hidden"
+            style="background:rgba(255,255,255,0.06); border:1px solid rgba(225,29,72,0.30); backdrop-filter:blur(8px);">
+            <div class="position-absolute" style="top:-20px; right:-20px; width:70px; height:70px; border-radius:50%; background:rgba(225,29,72,0.08);"></div>
+            <div class="d-flex align-items-center justify-content-center mx-auto mb-2 rounded-2 position-relative" style="width:38px; height:38px; background:rgba(225,29,72,0.18); border:1px solid rgba(225,29,72,0.30);">
+              <i class="bi bi-x-circle-fill" style="color:#FB7185; font-size:16px;"></i>
+            </div>
+            <div style="font-size:1.8rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statCancelled">0</div>
+            <div style="font-size:0.72rem; color:rgba(255,255,255,0.55); font-weight:500; margin-top:5px; letter-spacing:0.02em;">Cancelled</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="rounded-3 border" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+          <div class="px-4 py-1" style="border-bottom:1px solid #EBEBEB;">
+            <span class="fw-bold" style="font-size:0.875rem; color:#18181B;">Quick Actions</span>
+          </div>
+          <div class="p-3">
+            <div class="row g-3">
+              <div class="col-md-4 col-sm-12">
+                <a href="order.php" class="d-flex align-items-center gap-3 rounded-2 px-3 py-2 text-decoration-none"
+                  style="background:#FFF3E8; border:1.5px solid rgba(243,122,32,0.15);"
+                  onmouseover="this.style.background='#FDECD8';"
+                  onmouseout="this.style.background='#FFF3E8';">
+                  <div class="d-flex align-items-center justify-content-center rounded-2" style="width:32px; height:32px; background:#f37a20; flex-shrink:0;">
+                    <i class="bi bi-plus-circle-fill" style="color:#fff; font-size:14px;"></i>
+                  </div>
+                  <div>
+                    <div class="fw-semibold" style="font-size:0.8375rem; color:#18181B;">New Order</div>
+                    <div style="font-size:0.72rem; color:#A1A1AA;">Create a ride booking</div>
+                  </div>
+                  <i class="bi bi-chevron-right ms-auto" style="font-size:11px; color:#A1A1AA;"></i>
+                </a>
+              </div>
+              <div class="col-md-4 col-sm-12">
+                <a href="map.php" class="d-flex align-items-center gap-3 rounded-2 px-3 py-2 text-decoration-none"
+                  style="background:#FAFAFA; border:1.5px solid #EBEBEB;"
+                  onmouseover="this.style.borderColor='#f37a20'; this.style.background='#FFF3E8';"
+                  onmouseout="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA';">
+                  <div class="d-flex align-items-center justify-content-center rounded-2" style="width:32px; height:32px; background:#F4F4F5; flex-shrink:0;">
+                    <i class="bi bi-map-fill" style="color:#52525B; font-size:14px;"></i>
+                  </div>
+                  <div>
+                    <div class="fw-semibold" style="font-size:0.8375rem; color:#18181B;">Live Map</div>
+                    <div style="font-size:0.72rem; color:#A1A1AA;">Track drivers in real-time</div>
+                  </div>
+                  <i class="bi bi-chevron-right ms-auto" style="font-size:11px; color:#A1A1AA;"></i>
+                </a>
+              </div>
+              <div class="col-md-4 col-sm-12">
+                <a href="preorder.php" class="d-flex align-items-center gap-3 rounded-2 px-3 py-2 text-decoration-none"
+                  style="background:#FAFAFA; border:1.5px solid #EBEBEB;"
+                  onmouseover="this.style.borderColor='#f37a20'; this.style.background='#FFF3E8';"
+                  onmouseout="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA';">
+                  <div class="d-flex align-items-center justify-content-center rounded-2" style="width:32px; height:32px; background:#F4F4F5; flex-shrink:0;">
+                    <i class="bi bi-lightning-charge-fill" style="color:#52525B; font-size:14px;"></i>
+                  </div>
+                  <div>
+                    <div class="fw-semibold" style="font-size:0.8375rem; color:#18181B;">Live Orders</div>
+                    <div style="font-size:0.72rem; color:#A1A1AA;">Manage active rides</div>
+                  </div>
+                  <i class="bi bi-chevron-right ms-auto" style="font-size:11px; color:#A1A1AA;"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
   </main>
+</body>
+</html>
 
-  <div id="imageModal" class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="z-index:9999;">
-    <div class="position-absolute top-0 start-0 w-100 h-100" style="background:rgba(0,0,0,0.70); backdrop-filter:blur(3px);"></div>
-    <div class="position-relative" style="z-index:10000; width:90%; max-width:780px; max-height:90vh; animation:modalFadeIn 0.2s ease-out;">
-      <div class="d-flex flex-column overflow-hidden" style="background:#fff; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.30); max-height:90vh;">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  async function loadDashboardStats() {
+    try {
+      const setText = (id, value) => {
+        const node = document.getElementById(id);
+        if (node) node.textContent = value;
+      };
 
-        <div class="d-flex align-items-center justify-content-between px-4 py-3" style="border-bottom:1px solid #EBEBEB; background:#FAFAFA; flex-shrink:0;">
-          <span id="modalTitle" class="fw-semibold" style="font-size:0.9375rem; color:#18181B;">Document Preview</span>
-          <button class="modal-close-btn btn d-flex align-items-center justify-content-center p-0" aria-label="Close"
-            style="width:30px; height:30px; border-radius:7px; border:1.5px solid #EBEBEB; background:#fff; color:#71717A;"
-            onmouseover="this.style.background='#FFF3E8'; this.style.color='#f37a20'; this.style.borderColor='#f37a20';"
-            onmouseout="this.style.background='#fff'; this.style.color='#71717A'; this.style.borderColor='#EBEBEB';">
-            <i class="bi bi-x-lg" style="font-size:12px;"></i>
-          </button>
-        </div>
-
-        <div class="d-flex align-items-center justify-content-center p-4 overflow-auto" style="background:#F4F4F5; flex:1;">
-          <img id="modalImage" src="" alt="Document"
-            class="rounded-2"
-            style="max-width:100%; max-height:calc(90vh - 120px); object-fit:contain; box-shadow:0 4px 16px rgba(0,0,0,0.12);" />
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <style>
-    @keyframes modalFadeIn {
-      from { opacity:0; transform:scale(0.96); }
-      to   { opacity:1; transform:scale(1); }
-    }
-    #driverTable tbody tr, #customerTable tbody tr {
-      border-bottom: 1px solid #F4F4F5;
-      transition: background 0.12s;
-    }
-    #driverTable tbody tr:hover, #customerTable tbody tr:hover {
-      background: #FAFAFA;
-    }
-    #driverTable tbody td, #customerTable tbody td {
-      padding: 14px 24px;
-      font-size: 0.845rem;
-      color: #18181B;
-      vertical-align: middle;
-      border: none;
-    }
-    .document-preview {
-      transition: transform 0.15s, box-shadow 0.15s;
-      cursor: pointer;
-    }
-    .document-preview:hover {
-      transform: scale(1.08);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-      position: relative;
-      z-index: 10;
-    }
-  </style>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/pagination.js"></script>
-    <script src="js/app.js"></script>
-    <script>
-            document
-        .getElementById('sidebarToggle')
-        .addEventListener('click', function () {
-          document.querySelector('.sidebar').classList.toggle('active');
-        });
-
-      document.addEventListener('click', function (event) {
-        const sidebar = document.querySelector('.sidebar');
-        if (
-          window.innerWidth < 768 &&
-          !event.target.closest('.sidebar') &&
-          !event.target.closest('#sidebarToggle')
-        ) {
-          sidebar.classList.remove('active');
-        }
-      });
-
-      function toggleSidebar() {
-        console.log('Sidebar toggle functionality would go here');
+      const res = await fetch('api/get_dashboard_stats.php');
+      if (res.status === 401) {
+        window.location.href = '/';
+        return;
       }
-        // Toggle between Driver and Customer table views
-function switchTableView(view) {
-  const driverTable = document.getElementById('driverTable');
-  const customerTable = document.getElementById('customerTable');
-  const driverBtn = document.getElementById('driverViewBtn');
-  const customerBtn = document.getElementById('customerViewBtn');
-
-  if (view === 'driver') {
-    // Show Driver, Hide Customer
-    driverTable.classList.remove('d-none');
-    driverTable.classList.add('d-block');
-    customerTable.classList.remove('d-block');
-    customerTable.classList.add('d-none');
-
-    // Update button styles
-    driverBtn.style.backgroundColor = '#f37a20';
-    driverBtn.style.color = 'white';
-    driverBtn.style.borderColor = '#f37a20';
-
-    customerBtn.style.backgroundColor = '#fff';
-    customerBtn.style.color = '#3b3b3b';
-    customerBtn.style.borderColor = '#3b3b3b';
-  } else {
-    // Show Customer, Hide Driver
-    customerTable.classList.remove('d-none');
-    customerTable.classList.add('d-block');
-    driverTable.classList.remove('d-block');
-    driverTable.classList.add('d-none');
-
-    // Update button styles
-    customerBtn.style.backgroundColor = '#f37a20';
-    customerBtn.style.color = 'white';
-    customerBtn.style.borderColor = '#f37a20';
-
-    driverBtn.style.backgroundColor = '#fff';
-    driverBtn.style.color = '#3b3b3b';
-    driverBtn.style.borderColor = '#3b3b3b';
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  // Default to Driver view
-  switchTableView('driver');
-});
-
-  // Switch tab function
-  function switchTab(tabName) {
-    // Reset all tabs
-    document.querySelectorAll('.btn.btn-link').forEach(btn => {
-      btn.style.color = '#3b3b3b';
-      btn.style.borderBottom = 'none';
-    });
-    document.getElementById(tabName + 'Tab').style.color = '#f37a20';
-    document.getElementById(tabName + 'Tab').style.borderBottom = '3px solid #f37a20';
-
-    // Show correct data
-    const data = tabData[tabName];
-
-    // Render driver table
-    renderTable('driverTableBody', data.driver, 'driver');
-    // Render customer table
-    renderTable('customerTableBody', data.customer, 'customer');
-
-    // Toggle visibility of tables
-    document.getElementById('driverTable').style.display = 'block';
-    document.getElementById('customerTable').style.display = 'block'; // or 'none' if you want only one visible
-
-    // Optional: Update pagination count
-    updatePagination(data.driver.length);
-  }
-
-  // Render table rows
-  function renderTable(containerId, data, type) {
-    const tbody = document.getElementById(containerId);
-    tbody.innerHTML = '';
-
-    if (data.length === 0) {
-      if (type === 'passenger' || type === 'customer') {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4">No passengers to show</td></tr>`;
-      } else {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4">No drivers to show</td></tr>`;
+      if (!res.ok) {
+        throw new Error(`Failed to fetch dashboard stats (HTTP ${res.status})`);
       }
-      return;
-    }
 
-    data.forEach(item => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td class="ps-3">
-          <input type="checkbox" class="form-check-output" />
-        </td>
-        <td>
-          <div class="d-flex align-items-center">
-              <div class="fw-medium small">${item.name}</div>
-          </div>
-        </td>
-        <td>${type === 'driver' ? item.car : item.service}</td>
-        <td>${item.time}</td>
-        <td>${type === 'driver' ? item.start : item.pickup}</td>
-        <td>${type === 'driver' ? item.end : item.dropoff}</td>
-        <td class="text-end pe-4">
-          <span class="text-success">${item.fare}</span>
-        </td>
-      `;
-      tbody.appendChild(row);
-    });
+      const result = await res.json();
+      if (!result || !result.success || !result.data) {
+        throw new Error(result && result.error ? result.error : 'Dashboard stats returned empty response');
+      }
+
+      const data = result.data;
+
+      // Totals
+      setText('statTotalDrivers', data.drivers ?? 0);
+      setText('statTotalPassengers', data.passengers ?? 0);
+      setText('statTotalRides', data.rides ?? 0);
+      setText('statTodayRides', data.corporate_rides ?? 0);
+
+      // Status breakdown (On Trip intentionally forced to 0 per your request)
+      setText('statUnassigned', data.unassigned ?? 0);
+      setText('statAssigned', data.assigned ?? 0);
+      setText('statOnTrip', 0);
+      setText('statScheduled', data.scheduled ?? 0);
+      setText('statCompleted', data.completed ?? 0);
+      setText('statCancelled', data.cancelled ?? 0);
+    } catch (err) {
+      console.error('Failed to load dashboard stats:', err);
+    }
   }
 
-    </main>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/app.js"></script>
-    <script>
-      // Lightweight initializer that reuses functions from js/app.js
-      document.addEventListener('DOMContentLoaded', () => {
-        try {
-          if (typeof switchTableView === 'function') switchTableView('driver');
-          if (typeof switchTab === 'function') switchTab('onTrip');
-        } catch (e) {
-          console.error('Initialization error', e);
-        }
-      });
-    </script>
+  document.addEventListener('DOMContentLoaded', loadDashboardStats);
+</script>
