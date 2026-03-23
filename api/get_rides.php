@@ -19,7 +19,7 @@ try {
     
     // Get pagination parameters
     $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-    $limit = isset($_GET['limit']) ? max(1, min(100, intval($_GET['limit']))) : 10; // Default 10, max 100
+    $limit = isset($_GET['limit']) ? max(1, min(5000, intval($_GET['limit']))) : 10; 
     
     // Fetch paginated rides
     $rides = $db->fetchData('rides', [

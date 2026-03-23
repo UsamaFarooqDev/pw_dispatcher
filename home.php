@@ -48,7 +48,7 @@ require_once __DIR__ . '/auth/config.php';
             </div>
             <span class="rounded-pill px-2 py-1 fw-bold" style="font-size:0.7rem; background:rgba(255,255,255,0.20); color:#fff;">Total</span>
           </div>
-          <div style="font-size:2.2rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statTotalDrivers">-</div>
+          <div style="font-size:2.2rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statTotalDrivers">0</div>
           <div style="font-size:0.8rem; color:rgba(255,255,255,0.80); font-weight:500; margin-top:6px;">Registered Drivers</div>
         </div>
       </div>
@@ -63,7 +63,7 @@ require_once __DIR__ . '/auth/config.php';
             </div>
             <span class="rounded-pill px-2 py-1 fw-bold" style="font-size:0.7rem; background:rgba(255,255,255,0.10); color:rgba(255,255,255,0.80);">Total</span>
           </div>
-          <div style="font-size:2.2rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statTotalPassengers">-</div>
+          <div style="font-size:2.2rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statTotalPassengers">0</div>
           <div style="font-size:0.8rem; color:rgba(255,255,255,0.55); font-weight:500; margin-top:6px;">Registered Passengers</div>
         </div>
       </div>
@@ -77,7 +77,7 @@ require_once __DIR__ . '/auth/config.php';
             </div>
             <span class="rounded-pill px-2 py-1 fw-bold" style="font-size:0.7rem; background:#F4F4F5; color:#71717A;">All Time</span>
           </div>
-          <div style="font-size:2.2rem; font-weight:800; color:#18181B; letter-spacing:-0.04em; line-height:1;" id="statTotalRides">-</div>
+          <div style="font-size:2.2rem; font-weight:800; color:#18181B; letter-spacing:-0.04em; line-height:1;" id="statTotalRides">0</div>
           <div style="font-size:0.8rem; color:#A1A1AA; font-weight:500; margin-top:6px;">Application Rides</div>
         </div>
       </div>
@@ -93,7 +93,7 @@ require_once __DIR__ . '/auth/config.php';
               <span style="width:5px; height:5px; border-radius:50%; background:#22C55E;"></span>All Time
             </span>
           </div>
-          <div style="font-size:2.2rem; font-weight:800; color:#18181B; letter-spacing:-0.04em; line-height:1;" id="statTodayRides">-</div>
+          <div style="font-size:2.2rem; font-weight:800; color:#18181B; letter-spacing:-0.04em; line-height:1;" id="statTodayRides">0</div>
           <div style="font-size:0.8rem; color:#A1A1AA; font-weight:500; margin-top:6px;">Corporate Rides</div>
         </div>
       </div>
@@ -126,7 +126,7 @@ require_once __DIR__ . '/auth/config.php';
             <div class="d-flex align-items-center justify-content-center mx-auto mb-2 rounded-2 position-relative" style="width:38px; height:38px; background:rgba(243,122,32,0.18); border:1px solid rgba(243,122,32,0.30);">
               <i class="bi bi-hourglass-split" style="color:#f37a20; font-size:16px;"></i>
             </div>
-            <div style="font-size:1.8rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statUnassigned">1</div>
+            <div style="font-size:1.8rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statUnassigned">0</div>
             <div style="font-size:0.72rem; color:rgba(255,255,255,0.55); font-weight:500; margin-top:5px; letter-spacing:0.02em;">Unassigned</div>
           </div>
         </div>
@@ -138,7 +138,7 @@ require_once __DIR__ . '/auth/config.php';
             <div class="d-flex align-items-center justify-content-center mx-auto mb-2 rounded-2 position-relative" style="width:38px; height:38px; background:rgba(59,130,246,0.18); border:1px solid rgba(59,130,246,0.30);">
               <i class="bi bi-person-check-fill" style="color:#60A5FA; font-size:16px;"></i>
             </div>
-            <div style="font-size:1.8rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statAssigned">8</div>
+            <div style="font-size:1.8rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statAssigned">0</div>
             <div style="font-size:0.72rem; color:rgba(255,255,255,0.55); font-weight:500; margin-top:5px; letter-spacing:0.02em;">Assigned</div>
           </div>
         </div>
@@ -150,7 +150,7 @@ require_once __DIR__ . '/auth/config.php';
             <div class="d-flex align-items-center justify-content-center mx-auto mb-2 rounded-2 position-relative" style="width:38px; height:38px; background:rgba(249,115,22,0.18); border:1px solid rgba(249,115,22,0.30);">
               <i class="bi bi-car-front-fill" style="color:#FB923C; font-size:16px;"></i>
             </div>
-            <div style="font-size:1.8rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statOnTrip">4</div>
+            <div style="font-size:1.8rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statOnTrip">0</div>
             <div style="font-size:0.72rem; color:rgba(255,255,255,0.55); font-weight:500; margin-top:5px; letter-spacing:0.02em;">On Trip</div>
           </div>
         </div>
@@ -162,7 +162,7 @@ require_once __DIR__ . '/auth/config.php';
             <div class="d-flex align-items-center justify-content-center mx-auto mb-2 rounded-2 position-relative" style="width:38px; height:38px; background:rgba(139,92,246,0.18); border:1px solid rgba(139,92,246,0.30);">
               <i class="bi bi-calendar-event-fill" style="color:#A78BFA; font-size:16px;"></i>
             </div>
-            <div style="font-size:1.8rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statScheduled">5</div>
+            <div style="font-size:1.8rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statScheduled">0</div>
             <div style="font-size:0.72rem; color:rgba(255,255,255,0.55); font-weight:500; margin-top:5px; letter-spacing:0.02em;">Scheduled</div>
           </div>
         </div>
@@ -174,7 +174,7 @@ require_once __DIR__ . '/auth/config.php';
             <div class="d-flex align-items-center justify-content-center mx-auto mb-2 rounded-2 position-relative" style="width:38px; height:38px; background:rgba(34,197,94,0.18); border:1px solid rgba(34,197,94,0.30);">
               <i class="bi bi-check-circle-fill" style="color:#4ADE80; font-size:16px;"></i>
             </div>
-            <div style="font-size:1.8rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statCompleted">2</div>
+            <div style="font-size:1.8rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statCompleted">0</div>
             <div style="font-size:0.72rem; color:rgba(255,255,255,0.55); font-weight:500; margin-top:5px; letter-spacing:0.02em;">Completed</div>
           </div>
         </div>
@@ -186,7 +186,7 @@ require_once __DIR__ . '/auth/config.php';
             <div class="d-flex align-items-center justify-content-center mx-auto mb-2 rounded-2 position-relative" style="width:38px; height:38px; background:rgba(225,29,72,0.18); border:1px solid rgba(225,29,72,0.30);">
               <i class="bi bi-x-circle-fill" style="color:#FB7185; font-size:16px;"></i>
             </div>
-            <div style="font-size:1.8rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statCancelled">9</div>
+            <div style="font-size:1.8rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statCancelled">0</div>
             <div style="font-size:0.72rem; color:rgba(255,255,255,0.55); font-weight:500; margin-top:5px; letter-spacing:0.02em;">Cancelled</div>
           </div>
         </div>
@@ -256,40 +256,47 @@ require_once __DIR__ . '/auth/config.php';
   </main>
 </body>
 </html>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/auth/config.php"></script> 
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  const SUPABASE_URL = 'https://ijrnahatonxpuzwjtykd.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlqcm5haGF0b254cHV6d2p0eWtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzMwMDYsImV4cCI6MjA3MTI0OTAwNn0.cTqgwDjRywsc-Gq8_bolSGT-rzQRr4GONrs6W8VXc8E';
- async function countTable(table) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=id`, {
-      method: 'HEAD',
-      headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'Prefer': 'count=exact'
-      }
-    });
-    const count = res.headers.get('content-range');
-    // content-range format is "0-9/42" — the total is after the slash
-    return count ? parseInt(count.split('/')[1]) : 0;
-  }
-    async function loadDashboardStats() {
+  async function loadDashboardStats() {
     try {
-      const [drivers, passengers, rides, corporate] = await Promise.all([
-        countTable('drivers'),
-        countTable('passengers'),
-        countTable('rides'),
-        countTable('corporate_rides')
-      ]);
+      const setText = (id, value) => {
+        const node = document.getElementById(id);
+        if (node) node.textContent = value;
+      };
 
-      document.getElementById('statTotalDrivers').textContent     = drivers;
-      document.getElementById('statTotalPassengers').textContent  = passengers;
-      document.getElementById('statTotalRides').textContent       = rides;
-      document.getElementById('statTodayRides').textContent       = corporate;
+      const res = await fetch('api/get_dashboard_stats.php');
+      if (res.status === 401) {
+        window.location.href = '/';
+        return;
+      }
+      if (!res.ok) {
+        throw new Error(`Failed to fetch dashboard stats (HTTP ${res.status})`);
+      }
 
+      const result = await res.json();
+      if (!result || !result.success || !result.data) {
+        throw new Error(result && result.error ? result.error : 'Dashboard stats returned empty response');
+      }
+
+      const data = result.data;
+
+      // Totals
+      setText('statTotalDrivers', data.drivers ?? 0);
+      setText('statTotalPassengers', data.passengers ?? 0);
+      setText('statTotalRides', data.rides ?? 0);
+      setText('statTodayRides', data.corporate_rides ?? 0);
+
+      // Status breakdown (On Trip intentionally forced to 0 per your request)
+      setText('statUnassigned', data.unassigned ?? 0);
+      setText('statAssigned', data.assigned ?? 0);
+      setText('statOnTrip', 0);
+      setText('statScheduled', data.scheduled ?? 0);
+      setText('statCompleted', data.completed ?? 0);
+      setText('statCancelled', data.cancelled ?? 0);
     } catch (err) {
-      console.error('Stats fetch error:', err);
+      console.error('Failed to load dashboard stats:', err);
     }
   }
 
