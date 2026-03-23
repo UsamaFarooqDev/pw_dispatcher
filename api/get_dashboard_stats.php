@@ -25,26 +25,34 @@ try {
     $corporate = $db->getCount('corporate_rides');
 
     // Ride statuses used by the dashboard cards.
+    // Case-insensitive status counts to match the live-orders client-side logic
+    // (which lowercases status before comparing).
     $unassigned = $db->getCount('rides', [
-        'filter' => ['status' => 'searching'],
+        'filter' => ['status' => 'ilike.searching'],
     ]);
     $assigned = $db->getCount('rides', [
-        'filter' => ['status' => 'assigned'],
+        'filter' => ['status' => 'ilike.assigned'],
     ]);
 
     // Scheduled: upcoming or scheduled
     $scheduled = $db->getCount('rides', [
-        'filter' => ['status' => 'in.(upcoming,scheduled)'],
+        'filter' => ['status' => 'ilike.upcoming'],
+    ]) + $db->getCount('rides', [
+        'filter' => ['status' => 'ilike.scheduled'],
     ]);
 
     // Completed: completed or finished
     $completed = $db->getCount('rides', [
-        'filter' => ['status' => 'in.(completed,finished)'],
+        'filter' => ['status' => 'ilike.completed'],
+    ]) + $db->getCount('rides', [
+        'filter' => ['status' => 'ilike.finished'],
     ]);
 
     // Cancelled: cancelled or canceled
     $cancelled = $db->getCount('rides', [
-        'filter' => ['status' => 'in.(cancelled,canceled)'],
+        'filter' => ['status' => 'ilike.cancelled'],
+    ]) + $db->getCount('rides', [
+        'filter' => ['status' => 'ilike.canceled'],
     ]);
 
     // Per your request, show On Trip as 0.
