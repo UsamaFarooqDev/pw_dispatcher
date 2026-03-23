@@ -48,7 +48,7 @@ require_once __DIR__ . '/auth/config.php';
             </div>
             <span class="rounded-pill px-2 py-1 fw-bold" style="font-size:0.7rem; background:rgba(255,255,255,0.20); color:#fff;">Total</span>
           </div>
-          <div style="font-size:2.2rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statTotalDrivers">-</div>
+          <div style="font-size:2.2rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statTotalDrivers">0</div>
           <div style="font-size:0.8rem; color:rgba(255,255,255,0.80); font-weight:500; margin-top:6px;">Registered Drivers</div>
         </div>
       </div>
@@ -63,7 +63,7 @@ require_once __DIR__ . '/auth/config.php';
             </div>
             <span class="rounded-pill px-2 py-1 fw-bold" style="font-size:0.7rem; background:rgba(255,255,255,0.10); color:rgba(255,255,255,0.80);">Total</span>
           </div>
-          <div style="font-size:2.2rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statTotalPassengers">-</div>
+          <div style="font-size:2.2rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statTotalPassengers">0</div>
           <div style="font-size:0.8rem; color:rgba(255,255,255,0.55); font-weight:500; margin-top:6px;">Registered Passengers</div>
         </div>
       </div>
@@ -77,7 +77,7 @@ require_once __DIR__ . '/auth/config.php';
             </div>
             <span class="rounded-pill px-2 py-1 fw-bold" style="font-size:0.7rem; background:#F4F4F5; color:#71717A;">All Time</span>
           </div>
-          <div style="font-size:2.2rem; font-weight:800; color:#18181B; letter-spacing:-0.04em; line-height:1;" id="statTotalRides">-</div>
+          <div style="font-size:2.2rem; font-weight:800; color:#18181B; letter-spacing:-0.04em; line-height:1;" id="statTotalRides">0</div>
           <div style="font-size:0.8rem; color:#A1A1AA; font-weight:500; margin-top:6px;">Application Rides</div>
         </div>
       </div>
@@ -93,7 +93,7 @@ require_once __DIR__ . '/auth/config.php';
               <span style="width:5px; height:5px; border-radius:50%; background:#22C55E;"></span>All Time
             </span>
           </div>
-          <div style="font-size:2.2rem; font-weight:800; color:#18181B; letter-spacing:-0.04em; line-height:1;" id="statTodayRides">-</div>
+          <div style="font-size:2.2rem; font-weight:800; color:#18181B; letter-spacing:-0.04em; line-height:1;" id="statTodayRides">0</div>
           <div style="font-size:0.8rem; color:#A1A1AA; font-weight:500; margin-top:6px;">Corporate Rides</div>
         </div>
       </div>
