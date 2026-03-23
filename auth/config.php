@@ -162,8 +162,12 @@ function getPageTitle() {
             // Add filter conditions if provided
             foreach ($params['filter'] as $column => $value) {
                 if ($value !== null && $value !== '') {
-                    // Use column name as query key so Supabase receives e.g. driver_id=eq.uuid
-                    $queryParams[$column] = 'eq.' . $value;
+                    if (is_string($value) && preg_match('/^[a-zA-Z_]+\\..+$/', $value)) {
+                        $queryParams[$column] = $value;
+                    } else {
+                        // Use column name as query key so Supabase receives e.g. driver_id=eq.uuid
+                        $queryParams[$column] = 'eq.' . $value;
+                    }
                 }
             }
         }
