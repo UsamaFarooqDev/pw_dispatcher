@@ -282,6 +282,19 @@ require_once __DIR__ . '/auth/config.php';
 
       const data = result.data;
 
+      // Totals
+      setText('statTotalDrivers', data.drivers ?? 0);
+      setText('statTotalPassengers', data.passengers ?? 0);
+      setText('statTotalRides', data.rides ?? 0);
+      setText('statTodayRides', data.corporate_rides ?? 0);
+
+      // Status breakdown (On Trip intentionally forced to 0 per your request)
+      setText('statUnassigned', data.unassigned ?? 0);
+      setText('statAssigned', data.assigned ?? 0);
+      setText('statOnTrip', 0);
+      setText('statScheduled', data.scheduled ?? 0);
+      setText('statCompleted', data.completed ?? 0);
+      setText('statCancelled', data.cancelled ?? 0);
     } catch (err) {
       console.error('Failed to load dashboard stats:', err);
     }
