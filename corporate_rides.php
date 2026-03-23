@@ -15,26 +15,33 @@ require('modules/head.php');
 
   <main class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
 
-    <?php @require('modules/bodyHeader.php'); ?>
-
-    <!-- Header Actions -->
-    <div class="d-flex align-items-center justify-content-between mt-2 mb-4 flex-wrap gap-2">
-      <div>
-        <h5 class="fw-bold m-0" style="font-size:1rem; color:#18181B; letter-spacing:-0.01em;">Corporate Rides</h5>
-        <div style="font-size:0.78rem; color:#A1A1AA; margin-top:2px;">Manage corporate accounts and ride bookings</div>
-      </div>
+  <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 py-1">
+  <div class="d-flex align-items-center gap-2">
       <button class="btn d-flex align-items-center gap-2 fw-semibold px-4"
-        style="height:38px; background:#f37a20; color:#fff; border:none; border-radius:8px; font-size:0.85rem; box-shadow:0 4px 14px rgba(243,122,32,0.35);"
-        onmouseover="this.style.background='#d96010';"
-        onmouseout="this.style.background='#f37a20';"
-        data-bs-toggle="modal" data-bs-target="#newCorporateModal">
-        <i class="bi bi-building-add" style="font-size:15px;"></i>
-        New Corporate Account
-      </button>
-    </div>
+  style="height:38px; background:#f37a20; color:#fff; border:none; border-radius:8px; font-size:0.85rem; box-shadow:0 4px 14px rgba(243,122,32,0.35);"
+  onmouseover="this.style.background='#d96010';"
+  onmouseout="this.style.background='#f37a20';"
+  id="openCorporateModalBtn">
+  <i class="bi bi-building-add" style="font-size:15px;"></i>
+  New Corporate Account
+</button>
+  </div>
 
-    <!-- Corporate Rides Table -->
-    <div class="rounded-3 border overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+  <div class="position-relative" style="width:100%; max-width:280px;">
+    <i class="bi bi-search position-absolute top-50 translate-middle-y" style="left:13px; font-size:13px; color:#A1A1AA; pointer-events:none;"></i>
+    <input
+      type="text"
+      id="globalSearchInput"
+      placeholder="Find rides, assign orders…"
+      class="form-control w-100"
+      style="height:38px; border-radius:8px; border:1.5px solid #18181b; padding-left:34px; font-size:0.8375rem; color:#18181B; background:#FAFAFA; outline:none;"
+      onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+      onblur="this.style.borderColor='#18181b'; this.style.background='#FAFAFA'; this.style.boxShadow='none';"
+    />
+  </div>
+</div>
+
+    <div class="rounded-3 mt-4 border overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
       <div class="table-responsive" style="min-height:400px;">
         <table class="table mb-0" style="border-collapse:collapse;">
           <thead>
@@ -287,10 +294,195 @@ require('modules/head.php');
   </style>
 
   <!-- Fetch corporate rides from Supabase -->
-  <script src="assets/js/config.js"></script>
-  <script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/auth/config.php"></script>
+<script>
+
+  // ── MODAL FIX: manual init in case BS loads late ──────
+  document.addEventListener('DOMContentLoaded', () => {
+
+    const modalEl = document.getElementById('newCorporateModal');
+    const openBtn = document.getElementById('openCorporateModalBtn');
+    let bsModal   = null;
+
+    // Init Bootstrap modal manually — fixes "not opening" issue
+    if (modalEl && typeof bootstrap !== 'undefined') {
+      bsModal = new bootstrap.Modal(modalEl);
+    } else if (modalEl) {
+      // Fallback: wait for bootstrap to load
+      window.addEventListener('load', () => {
+        bsModal = new bootstrap.Modal(modalEl);
+      });
+    }
+
+    openBtn?.addEventListener('click', () => {
+      if (bsModal) bsModal.show();
+      else console.error('Bootstrap Modal not available — check Bootstrap JS is loaded');
+    });
+
+    // ── FORM VALIDATION HELPERS ───────────────────────
+    function getVal(id) {
+      return document.getElementById(id)?.value?.trim() ?? '';
+    }
+
+    function setFieldError(id, message) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.borderColor = '#E11D48';
+      el.style.boxShadow   = '0 0 0 3px rgba(225,29,72,0.10)';
+      let err = el.parentElement.querySelector('.field-error');
+      if (!err) {
+        err = document.createElement('div');
+        err.className = 'field-error';
+        err.style.cssText = 'font-size:0.72rem; color:#E11D48; margin-top:4px;';
+        el.parentElement.appendChild(err);
+      }
+      err.textContent = message;
+    }
+
+    function clearFieldErrors() {
+      document.querySelectorAll('.field-error').forEach(e => e.remove());
+      document.querySelectorAll('#newCorporateModal input, #newCorporateModal select, #newCorporateModal textarea').forEach(el => {
+        el.style.borderColor  = '#EBEBEB';
+        el.style.boxShadow    = 'none';
+        el.style.background   = '#FAFAFA';
+      });
+    }
+
+    function validateForm() {
+      clearFieldErrors();
+      let valid = true;
+
+      const required = {
+        corp_company_name:    'Company name is required',
+        corp_tax_number:      'Tax number is required',
+        corp_office_address:  'Office address is required',
+        corp_appointed_person:'Appointed person is required',
+        corp_designation:     'Designation is required',
+        corp_email:           'Email address is required',
+        corp_phone:           'Phone number is required',
+        corp_iban:            'Billing IBAN is required',
+        corp_payment_cycle:   'Payment cycle is required',
+        corp_invoice_email:   'Invoice email is required',
+        corp_password:        'Password is required'
+      };
+
+      for (const [id, msg] of Object.entries(required)) {
+        if (!getVal(id)) { setFieldError(id, msg); valid = false; }
+      }
+
+      // Email format
+      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (getVal('corp_email') && !emailRe.test(getVal('corp_email'))) {
+        setFieldError('corp_email', 'Enter a valid email address');
+        valid = false;
+      }
+      if (getVal('corp_invoice_email') && !emailRe.test(getVal('corp_invoice_email'))) {
+        setFieldError('corp_invoice_email', 'Enter a valid invoice email');
+        valid = false;
+      }
+
+      // Password length
+      if (getVal('corp_password') && getVal('corp_password').length < 8) {
+        setFieldError('corp_password', 'Password must be at least 8 characters');
+        valid = false;
+      }
+
+      return valid;
+    }
+
+    // ── CREATE CORPORATE SUBMIT ───────────────────────
+    document.getElementById('createCorporateBtn')?.addEventListener('click', async () => {
+      if (!validateForm()) return;
+
+      const btn     = document.getElementById('createCorporateBtn');
+      const origHTML = btn.innerHTML;
+      btn.disabled  = true;
+      btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" style="width:14px;height:14px;border-width:2px;" role="status"></span>Creating…`;
+
+      const payload = {
+        company_name:      getVal('corp_company_name'),
+        tax_number:        getVal('corp_tax_number'),
+        office_address:    getVal('corp_office_address'),
+        appointed_person:  getVal('corp_appointed_person'),
+        designation:       getVal('corp_designation'),
+        email:             getVal('corp_email'),
+        phone:             getVal('corp_phone'),
+        billing_iban:              getVal('corp_iban'),
+        payment_cycle:     getVal('corp_payment_cycle'),
+        invoice_email:     getVal('corp_invoice_email'),
+        special_notes_company:     getVal('corp_notes_company'),
+        special_notes_powercabs:   getVal('corp_notes_powercabs'),
+        password:          getVal('corp_password')
+      };
+
+      try {
+        const res  = await fetch('api/create_corporate.php', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(payload)
+        });
+
+        const json = await res.json();
+
+        if (json.success) {
+          bsModal.hide();
+          clearFieldErrors();
+          document.querySelectorAll('#newCorporateModal input, #newCorporateModal select, #newCorporateModal textarea')
+            .forEach(el => el.value = '');
+          showToast('Corporate account created successfully', '#22C55E');
+          loadCorporateRides(1); // refresh table
+        } else {
+          showToast(json.error ?? 'Something went wrong', '#E11D48');
+          // If it's a field-specific error, highlight the field
+          if (json.error?.toLowerCase().includes('email')) {
+            setFieldError('corp_email', json.error);
+          }
+        }
+
+      } catch (err) {
+        console.error('Create corporate error:', err);
+        showToast('Network error — please try again', '#E11D48');
+      } finally {
+        btn.disabled  = false;
+        btn.innerHTML = origHTML;
+      }
+    });
+
+    // ── TOAST HELPER ─────────────────────────────────
+    function showToast(message, bgColor = '#18181B') {
+      let toast = document.getElementById('corpToast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'corpToast';
+        toast.style.cssText = `
+          position:fixed; bottom:24px; right:24px; z-index:9999;
+          background:${bgColor}; color:#fff; font-size:0.845rem; font-weight:500;
+          padding:12px 20px; border-radius:10px;
+          box-shadow:0 8px 24px rgba(0,0,0,0.18);
+          display:flex; align-items:center; gap:10px;
+          transform:translateY(20px); opacity:0;
+          transition:all 0.25s ease;
+        `;
+        document.body.appendChild(toast);
+      }
+      toast.style.background = bgColor;
+      toast.innerHTML = `
+        <i class="bi ${bgColor === '#22C55E' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'}"></i>
+        ${message}
+      `;
+      requestAnimationFrame(() => {
+        toast.style.transform = 'translateY(0)';
+        toast.style.opacity   = '1';
+      });
+      setTimeout(() => {
+        toast.style.transform = 'translateY(20px)';
+        toast.style.opacity   = '0';
+      }, 4000);
+    }
+
+    // ── LOAD CORPORATE RIDES TABLE ────────────────────
     const CORP_PAGE_SIZE = 15;
-    let corpCurrentPage = 1;
 
     async function loadCorporateRides(page = 1) {
       const tbody = document.getElementById('corporateRidesBody');
@@ -299,16 +491,16 @@ require('modules/head.php');
 
       const from = (page - 1) * CORP_PAGE_SIZE;
       const to   = from + CORP_PAGE_SIZE - 1;
-
+      
       try {
         const res = await fetch(
           `${SUPABASE_URL}/rest/v1/corporate_rides?select=*&order=created_at.desc`,
           {
             headers: {
-              'apikey': SUPABASE_ANON_KEY,
+              'apikey':        SUPABASE_ANON_KEY,
               'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-              'Range': `${from}-${to}`,
-              'Prefer': 'count=exact'
+              'Range':         `${from}-${to}`,
+              'Prefer':        'count=exact'
             }
           }
         );
@@ -329,20 +521,23 @@ require('modules/head.php');
           return;
         }
 
+        const statusConfig = {
+          completed: { bg:'#F0FDF4', color:'#16A34A', label:'Completed' },
+          assigned:  { bg:'#EFF6FF', color:'#2563EB', label:'Assigned'  },
+          searching: { bg:'#FFF3E8', color:'#f37a20', label:'Searching' },
+          upcoming:  { bg:'#F5F3FF', color:'#7C3AED', label:'Upcoming'  },
+          cancelled: { bg:'#FFF1F2', color:'#E11D48', label:'Cancelled' },
+          on_trip:   { bg:'#FFF7ED', color:'#EA580C', label:'On Trip'   },
+        };
+
         tbody.innerHTML = data.map(ride => {
-          const statusConfig = {
-            completed:  { bg:'#F0FDF4', color:'#16A34A', label:'Completed' },
-            assigned:   { bg:'#EFF6FF', color:'#2563EB', label:'Assigned'  },
-            searching:  { bg:'#FFF3E8', color:'#f37a20', label:'Searching' },
-            upcoming:   { bg:'#F5F3FF', color:'#7C3AED', label:'Upcoming'  },
-            cancelled:  { bg:'#FFF1F2', color:'#E11D48', label:'Cancelled' },
-            on_trip:    { bg:'#FFF7ED', color:'#EA580C', label:'On Trip'   },
-          };
-          const s = statusConfig[ride.status] || { bg:'#F4F4F5', color:'#71717A', label: ride.status ?? '—' };
-          const date = ride.created_at ? new Date(ride.created_at).toLocaleDateString('en-IE', { day:'2-digit', month:'short', year:'numeric' }) : '—';
+          const s    = statusConfig[ride.status] ?? { bg:'#F4F4F5', color:'#71717A', label: ride.status ?? '—' };
+          const date = ride.created_at
+            ? new Date(ride.created_at).toLocaleDateString('en-IE', { day:'2-digit', month:'short', year:'numeric' })
+            : '—';
 
           return `<tr>
-            <td style="color:#71717A; font-size:0.8rem;">${date}</td>
+            <td style="color:#71717A; font-size:0.8rem; white-space:nowrap;">${date}</td>
             <td class="fw-semibold">${ride.company_name ?? '—'}</td>
             <td>${ride.employee_name ?? '—'}</td>
             <td style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${ride.pickup ?? ''}">${ride.pickup ?? '—'}</td>
@@ -350,61 +545,63 @@ require('modules/head.php');
             <td>${ride.payment_method ?? '—'}</td>
             <td class="fw-semibold">${ride.fare ? '€' + Number(ride.fare).toFixed(2) : '—'}</td>
             <td>
-              <span class="rounded-pill px-2 py-1 fw-semibold" style="font-size:0.72rem; background:${s.bg}; color:${s.color}; white-space:nowrap;">
+              <span class="rounded-pill px-2 py-1 fw-semibold"
+                style="font-size:0.72rem; background:${s.bg}; color:${s.color}; white-space:nowrap;">
                 ${s.label}
               </span>
             </td>
           </tr>`;
         }).join('');
 
-        renderCorporatePagination(total, page);
+        renderPagination(total, page);
 
       } catch (err) {
-        console.error('Corporate rides fetch error:', err);
+        console.error('Corporate rides error:', err);
         tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4" style="border:none; color:#E11D48; font-size:0.845rem;">
-          Failed to load rides. Please refresh.</td></tr>`;
+          Failed to load — please refresh.</td></tr>`;
       }
     }
 
-    function renderCorporatePagination(total, current) {
+    function renderPagination(total, current) {
       const pages = Math.ceil(total / CORP_PAGE_SIZE);
-      const el = document.getElementById('corporateRidesPagination');
+      const el    = document.getElementById('corporateRidesPagination');
       if (pages <= 1) { el.innerHTML = ''; return; }
 
       let html = `<div class="d-flex align-items-center gap-2 flex-wrap">
         <span style="font-size:0.78rem; color:#A1A1AA;">${total} records</span>
         <div class="d-flex gap-1 ms-auto">`;
 
-      html += `<button onclick="corpGoTo(${current - 1})" ${current===1?'disabled':''} class="btn px-2"
-        style="height:30px; border:1.5px solid #EBEBEB; border-radius:6px; font-size:0.78rem; background:#fff; color:#52525B;">
+      html += `<button onclick="corpGoTo(${current-1})" ${current===1?'disabled':''} class="btn px-2"
+        style="height:30px; border:1.5px solid #EBEBEB; border-radius:6px; font-size:0.78rem; background:#fff;">
         <i class="bi bi-chevron-left"></i></button>`;
 
       for (let p = 1; p <= pages; p++) {
-        if (p === 1 || p === pages || (p >= current - 1 && p <= current + 1)) {
+        if (p===1 || p===pages || (p>=current-1 && p<=current+1)) {
           html += `<button onclick="corpGoTo(${p})" class="btn px-3"
-            style="height:30px; border:1.5px solid ${p===current?'#f37a20':'#EBEBEB'}; border-radius:6px; font-size:0.78rem;
-            background:${p===current?'#f37a20':'#fff'}; color:${p===current?'#fff':'#52525B'}; font-weight:${p===current?'700':'400'};">
-            ${p}</button>`;
-        } else if (p === current - 2 || p === current + 2) {
+            style="height:30px; border:1.5px solid ${p===current?'#f37a20':'#EBEBEB'}; border-radius:6px;
+            font-size:0.78rem; background:${p===current?'#f37a20':'#fff'};
+            color:${p===current?'#fff':'#52525B'}; font-weight:${p===current?700:400};">${p}</button>`;
+        } else if (p===current-2 || p===current+2) {
           html += `<span style="line-height:30px; color:#A1A1AA; font-size:0.78rem;">…</span>`;
         }
       }
 
-      html += `<button onclick="corpGoTo(${current + 1})" ${current===pages?'disabled':''} class="btn px-2"
-        style="height:30px; border:1.5px solid #EBEBEB; border-radius:6px; font-size:0.78rem; background:#fff; color:#52525B;">
+      html += `<button onclick="corpGoTo(${current+1})" ${current===pages?'disabled':''} class="btn px-2"
+        style="height:30px; border:1.5px solid #EBEBEB; border-radius:6px; font-size:0.78rem; background:#fff;">
         <i class="bi bi-chevron-right"></i></button>`;
 
       html += `</div></div>`;
       el.innerHTML = html;
     }
 
-    function corpGoTo(page) {
-      corpCurrentPage = page;
-      loadCorporateRides(page);
-    }
+    // Expose for pagination buttons
+    window.corpGoTo = (page) => loadCorporateRides(page);
 
-    document.addEventListener('DOMContentLoaded', () => loadCorporateRides(1));
-  </script>
+    // Initial load
+    loadCorporateRides(1);
+
+  }); // end DOMContentLoaded
+</script>
 
 </body>
 </html>
