@@ -13,7 +13,7 @@ require('modules/head.php');
   <?php require_once 'modules/navbar.php'; ?>
   <?php @require('modules/sidebar.php'); ?>
 
-  <main class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
+  <main class="main-content p-4" style="background:#F4F4F5; min-height:92vh;">
 
   <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 py-1">
   <div class="d-flex align-items-center gap-2">
@@ -73,15 +73,10 @@ require('modules/head.php');
 
   </main>
 
-
-  <!-- ══════════════════════════════════════════════
-       NEW CORPORATE ACCOUNT MODAL
-  ══════════════════════════════════════════════ -->
   <div class="modal fade" id="newCorporateModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
       <div class="modal-content border-0" style="border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,0.15);">
 
-        <!-- Modal Header -->
         <div class="px-4 py-3 d-flex align-items-center justify-content-between" style="border-bottom:1px solid #EBEBEB; flex-shrink:0;">
           <div>
             <h5 class="fw-bold mb-0" style="font-size:0.9375rem; color:#18181B;">New Corporate Account</h5>
@@ -95,10 +90,8 @@ require('modules/head.php');
           </button>
         </div>
 
-        <!-- Modal Body -->
         <div class="modal-body p-4" style="overflow-y:auto;">
 
-          <!-- Section: Company Info -->
           <div class="mb-2 pb-2" style="border-bottom:1px solid #EBEBEB;">
             <span class="fw-bold" style="font-size:0.775rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Company Information</span>
           </div>
@@ -127,7 +120,6 @@ require('modules/head.php');
             </div>
           </div>
 
-          <!-- Section: Contact Person -->
           <div class="mb-2 pb-2" style="border-bottom:1px solid #EBEBEB;">
             <span class="fw-bold" style="font-size:0.775rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Appointed Contact</span>
           </div>
@@ -169,7 +161,6 @@ require('modules/head.php');
             </div>
           </div>
 
-          <!-- Section: Billing -->
           <div class="mb-2 pb-2" style="border-bottom:1px solid #EBEBEB;">
             <span class="fw-bold" style="font-size:0.775rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Billing & Invoicing</span>
           </div>
@@ -207,7 +198,6 @@ require('modules/head.php');
             </div>
           </div>
 
-          <!-- Section: Notes -->
           <div class="mb-2 pb-2" style="border-bottom:1px solid #EBEBEB;">
             <span class="fw-bold" style="font-size:0.775rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Notes</span>
           </div>
@@ -233,7 +223,6 @@ require('modules/head.php');
             </div>
           </div>
 
-          <!-- Section: Account Access -->
           <div class="mb-2 pb-2" style="border-bottom:1px solid #EBEBEB;">
             <span class="fw-bold" style="font-size:0.775rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Account Access</span>
           </div>
@@ -259,7 +248,6 @@ require('modules/head.php');
 
         </div>
 
-        <!-- Modal Footer -->
         <div class="px-4 py-3 d-flex justify-content-between align-items-center" style="border-top:1px solid #EBEBEB; flex-shrink:0;">
           <div style="font-size:0.75rem; color:#A1A1AA;">
             <span style="color:#E11D48;">*</span> Required fields
@@ -286,19 +274,16 @@ require('modules/head.php');
   </div>
 
 
-  <!-- Table row styles -->
   <style>
     #corporateRidesBody tr { border-bottom:1px solid #F4F4F5; transition:background 0.12s; }
     #corporateRidesBody tr:hover { background:#FAFAFA; }
     #corporateRidesBody td { padding:14px 24px; font-size:0.845rem; color:#18181B; vertical-align:middle; border:none; }
   </style>
 
-  <!-- Fetch corporate rides from Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/js/pagination.js"></script>
 <script>
 
-  // ── MODAL FIX: manual init in case BS loads late ──────
   document.addEventListener('DOMContentLoaded', () => {
 
     const modalEl = document.getElementById('newCorporateModal');
@@ -567,13 +552,13 @@ require('modules/head.php');
           const fare = ride.fare ?? ride.price ?? null;
 
           return `<tr>
-            <td class="fw-semibold">${escapeHtml(company)}</td>
+            <td>${escapeHtml(company)}</td>
             <td>${escapeHtml(employee)}</td>
             <td style="color:#71717A; font-size:0.8rem; white-space:nowrap;">${escapeHtml(date)}</td>
             <td style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(pickup)}">${escapeHtml(pickup)}</td>
             <td style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(destination)}">${escapeHtml(destination)}</td>
             <td>${escapeHtml(payment)}</td>
-            <td class="fw-semibold">${fare ? 'EUR ' + Number(fare).toFixed(2) : '—'}</td>
+            <td>${fare ? '€' + Number(fare).toFixed(2) : '—'}</td>
             <td>
               <span class="rounded-pill px-2 py-1 fw-semibold"
                 style="font-size:0.72rem; background:${s.bg}; color:${s.color}; white-space:nowrap;">
