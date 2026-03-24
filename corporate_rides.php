@@ -295,6 +295,7 @@ require('modules/head.php');
 
   <!-- Fetch corporate rides from Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/pagination.js"></script>
 <script>
 
   // ── MODAL FIX: manual init in case BS loads late ──────
@@ -481,9 +482,19 @@ require('modules/head.php');
     }
 
     // ── LOAD CORPORATE RIDES TABLE ────────────────────
-    const CORP_PAGE_SIZE = 15;
+    const CORP_PAGE_SIZE = 10;
     let currentPage = 1;
     let currentSearch = '';
+    const corporatePagination = (typeof PaginationManager !== 'undefined')
+      ? new PaginationManager({
+          containerId: 'corporateRidesPagination',
+          page: 1,
+          limit: CORP_PAGE_SIZE,
+          total: 0,
+          maxVisiblePages: 7,
+          onPageChange: (page) => loadCorporateRides(page)
+        })
+      : null;
 
     function escapeHtml(value) {
       return String(value ?? '')
@@ -521,7 +532,11 @@ require('modules/head.php');
             <i class="bi bi-building d-block mb-2" style="font-size:1.5rem; color:#EBEBEB;"></i>
             <span style="font-size:0.845rem; color:#A1A1AA;">No corporate rides found${currentSearch ? ' for this search' : ''}</span>
           </td></tr>`;
-          document.getElementById('corporateRidesPagination').innerHTML = '';
+          if (corporatePagination) {
+            corporatePagination.update(0, 1);
+          } else {
+            document.getElementById('corporateRidesPagination').innerHTML = '';
+          }
           return;
         }
 
@@ -568,7 +583,11 @@ require('modules/head.php');
           </tr>`;
         }).join('');
 
-        renderPagination(total, page);
+        if (corporatePagination) {
+          corporatePagination.update(total, page);
+        } else {
+          renderPagination(total, page);
+        }
 
       } catch (err) {
         console.error('Corporate rides error:', err);
@@ -609,7 +628,7 @@ require('modules/head.php');
       el.innerHTML = html;
     }
 
-    // Expose for pagination buttons
+    // Expose fallback pagination function if shared component is unavailable
     window.corpGoTo = (page) => loadCorporateRides(page);
 
     let searchDebounce = null;
