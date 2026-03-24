@@ -33,6 +33,18 @@
       </a>
     </li>
 
+        <li class="nav-item">
+      <a href="order.php" class="nav-link sidebar-link d-flex align-items-center gap-2 fw-semibold text-body rounded-2 px-3 py-1"
+        style="font-size:0.92rem; color:#52525B; transition:all 0.15s;"
+        onmouseover="this.style.background='#FFF3E8'; this.style.color='#f37a20';"
+        onmouseout="this.style.background='transparent'; this.style.color='#52525B';">
+        <span class="d-flex align-items-center justify-content-center" style="width:30px; height:30px; background:#F4F4F5; border-radius:7px; flex-shrink:0; font-size:18px;">
+          <i class="bi bi-plus-circle"></i>
+        </span>
+        Create Order
+      </a>
+    </li>
+
     <li class="nav-item">
       <a href="preorder.php" class="nav-link sidebar-link d-flex align-items-center gap-2 fw-semibold text-body rounded-2 px-3 py-1"
         style="font-size:0.92rem; color:#52525B; transition:all 0.15s;"
@@ -45,15 +57,39 @@
       </a>
     </li>
 
-    <li class="nav-item">
-      <a href="corporate.php" class="nav-link sidebar-link d-flex align-items-center gap-2 fw-semibold text-body rounded-2 px-3 py-1"
+        <li class="nav-item">
+      <a href="map.php" class="nav-link sidebar-link d-flex align-items-center gap-2 fw-semibold text-body rounded-2 px-3 py-1"
         style="font-size:0.92rem; color:#52525B; transition:all 0.15s;"
         onmouseover="this.style.background='#FFF3E8'; this.style.color='#f37a20';"
         onmouseout="this.style.background='transparent'; this.style.color='#52525B';">
         <span class="d-flex align-items-center justify-content-center" style="width:30px; height:30px; background:#F4F4F5; border-radius:7px; flex-shrink:0; font-size:18px;">
-          <i class="bi bi-taxi-front"></i>
+          <i class="bi bi-map"></i>
         </span>
-        App Ride
+        Live Map
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a href="application_rides.php" class="nav-link sidebar-link d-flex align-items-center gap-2 fw-semibold text-body rounded-2 px-3 py-1"
+        style="font-size:0.92rem; color:#52525B; transition:all 0.15s;"
+        onmouseover="this.style.background='#FFF3E8'; this.style.color='#f37a20';"
+        onmouseout="this.style.background='transparent'; this.style.color='#52525B';">
+        <span class="d-flex align-items-center justify-content-center" style="width:30px; height:30px; background:#F4F4F5; border-radius:7px; flex-shrink:0; font-size:18px;">
+          <i class="bi bi-app-indicator"></i>
+        </span>
+        App Rides
+      </a>
+    </li>
+
+     <li class="nav-item">
+      <a href="corporate_rides.php" class="nav-link sidebar-link d-flex align-items-center gap-2 fw-semibold text-body rounded-2 px-3 py-1"
+        style="font-size:0.92rem; color:#52525B; transition:all 0.15s;"
+        onmouseover="this.style.background='#FFF3E8'; this.style.color='#f37a20';"
+        onmouseout="this.style.background='transparent'; this.style.color='#52525B';">
+        <span class="d-flex align-items-center justify-content-center" style="width:30px; height:30px; background:#F4F4F5; border-radius:7px; flex-shrink:0; font-size:18px;">
+          <i class="bi bi-buildings"></i>
+        </span>
+        Corporate Rides
       </a>
     </li>
 
@@ -63,9 +99,9 @@
         onmouseover="this.style.background='#FFF3E8'; this.style.color='#f37a20';"
         onmouseout="this.style.background='transparent'; this.style.color='#52525B';">
         <span class="d-flex align-items-center justify-content-center" style="width:30px; height:30px; background:#F4F4F5; border-radius:7px; flex-shrink:0; font-size:18px;">
-          <i class="bi bi-person-lines-fill"></i>
+          <i class="bi bi-gear"></i>
         </span>
-        Profile Setting
+        Setting
       </a>
     </li>
 
