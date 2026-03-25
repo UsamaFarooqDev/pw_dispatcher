@@ -22,7 +22,7 @@ require('modules/head.php');
           <button
             id="driverViewBtn"
             class="btn btn-sm fw-semibold d-flex align-items-center gap-2 px-3"
-            style="border-radius:6px; height:32px; font-size:0.9125rem; background:#fff; color:#18181B; border:none; box-shadow:0 1px 3px rgba(0,0,0,0.08);"
+            style="border-radius:6px; height:32px; font-size:0.9125rem; background:#f37a20; color:#ffff; border:none; box-shadow:0 1px 3px rgba(0,0,0,0.08);"
             onclick="switchTableView('driver')"
           >
             <i class="bi bi-person-badge" style="font-size:13px;"></i> Drivers
@@ -78,7 +78,8 @@ require('modules/head.php');
           </div>
         </div>
 
-        <div id="paginationContainer" class="mt-3"></div>
+<div id="driverPaginationContainer" class="mt-3"></div>
+<div id="passengerPaginationContainer" class="mt-3" style="display:none;"></div>
 
       </div>
     </div>
@@ -168,6 +169,8 @@ require('modules/head.php');
     const customerTable = document.getElementById('customerTable');
     const driverBtn     = document.getElementById('driverViewBtn');
     const customerBtn   = document.getElementById('customerViewBtn');
+      const driverPagination = document.getElementById('driverPaginationContainer');
+  const passengerPagination = document.getElementById('passengerPaginationContainer');
 
     if (!driverTable || !customerTable || !driverBtn || !customerBtn) return;
 
@@ -178,6 +181,9 @@ require('modules/head.php');
       customerTable.classList.remove('d-block');
       customerTable.classList.add('d-none');
 
+      if (driverPagination)    driverPagination.style.display    = 'block';
+      if (passengerPagination) passengerPagination.style.display = 'none';
+
       driverBtn.style.cssText  = 'border-radius:6px; height:32px; font-size:0.9125rem; background:#f37a20; color:#fff; border:none; box-shadow:0 1px 3px rgba(0,0,0,0.08);';
       customerBtn.style.cssText = 'border-radius:6px; height:32px; font-size:0.9125rem; background:transparent; color:#71717A; border:none; box-shadow:none;';
 
@@ -187,6 +193,9 @@ require('modules/head.php');
       customerTable.classList.add('d-block');
       driverTable.classList.remove('d-block');
       driverTable.classList.add('d-none');
+
+      if (passengerPagination) passengerPagination.style.display = 'block';
+      if (driverPagination)    driverPagination.style.display    = 'none';
 
       customerBtn.style.cssText = 'border-radius:6px; height:32px; font-size:0.9125rem; background:#f37a20; color:#fff; border:none; box-shadow:0 1px 3px rgba(0,0,0,0.08);';
       driverBtn.style.cssText   = 'border-radius:6px; height:32px; font-size:0.9125rem; background:transparent; color:#71717A; border:none; box-shadow:none;';

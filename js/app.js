@@ -22,11 +22,9 @@ document.addEventListener('DOMContentLoaded', function () {
     customerTable.classList.add('d-none');
   }
 
-  // Initialize pagination managers
-  const paginationContainer = document.getElementById('paginationContainer');
-  if (paginationContainer) {
+  if (document.getElementById('driverPaginationContainer')) {
     driverPagination = new PaginationManager({
-      containerId: 'paginationContainer',
+      containerId: 'driverPaginationContainer',
       page: 1,
       limit: ITEMS_PER_PAGE,
       total: 0,
@@ -34,9 +32,11 @@ document.addEventListener('DOMContentLoaded', function () {
         loadDriversData(page, limit);
       },
     });
+  }
 
+  if (document.getElementById('passengerPaginationContainer')) {
     passengerPagination = new PaginationManager({
-      containerId: 'paginationContainer',
+      containerId: 'passengerPaginationContainer',
       page: 1,
       limit: ITEMS_PER_PAGE,
       total: 0,
@@ -457,51 +457,6 @@ function switchTab(tabName) {
   // Here you can filter data based on tab selection
   // For now, we'll just reload all data
   loadAllData();
-}
-
-function switchTableView(viewType) {
-  const driverTable = document.getElementById('driverTable');
-  const customerTable = document.getElementById('customerTable');
-  const driverBtn = document.getElementById('driverViewBtn');
-  const customerBtn = document.getElementById('customerViewBtn');
-
-  if (viewType === 'driver') {
-    driverTable.classList.remove('d-none');
-    driverTable.classList.add('d-block');
-    customerTable.classList.remove('d-block');
-    customerTable.classList.add('d-none');
-
-    driverBtn.style.background = '#f37a20';
-    driverBtn.style.color = 'white';
-    driverBtn.style.borderColor = '#f37a20';
-    customerBtn.style.background = '#fff';
-    customerBtn.style.color = '#3b3b3b';
-    customerBtn.style.borderColor = '#3b3b3b';
-
-    // Load drivers data with pagination
-    const currentPage = driverPagination
-      ? driverPagination.getCurrentPage()
-      : 1;
-    loadDriversData(currentPage, ITEMS_PER_PAGE);
-  } else {
-    driverTable.classList.remove('d-block');
-    driverTable.classList.add('d-none');
-    customerTable.classList.remove('d-none');
-    customerTable.classList.add('d-block');
-
-    customerBtn.style.background = '#f37a20';
-    customerBtn.style.color = 'white';
-    customerBtn.style.borderColor = '#f37a20';
-    driverBtn.style.background = '#fff';
-    driverBtn.style.color = '#3b3b3b';
-    driverBtn.style.borderColor = '#3b3b3b';
-
-    // Load passengers data with pagination
-    const currentPage = passengerPagination
-      ? passengerPagination.getCurrentPage()
-      : 1;
-    loadPassengersData(currentPage, ITEMS_PER_PAGE);
-  }
 }
 
 function setupDashboardSearch() {

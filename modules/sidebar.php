@@ -146,8 +146,10 @@ document.addEventListener("DOMContentLoaded", function () {
 <style>
 .sidebar a.active i {
   color: #f37a20 !important;
+  background-color: #fff2e9 !important;
 }
 .sidebar-link.active {
   color: #f37a20 !important;
+  background-color: #fff2e9 !important;
 }
 </style>

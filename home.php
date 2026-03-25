@@ -22,14 +22,31 @@ require_once __DIR__ . '/auth/config.php';
   <main class="main-content p-4" style="background:#F4F4F5; min-height:92vh;">
 
     <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
-      <div>
-        <div style="font-size:0.75rem; color:#A1A1AA; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; margin-bottom:3px;">
-          <?php echo date('l, d F Y'); ?>
-        </div>
-        <h4 class="fw-bold m-0" style="font-size:1.3rem; color:#18181B; letter-spacing:-0.02em;">
-          Good <?php echo (date('H')<12)?'Morning':((date('H')<17)?'Afternoon':'Evening'); ?>, <?php echo htmlspecialchars(explode(' ',$user_name)[0] ?? 'Dispatcher'); ?> 👋
-        </h4>
-      </div>
+   <?php
+  $dublinTime = new DateTime('now', new DateTimeZone('Europe/Dublin'));
+  $hour       = (int) $dublinTime->format('H');
+  $dateStr    = $dublinTime->format('l, d F Y');
+
+  $greeting = $hour < 12 ? 'Morning' : ($hour < 17 ? 'Afternoon' : 'Evening');
+  $icon     = $hour < 12
+    ? '<i class="bi bi-sun-fill" style="color:#F59E0B; font-size:1.1rem;"></i>'
+    : ($hour < 17
+      ? '<i class="bi bi-brightness-high-fill" style="color:#f37a20; font-size:1.1rem;"></i>'
+      : '<i class="bi bi-moon-stars-fill" style="color:#6366F1; font-size:1rem;"></i>');
+
+  $firstName = htmlspecialchars(explode(' ', trim($user_name ?? ''))[0] ?? 'Dispatcher');
+?>
+
+<div>
+  <div style="font-size:0.72rem; color:#A1A1AA; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:4px;">
+    <?php echo $dateStr; ?>
+  </div>
+  <h4 class="fw-bold m-0 d-flex align-items-center gap-2" style="font-size:1.25rem; color:#18181B; letter-spacing:-0.02em; line-height:1.3;">
+    <?php echo $icon; ?>
+    Good <?php echo $greeting; ?>, <?php echo $firstName; ?>
+  </h4>
+</div>
+
       <div class="d-flex align-items-center gap-2 px-3 py-2 rounded-2" style="background:#fff; border:1.5px solid #EBEBEB; font-size:0.8rem; color:#52525B; font-weight:600;">
         <span style="width:8px; height:8px; border-radius:50%; background:#22C55E; flex-shrink:0; box-shadow:0 0 0 3px rgba(34,197,94,0.15);"></span>
         System Online
