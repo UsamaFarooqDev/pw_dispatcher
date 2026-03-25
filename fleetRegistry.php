@@ -38,8 +38,8 @@ require('modules/head.php');
         </div>
 
         <div id="driverTable" class="d-block mb-3" style="min-height:362px;">
-          <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB;">
-            <table class="table mb-0" style="border-collapse:collapse;">
+          <div class="table-responsive rounded-2" style="border:1px solid #EBEBEB;">
+            <table class="table mb-0" style="border-collapse:collapse; min-width:900px;">
               <thead>
                 <tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
                   <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
@@ -141,144 +141,64 @@ require('modules/head.php');
     }
   </style>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/pagination.js"></script>
-    <script src="js/app.js"></script>
-    <script>
-            document
-        .getElementById('sidebarToggle')
-        .addEventListener('click', function () {
-          document.querySelector('.sidebar').classList.toggle('active');
-        });
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/pagination.js"></script>
+<script src="js/app.js"></script>
+<script>
+  document.getElementById('sidebarToggle')?.addEventListener('click', function () {
+    document.querySelector('.sidebar')?.classList.toggle('active');
+  });
 
-      document.addEventListener('click', function (event) {
-        const sidebar = document.querySelector('.sidebar');
-        if (
-          window.innerWidth < 768 &&
-          !event.target.closest('.sidebar') &&
-          !event.target.closest('#sidebarToggle')
-        ) {
-          sidebar.classList.remove('active');
-        }
-      });
-
-      function toggleSidebar() {
-        console.log('Sidebar toggle functionality would go here');
-      }
-        // Toggle between Driver and Customer table views
-function switchTableView(view) {
-  const driverTable = document.getElementById('driverTable');
-  const customerTable = document.getElementById('customerTable');
-  const driverBtn = document.getElementById('driverViewBtn');
-  const customerBtn = document.getElementById('customerViewBtn');
-
-  if (view === 'driver') {
-    // Show Driver, Hide Customer
-    driverTable.classList.remove('d-none');
-    driverTable.classList.add('d-block');
-    customerTable.classList.remove('d-block');
-    customerTable.classList.add('d-none');
-
-    // Update button styles
-    driverBtn.style.backgroundColor = '#f37a20';
-    driverBtn.style.color = 'white';
-    driverBtn.style.borderColor = '#f37a20';
-
-    customerBtn.style.backgroundColor = '#fff';
-    customerBtn.style.color = '#3b3b3b';
-    customerBtn.style.borderColor = '#3b3b3b';
-  } else {
-    // Show Customer, Hide Driver
-    customerTable.classList.remove('d-none');
-    customerTable.classList.add('d-block');
-    driverTable.classList.remove('d-block');
-    driverTable.classList.add('d-none');
-
-    // Update button styles
-    customerBtn.style.backgroundColor = '#f37a20';
-    customerBtn.style.color = 'white';
-    customerBtn.style.borderColor = '#f37a20';
-
-    driverBtn.style.backgroundColor = '#fff';
-    driverBtn.style.color = '#3b3b3b';
-    driverBtn.style.borderColor = '#3b3b3b';
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  // Default to Driver view
-  switchTableView('driver');
-});
-
-  // Switch tab function
-  function switchTab(tabName) {
-    // Reset all tabs
-    document.querySelectorAll('.btn.btn-link').forEach(btn => {
-      btn.style.color = '#3b3b3b';
-      btn.style.borderBottom = 'none';
-    });
-    document.getElementById(tabName + 'Tab').style.color = '#f37a20';
-    document.getElementById(tabName + 'Tab').style.borderBottom = '3px solid #f37a20';
-
-    // Show correct data
-    const data = tabData[tabName];
-
-    // Render driver table
-    renderTable('driverTableBody', data.driver, 'driver');
-    // Render customer table
-    renderTable('customerTableBody', data.customer, 'customer');
-
-    // Toggle visibility of tables
-    document.getElementById('driverTable').style.display = 'block';
-    document.getElementById('customerTable').style.display = 'block'; // or 'none' if you want only one visible
-
-    // Optional: Update pagination count
-    updatePagination(data.driver.length);
-  }
-
-  // Render table rows
-  function renderTable(containerId, data, type) {
-    const tbody = document.getElementById(containerId);
-    tbody.innerHTML = '';
-
-    if (data.length === 0) {
-      if (type === 'passenger' || type === 'customer') {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4">No passengers to show</td></tr>`;
-      } else {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4">No drivers to show</td></tr>`;
-      }
-      return;
+  document.addEventListener('click', function (event) {
+    const sidebar = document.querySelector('.sidebar');
+    if (
+      window.innerWidth < 768 &&
+      sidebar &&
+      !event.target.closest('.sidebar') &&
+      !event.target.closest('#sidebarToggle')
+    ) {
+      sidebar.classList.remove('active');
     }
+  });
 
-    data.forEach(item => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td class="ps-3">
-          <input type="checkbox" class="form-check-output" />
-        </td>
-        <td>
-          <div class="d-flex align-items-center">
-              <div class="fw-medium small">${item.name}</div>
-          </div>
-        </td>
-        <td>${type === 'driver' ? item.car : item.service}</td>
-        <td>${item.time}</td>
-        <td>${type === 'driver' ? item.start : item.pickup}</td>
-        <td>${type === 'driver' ? item.end : item.dropoff}</td>
-        <td class="text-end pe-4">
-          <span class="text-success">${item.fare}</span>
-        </td>
-      `;
-      tbody.appendChild(row);
-    });
-  }
+  let passengersLoaded = false;
 
-      document.addEventListener('DOMContentLoaded', () => {
-        try {
-          if (typeof switchTableView === 'function') switchTableView('driver');
-          if (typeof switchTab === 'function') switchTab('onTrip');
-        } catch (e) {
-          console.error('Initialization error', e);
+  function switchTableView(view) {
+    const driverTable   = document.getElementById('driverTable');
+    const customerTable = document.getElementById('customerTable');
+    const driverBtn     = document.getElementById('driverViewBtn');
+    const customerBtn   = document.getElementById('customerViewBtn');
+
+    if (!driverTable || !customerTable || !driverBtn || !customerBtn) return;
+
+    if (view === 'driver') {
+
+      driverTable.classList.remove('d-none');
+      driverTable.classList.add('d-block');
+      customerTable.classList.remove('d-block');
+      customerTable.classList.add('d-none');
+
+      driverBtn.style.cssText  = 'border-radius:6px; height:32px; font-size:0.9125rem; background:#f37a20; color:#fff; border:none; box-shadow:0 1px 3px rgba(0,0,0,0.08);';
+      customerBtn.style.cssText = 'border-radius:6px; height:32px; font-size:0.9125rem; background:transparent; color:#71717A; border:none; box-shadow:none;';
+
+    } else {
+
+      customerTable.classList.remove('d-none');
+      customerTable.classList.add('d-block');
+      driverTable.classList.remove('d-block');
+      driverTable.classList.add('d-none');
+
+      customerBtn.style.cssText = 'border-radius:6px; height:32px; font-size:0.9125rem; background:#f37a20; color:#fff; border:none; box-shadow:0 1px 3px rgba(0,0,0,0.08);';
+      driverBtn.style.cssText   = 'border-radius:6px; height:32px; font-size:0.9125rem; background:transparent; color:#71717A; border:none; box-shadow:none;';
+
+      if (!passengersLoaded) {
+        if (typeof loadPassengersData === 'function') {
+          loadPassengersData(1);
+          passengersLoaded = true;
+        } else {
+          console.error('loadPassengersData is not defined — check app.js is loaded correctly');
         }
-      });
-    </script>
+      }
+    }
+  }
+</script>
