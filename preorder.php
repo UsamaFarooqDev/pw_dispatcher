@@ -101,10 +101,11 @@ require('modules/head.php');
 
       </div>
 
-      <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
-        <table class="table mb-0" style="border-collapse:collapse;">
-          <thead>
-            <tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
+      <!-- Unassigned -->
+      <div id="pane-unassigned" class="tab-pane-table">
+        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
+          <table class="table mb-0" style="border-collapse:collapse;">
+            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
@@ -112,14 +113,131 @@ require('modules/head.php');
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;" id="actionHeader">Action</th>
-            </tr>
-          </thead>
-          <tbody id="unassignedRidesBody"></tbody>
-          <tbody id="assignedRidesBody" style="display:none;"></tbody>
-          <tbody id="scheduledRidesBody" style="display:none;"></tbody>
-          <tbody id="cancelledRidesBody" style="display:none;"></tbody>
-          <tbody id="completedRidesBody" style="display:none;"></tbody>
-        </table>
+            </tr></thead>
+            <tbody id="unassignedRidesBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Assigned -->
+      <div id="pane-assigned" class="tab-pane-table" style="display:none;">
+        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
+          <table class="table mb-0" style="border-collapse:collapse;">
+            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Action</th>
+            </tr></thead>
+            <tbody id="assignedRidesBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- On Trip -->
+      <div id="pane-ontrip" class="tab-pane-table" style="display:none;">
+        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
+          <table class="table mb-0" style="border-collapse:collapse;">
+            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
+            </tr></thead>
+            <tbody id="onTripRidesBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Scheduled -->
+      <div id="pane-scheduled" class="tab-pane-table" style="display:none;">
+        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
+          <table class="table mb-0" style="border-collapse:collapse;">
+            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
+            </tr></thead>
+            <tbody id="scheduledRidesBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Cancelled -->
+      <div id="pane-cancelled" class="tab-pane-table" style="display:none;">
+        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
+          <table class="table mb-0" style="border-collapse:collapse;">
+            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
+            </tr></thead>
+            <tbody id="cancelledRidesBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Completed -->
+      <div id="pane-completed" class="tab-pane-table" style="display:none;">
+        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
+          <table class="table mb-0" style="border-collapse:collapse;">
+            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
+            </tr></thead>
+            <tbody id="completedRidesBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Unpaid -->
+      <div id="pane-unpaid" class="tab-pane-table" style="display:none;">
+        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
+          <table class="table mb-0" style="border-collapse:collapse;">
+            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
+            </tr></thead>
+            <tbody id="unpaidRidesBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- All Mine -->
+      <div id="pane-allmine" class="tab-pane-table" style="display:none;">
+        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
+          <table class="table mb-0" style="border-collapse:collapse;">
+            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Action</th>
+            </tr></thead>
+            <tbody id="allMineRidesBody"></tbody>
+          </table>
+        </div>
       </div>
 
       <div id="preorderPaginationContainer" class="mt-3"></div>
@@ -172,9 +290,12 @@ require('modules/head.php');
       let currentRidesData = {
         unassigned: [],
         assigned: [],
+        ontrip: [],
         scheduled: [],
         cancelled: [],
-        completed: []
+        completed: [],
+        unpaid: [],
+        allmine: []
       }; // Cache current rides data to detect changes
       
       // Pagination
@@ -183,8 +304,12 @@ require('modules/head.php');
       let currentTab = 'unassigned'; // Track current active tab
 
       document.addEventListener('DOMContentLoaded', function () {
+        // Setup tab switching first — must always run regardless of other errors
+        setupTabSwitching();
+        setupPreorderSearch();
+
+        // Initialize pagination
         try {
-          // Initialize pagination
           const paginationContainer = document.getElementById('preorderPaginationContainer');
           if (paginationContainer && typeof PaginationManager !== 'undefined') {
             preorderPagination = new PaginationManager({
@@ -196,40 +321,28 @@ require('modules/head.php');
                 updateTableForCurrentTab(page, limit);
               }
             });
-          } else if (!paginationContainer) {
-            console.warn('Pagination container not found');
-          } else if (typeof PaginationManager === 'undefined') {
-            console.warn('PaginationManager not loaded. Make sure pagination.js is loaded before this script.');
           }
-          
-          // Load beeping state from global monitor
-          if (window.BeepMonitor) {
-            window.BeepMonitor.loadBeepingState();
-            beepingRideIds = new Set(window.BeepMonitor.getBeepingRideIds());
-          }
-          // Initial load - show loading state
-          loadUnassignedRides(true);
-          loadAssignedRides(true);
-          loadScheduledRides(true);
-          loadCancelledRides(true);
-          loadCompletedRides(true);
-          // Start polling for ride status updates (silent - no UI reload)
-          startPolling();
-
-          toggleActionColumn(true);
-          
-          // Setup tab switching
-          setupTabSwitching();
-          setupPreorderSearch();
-        } catch (error) {
-          console.error('Error initializing page:', error);
-          // Still try to load data even if pagination fails
-          loadUnassignedRides(true);
-          loadAssignedRides(true);
-          loadScheduledRides(true);
-          loadCancelledRides(true);
-          loadCompletedRides(true);
+        } catch (e) {
+          console.warn('Pagination init error:', e);
         }
+
+        // Sync beeping state
+        if (window.BeepMonitor) {
+          beepingRideIds = new Set(window.BeepMonitor.getBeepingRideIds());
+        }
+
+        // Load all tab data
+        loadUnassignedRides(true);
+        loadAssignedRides(true);
+        loadOnTripRides(true);
+        loadScheduledRides(true);
+        loadCancelledRides(true);
+        loadCompletedRides(true);
+        loadUnpaidRides(true);
+        loadAllMineRides(true);
+
+        // Start polling
+        startPolling();
       });
 
       // Cleanup on page unload
@@ -665,9 +778,8 @@ require('modules/head.php');
       }
 
       function updateUnassignedTabCount(count) {
-        const unassignedTab = document.getElementById('tab-unassigned');
-        if (!unassignedTab) return;
-        unassignedTab.textContent = `Unassigned (${count})`;
+        const badge = document.getElementById('count-unassigned');
+        if (badge) badge.textContent = count;
       }
 
       function updatePaginationInfo(totalItems) {
@@ -683,32 +795,43 @@ require('modules/head.php');
           const start = (page - 1) * limit;
           const end = start + limit;
           const paginatedRides = rides.slice(start, end);
-          
+
           if (currentTab === 'unassigned') {
             populateUnassignedTable(paginatedRides);
           } else if (currentTab === 'assigned') {
             populateAssignedTable(paginatedRides);
+          } else if (currentTab === 'ontrip') {
+            populateOnTripTable(paginatedRides);
           } else if (currentTab === 'scheduled') {
             populateScheduledTable(paginatedRides);
           } else if (currentTab === 'cancelled') {
             populateCancelledTable(paginatedRides);
           } else if (currentTab === 'completed') {
             populateCompletedTable(paginatedRides);
+          } else if (currentTab === 'unpaid') {
+            populateUnpaidTable(paginatedRides);
+          } else if (currentTab === 'allmine') {
+            populateAllMineTable(paginatedRides);
           }
         } catch (error) {
           console.error('Error in updateTableForCurrentTab:', error);
-          // Fallback: populate all rides for current tab
           const rides = currentRidesData[currentTab] || [];
           if (currentTab === 'unassigned') {
             populateUnassignedTable(rides);
           } else if (currentTab === 'assigned') {
             populateAssignedTable(rides);
+          } else if (currentTab === 'ontrip') {
+            populateOnTripTable(rides);
           } else if (currentTab === 'scheduled') {
             populateScheduledTable(rides);
           } else if (currentTab === 'cancelled') {
             populateCancelledTable(rides);
           } else if (currentTab === 'completed') {
             populateCompletedTable(rides);
+          } else if (currentTab === 'unpaid') {
+            populateUnpaidTable(rides);
+          } else if (currentTab === 'allmine') {
+            populateAllMineTable(rides);
           }
         }
       }
@@ -792,122 +915,47 @@ require('modules/head.php');
       }
 
       function updateAssignedTabCount(count) {
-        const assignedTab = document.getElementById('tab-assigned');
-        if (!assignedTab) return;
-        assignedTab.textContent = `Assigned (${count})`;
+        const badge = document.getElementById('count-assigned');
+        if (badge) badge.textContent = count;
       }
 
+      const TAB_CONFIG = [
+        { btnId: 'tab-unassigned', paneId: 'pane-unassigned', key: 'unassigned', action: true },
+        { btnId: 'tab-assigned',   paneId: 'pane-assigned',   key: 'assigned',   action: true },
+        { btnId: 'tab-on-trip',    paneId: 'pane-ontrip',     key: 'ontrip',     action: false },
+        { btnId: 'tab-scheduled',  paneId: 'pane-scheduled',  key: 'scheduled',  action: false },
+        { btnId: 'tab-cancelled',  paneId: 'pane-cancelled',  key: 'cancelled',  action: false },
+        { btnId: 'tab-finished',   paneId: 'pane-completed',  key: 'completed',  action: false },
+        { btnId: 'tab-unpaid',     paneId: 'pane-unpaid',     key: 'unpaid',     action: false },
+        { btnId: 'tab-all-mine',   paneId: 'pane-allmine',    key: 'allmine',    action: true },
+      ];
+
       function setupTabSwitching() {
-        const unassignedTab = document.getElementById('tab-unassigned');
-        const assignedTab = document.getElementById('tab-assigned');
-        const scheduledTab = document.getElementById('tab-scheduled');
-        const cancelledTab = document.getElementById('tab-cancelled');
-        const completedTab = document.getElementById('tab-finished');
-        const unassignedBody = document.getElementById('unassignedRidesBody');
-        const assignedBody = document.getElementById('assignedRidesBody');
-        const scheduledBody = document.getElementById('scheduledRidesBody');
-        const cancelledBody = document.getElementById('cancelledRidesBody');
-        const completedBody = document.getElementById('completedRidesBody');
-
-        function clearAllTabStyles() {
-          [unassignedTab, assignedTab, scheduledTab, cancelledTab, completedTab].forEach((t) => {
-            if (t) {
-              t.style.color = '#3b3b3b';
-              t.style.borderBottom = 'none';
-            }
+        function clearAllTabs() {
+          TAB_CONFIG.forEach(({ btnId, paneId }) => {
+            const btn = document.getElementById(btnId);
+            const pane = document.getElementById(paneId);
+            if (btn) { btn.classList.remove('active-tab'); btn.style.color = '#71717A'; }
+            if (pane) pane.style.display = 'none';
           });
         }
 
-        function hideAllBodies() {
-          [unassignedBody, assignedBody, scheduledBody, cancelledBody, completedBody].forEach((b) => {
-            if (b) b.style.display = 'none';
-          });
-        }
-
-        if (unassignedTab) {
-          unassignedTab.addEventListener('click', () => {
-            currentTab = 'unassigned';
-            toggleActionColumn(true);
-            clearAllTabStyles();
-            unassignedTab.style.color = '#f37a20';
-            unassignedTab.style.borderBottom = '3px solid #f37a20';
-            hideAllBodies();
-            if (unassignedBody) unassignedBody.style.display = '';
-            const rides = currentRidesData.unassigned || [];
+        TAB_CONFIG.forEach(({ btnId, paneId, key, action }) => {
+          const btn = document.getElementById(btnId);
+          const pane = document.getElementById(paneId);
+          if (!btn) return;
+          btn.addEventListener('click', () => {
+            currentTab = key;
+            clearAllTabs();
+            btn.classList.add('active-tab');
+            if (pane) pane.style.display = '';
+            const rides = currentRidesData[key] || [];
             if (preorderPagination) {
               preorderPagination.update(rides.length, 1);
               updateTableForCurrentTab(1, ITEMS_PER_PAGE);
             }
           });
-        }
-
-        if (assignedTab) {
-          assignedTab.addEventListener('click', () => {
-            currentTab = 'assigned';
-            toggleActionColumn(true);
-            clearAllTabStyles();
-            assignedTab.style.color = '#f37a20';
-            assignedTab.style.borderBottom = '3px solid #f37a20';
-            hideAllBodies();
-            if (assignedBody) assignedBody.style.display = '';
-            const rides = currentRidesData.assigned || [];
-            if (preorderPagination) {
-              preorderPagination.update(rides.length, 1);
-              updateTableForCurrentTab(1, ITEMS_PER_PAGE);
-            }
-          });
-        }
-
-        if (scheduledTab) {
-          scheduledTab.addEventListener('click', () => {
-            currentTab = 'scheduled';
-            toggleActionColumn(false);
-            clearAllTabStyles();
-            scheduledTab.style.color = '#f37a20';
-            scheduledTab.style.borderBottom = '3px solid #f37a20';
-            hideAllBodies();
-            if (scheduledBody) scheduledBody.style.display = '';
-            const rides = currentRidesData.scheduled || [];
-            if (preorderPagination) {
-              preorderPagination.update(rides.length, 1);
-              updateTableForCurrentTab(1, ITEMS_PER_PAGE);
-            }
-          });
-        }
-
-        if (cancelledTab) {
-          cancelledTab.addEventListener('click', () => {
-            currentTab = 'cancelled';
-            toggleActionColumn(false);
-            clearAllTabStyles();
-            cancelledTab.style.color = '#f37a20';
-            cancelledTab.style.borderBottom = '3px solid #f37a20';
-            hideAllBodies();
-            if (cancelledBody) cancelledBody.style.display = '';
-            const rides = currentRidesData.cancelled || [];
-            if (preorderPagination) {
-              preorderPagination.update(rides.length, 1);
-              updateTableForCurrentTab(1, ITEMS_PER_PAGE);
-            }
-          });
-        }
-
-        if (completedTab) {
-          completedTab.addEventListener('click', () => {
-            currentTab = 'completed';
-            toggleActionColumn(false);
-            clearAllTabStyles();
-            completedTab.style.color = '#f37a20';
-            completedTab.style.borderBottom = '3px solid #f37a20';
-            hideAllBodies();
-            if (completedBody) completedBody.style.display = '';
-            const rides = currentRidesData.completed || [];
-            if (preorderPagination) {
-              preorderPagination.update(rides.length, 1);
-              updateTableForCurrentTab(1, ITEMS_PER_PAGE);
-            }
-          });
-        }
+        });
       }
 
       async function loadScheduledRides(showLoading = false) {
@@ -986,9 +1034,8 @@ require('modules/head.php');
       }
 
       function updateScheduledTabCount(count) {
-        const scheduledTab = document.getElementById('tab-scheduled');
-        if (!scheduledTab) return;
-        scheduledTab.textContent = `Scheduled (${count})`;
+        const badge = document.getElementById('count-scheduled');
+        if (badge) badge.textContent = count;
       }
 
       async function loadCancelledRides(showLoading = false) {
@@ -1052,9 +1099,8 @@ require('modules/head.php');
       }
 
       function updateCancelledTabCount(count) {
-        const tab = document.getElementById('tab-cancelled');
-        if (!tab) return;
-        tab.textContent = `Cancelled (${count})`;
+        const badge = document.getElementById('count-cancelled');
+        if (badge) badge.textContent = count;
       }
 
       async function loadCompletedRides(showLoading = false) {
@@ -1137,12 +1183,18 @@ require('modules/head.php');
           tbodyId = 'unassignedRidesBody';
         } else if (currentTab === 'assigned') {
           tbodyId = 'assignedRidesBody';
+        } else if (currentTab === 'ontrip') {
+          tbodyId = 'onTripRidesBody';
         } else if (currentTab === 'scheduled') {
           tbodyId = 'scheduledRidesBody';
         } else if (currentTab === 'cancelled') {
           tbodyId = 'cancelledRidesBody';
         } else if (currentTab === 'completed') {
           tbodyId = 'completedRidesBody';
+        } else if (currentTab === 'unpaid') {
+          tbodyId = 'unpaidRidesBody';
+        } else if (currentTab === 'allmine') {
+          tbodyId = 'allMineRidesBody';
         }
 
         if (!tbodyId) return;
@@ -1184,9 +1236,91 @@ require('modules/head.php');
       }
 
       function updateCompletedTabCount(count) {
-        const tab = document.getElementById('tab-finished');
+        const badge = document.getElementById('count-finished');
+        if (badge) badge.textContent = count;
+      }
+
+      async function loadOnTripRides(showLoading = false) {
+        try {
+          const response = await fetch('api/get_rides.php?page=1&limit=1000');
+          if (response.status === 401) { window.location.href = '/'; return; }
+          if (!response.ok) throw new Error('Failed to fetch rides from server');
+          const result = await response.json();
+          if (!result.success) throw new Error(result.error || 'Failed to fetch rides');
+          const rides = result && result.data ? result.data : [];
+          const onTripRides = rides.filter((ride) => {
+            const status = (ride.status || '').toLowerCase();
+            return status === 'on_trip' || status === 'ongoing' || status === 'in_progress' || status === 'ontrip';
+          });
+          currentRidesData.ontrip = onTripRides;
+          updateOnTripTabCount(onTripRides.length);
+          if (currentTab === 'ontrip') {
+            updatePaginationInfo(onTripRides.length);
+            const currentPage = preorderPagination ? preorderPagination.getCurrentPage() : 1;
+            updateTableForCurrentTab(currentPage, ITEMS_PER_PAGE);
+          }
+        } catch (error) {
+          console.error('Error loading on-trip rides:', error);
+          updateOnTripTabCount(0);
+        }
+      }
+
+      function populateOnTripTable(rides) {
+        const tbody = document.getElementById('onTripRidesBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        if (!rides || rides.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No on-trip rides to show</td></tr>';
+          return;
+        }
+        rides.forEach((ride) => {
+          const name = ride.passenger_name || 'N/A';
+          const orderTime = formatOrderTime(ride.created_at);
+          const pickup = ride.pickup_addr || ride.actual_start_addr || 'N/A';
+          const destination = ride.dest_addr || ride.actual_end_addr || 'N/A';
+          const status = ride.status || 'N/A';
+          const fare = formatFare(ride.fare_eur, ride.estimate_fare);
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td class="ps-3">${name}</td>
+            <td>${orderTime}</td>
+            <td>${pickup}</td>
+            <td>${destination}</td>
+            <td>${status}</td>
+            <td class="text-end pe-4">${fare}</td>
+          `;
+          tbody.appendChild(row);
+        });
+        applyPreorderSearchFilterForCurrentTab();
+      }
+
+      function updateOnTripTabCount(count) {
+        const tab = document.getElementById('tab-on-trip');
         if (!tab) return;
-        tab.textContent = `Completed (${count})`;
+        const badge = tab.querySelector('#count-on-trip');
+        if (badge) badge.textContent = count;
+      }
+
+      function loadUnpaidRides() {
+        currentRidesData.unpaid = [];
+        const badge = document.getElementById('count-unpaid');
+        if (badge) badge.textContent = 0;
+      }
+
+      function populateUnpaidTable() {
+        const tbody = document.getElementById('unpaidRidesBody');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Coming soon</td></tr>';
+      }
+
+      function loadAllMineRides() {
+        currentRidesData.allmine = [];
+        const badge = document.getElementById('count-all-mine');
+        if (badge) badge.textContent = 0;
+      }
+
+      function populateAllMineTable() {
+        const tbody = document.getElementById('allMineRidesBody');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Coming soon</td></tr>';
       }
 
     </script>
