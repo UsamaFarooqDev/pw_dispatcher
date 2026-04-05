@@ -49,7 +49,7 @@ require_once __DIR__ . '/auth/config.php';
 
       <div class="d-flex align-items-center gap-2 px-3 py-2 rounded-2" style="background:#fff; border:1.5px solid #EBEBEB; font-size:0.8rem; color:#52525B; font-weight:600;">
         <span style="width:8px; height:8px; border-radius:50%; background:#22C55E; flex-shrink:0; box-shadow:0 0 0 3px rgba(34,197,94,0.15);"></span>
-        System Online
+        System ofline
       </div>
     </div>
 
