@@ -14,10 +14,16 @@ require_once $mailerBase . '/PHPMailer.php';
 require_once $mailerBase . '/SMTP.php';
 
 /** SMTP config – same as reminderemail.php (PowerCabs) */
-define('MAIL_HOST', 'mail.powercabs.ie');
-define('MAIL_USERNAME', 'admin@powercabs.ie');
-define('MAIL_PASSWORD', 'Pwcabs@_1234');
-define('MAIL_FROM_ADDRESS', 'admin@powercabs.ie');
+// define('MAIL_HOST', 'mail.powercabs.ie');
+// define('MAIL_USERNAME', 'admin@powercabs.ie');
+// define('MAIL_PASSWORD', 'Pwcabs@_1234');
+// define('MAIL_FROM_ADDRESS', 'admin@powercabs.ie');
+// define('MAIL_FROM_NAME', 'PowerCabs Admin');
+
+define('MAIL_HOST', 'smtp.gmail.com');
+define('MAIL_USERNAME', 'arsalar286@gmail.com');
+define('MAIL_PASSWORD', 'qrpa qtqt qwgr zvus');
+define('MAIL_FROM_ADDRESS', 'arsalar286@gmail.com');
 define('MAIL_FROM_NAME', 'PowerCabs Admin');
 
 /**
@@ -45,8 +51,7 @@ function sendRideAssignedEmail($passengerEmail, $passengerName, $pickupAddr, $de
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
-        // Log SMTP conversation to PHP error log for debugging delivery issues.
-        $mail->SMTPDebug = SMTP::DEBUG_SERVER;
+        $mail->SMTPDebug   = SMTP::DEBUG_OFF;
         $mail->Debugoutput = function ($str, $level) {
             error_log("PHPMailer debug (level {$level}): {$str}");
         };
@@ -56,15 +61,19 @@ function sendRideAssignedEmail($passengerEmail, $passengerName, $pickupAddr, $de
         $mail->Password   = MAIL_PASSWORD;
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
+        $mail->Timeout    = 20;
 
         $mail->setFrom(MAIL_FROM_ADDRESS, MAIL_FROM_NAME);
         $mail->addAddress($passengerEmail);
+        $mail->addReplyTo(MAIL_FROM_ADDRESS, MAIL_FROM_NAME);
         $mail->isHTML(true);
-        $mail->Subject = 'Your ride has been assigned – PowerCabs';
-        $mail->CharSet = 'UTF-8';
+        $mail->CharSet  = PHPMailer::CHARSET_UTF8;
+        $mail->Encoding = PHPMailer::ENCODING_BASE64;
+        $mail->Subject  = 'Your ride has been assigned - PowerCabs';
 
         $body = buildRideAssignedBody($passengerName, $pickupAddr, $destAddr, $rideType, $fareEur, $templateDir);
-        $mail->Body = $body;
+        $mail->Body    = $body;
+        $mail->AltBody = buildRideAssignedAltBody($passengerName, $pickupAddr, $destAddr, $rideType, $fareEur);
 
         $mail->send();
         return true;
@@ -72,6 +81,32 @@ function sendRideAssignedEmail($passengerEmail, $passengerName, $pickupAddr, $de
         error_log('Ride-assigned email error: ' . $mail->ErrorInfo);
         return $mail->ErrorInfo;
     }
+}
+
+/**
+ * Plain-text alternative body. Required for good deliverability — mailers
+ * without AltBody get higher spam scores and are frequently dropped.
+ */
+function buildRideAssignedAltBody($passengerName, $pickupAddr, $destAddr, $rideType, $fareEur) {
+    $name   = $passengerName ?: 'Passenger';
+    $pickup = $pickupAddr    ?: '-';
+    $dest   = $destAddr      ?: '-';
+    $type   = $rideType      ?: '-';
+    $fare   = ($fareEur !== '' && $fareEur !== null) ? ('EUR ' . $fareEur) : '-';
+
+    return "Hi {$name},\n\n"
+        . "Your PowerCabs ride has been confirmed.\n\n"
+        . "TRIP DETAILS\n"
+        . "------------\n"
+        . "Pick-up:  {$pickup}\n"
+        . "Drop-off: {$dest}\n"
+        . "Service:  {$type}\n"
+        . "Fare:     {$fare}\n\n"
+        . "Please be ready at your pickup location 5 minutes before the scheduled time.\n"
+        . "The fare shown is an estimate; tolls, waiting time and route changes may affect the final amount.\n\n"
+        . "Questions? Call +353 1 500 0000 or email support@powercabs.ie.\n\n"
+        . "Thank you for choosing PowerCabs.\n"
+        . "-- PowerCabs Ireland";
 }
 
 /**

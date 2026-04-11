@@ -15,9 +15,14 @@ $page_titles = [
 
 $page_title = isset($page_titles[$current_page]) ? $page_titles[$current_page] : 'Dashboard';
 
-$user_name = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : 'John Doe';
-$user_email = isset($_SESSION['user_email']) ? $_SESSION['user_email'] : 'john@powercabs.com';
+$user_name = isset($_SESSION['user_name']) && $_SESSION['user_name'] !== '' ? $_SESSION['user_name'] : '';
+$user_email = isset($_SESSION['user_email']) && $_SESSION['user_email'] !== '' ? $_SESSION['user_email'] : (isset($_SESSION['user']['email']) ? $_SESSION['user']['email'] : '');
 $profile_image = isset($_SESSION['profile_image']) ? $_SESSION['profile_image'] : '';
+
+if ($user_name === '' && $user_email !== '') {
+    $emailParts = explode('@', $user_email);
+    $user_name = ucfirst($emailParts[0]);
+}
 ?>
 
 <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top px-4" style="height:52px; box-shadow: 0 1px 0 #EBEBEB, 0 4px 20px rgba(0,0,0,0.05); z-index:1030;">
@@ -91,8 +96,8 @@ $profile_image = isset($_SESSION['profile_image']) ? $_SESSION['profile_image'] 
       <ul class="dropdown-menu dropdown-menu-end mt-1 p-1" style="min-width:210px; border:1px solid #EBEBEB; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.10);">
         <li>
           <div class="px-3 py-2 mb-1" style="border-bottom:1px solid #EBEBEB;">
-            <div class="fw-bold" style="font-size:0.875rem; color:#18181B;"><?php echo htmlspecialchars($user_name); ?></div>
-            <div style="font-size:0.72rem; color:#A1A1AA;"><?php echo htmlspecialchars($user_email ?? ''); ?></div>
+            <div id="dropdownUserName" class="fw-bold text-truncate" style="font-size:0.875rem; color:#18181B;"><?php echo htmlspecialchars($user_name); ?></div>
+            <div id="dropdownUserEmail" class="text-truncate" style="font-size:0.72rem; color:#A1A1AA;"><?php echo htmlspecialchars($user_email ?? ''); ?></div>
           </div>
         </li>
         <li>
@@ -161,14 +166,19 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
       if (json.success && json.data) {
-        // Update name and email
+        const name = json.data.name || 'User';
+        const email = json.data.email || '';
         const nameEl = document.getElementById('navbarUserName');
-        const emailEl = document.getElementById('navbarUserEmail');
+        const dropdownNameEl = document.getElementById('dropdownUserName');
+        const dropdownEmailEl = document.getElementById('dropdownUserEmail');
+        const greetingEl = document.getElementById('homeGreetingFirstName');
         const avatarImg = document.getElementById('navbarAvatarImg');
         const avatarInitials = document.getElementById('navbarAvatarInitials');
-        
-        if (nameEl) nameEl.textContent = json.data.name || 'User';
-        if (emailEl) emailEl.textContent = json.data.email || '';
+
+        if (nameEl) nameEl.textContent = name;
+        if (dropdownNameEl) dropdownNameEl.textContent = name;
+        if (dropdownEmailEl) dropdownEmailEl.textContent = email;
+        if (greetingEl) greetingEl.textContent = (name.split(' ')[0] || 'Dispatcher');
         
         // Update avatar
         if (json.data.profile_image) {

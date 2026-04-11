@@ -729,7 +729,10 @@ require('modules/head.php');
                 <td>${status}</td>
                 <td class="text-end pe-4">${fare}</td>
                 <td class="text-end pe-4">
-                  <a href="orderassigned.php?id=${rideId}" class="text-decoration-none" style="color: #f37a20;">View Details</a>
+                  <a href="orderassigned.php?id=${rideId}" class="view-details-btn">
+                    <span>View Details</span>
+                    <i class="bi bi-chevron-right"></i>
+                  </a>
                 </td>
               `;
               tbody.appendChild(row);
@@ -905,7 +908,10 @@ require('modules/head.php');
             <td>${status}</td>
             <td class="text-end pe-4">${fare}</td>
             <td class="text-end pe-4">
-              <a href="preorder/${ride.id}" class="text-decoration-none" style="color: #f37a20;">View Details</a>
+              <a href="preorder/${ride.id}" class="view-details-btn">
+                <span>View Details</span>
+                <i class="bi bi-chevron-right"></i>
+              </a>
             </td>
           `;
           tbody.appendChild(row);

@@ -160,14 +160,24 @@ require('modules/head.php');
             </div>
           </div>
 
-          <button class="btn w-100 d-flex align-items-center justify-content-center gap-2 fw-semibold" id="assignDriverBtn"
-            style="height:40px; background:#f37a20; color:#fff; border:none; border-radius:8px; font-size:0.875rem; box-shadow:0 4px 14px rgba(243,122,32,0.35);"
-            onmouseover="this.style.background='#d96010';"
-            onmouseout="this.style.background='#f37a20';">
-            <i class="bi bi-person-check" style="font-size:15px;"></i>
-            <span id="btnText">Assign Driver</span>
-            <span id="btnSpinner" class="spinner-border spinner-border-sm" style="display:none;" role="status" aria-hidden="true"></span>
-          </button>
+          <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn d-flex align-items-center justify-content-center gap-2 fw-semibold px-3" id="cancelRideBtn"
+              style="height:40px; background:#fff; color:#E11D48; border:1.5px solid #E11D48; border-radius:8px; font-size:0.875rem; white-space:nowrap; transition:all 0.15s;"
+              onmouseover="this.style.background='#E11D48'; this.style.color='#fff';"
+              onmouseout="this.style.background='#fff'; this.style.color='#E11D48';">
+              <i class="bi bi-x-circle" style="font-size:15px;"></i>
+              <span id="cancelBtnText">Cancel Ride</span>
+              <span id="cancelBtnSpinner" class="spinner-border spinner-border-sm" style="display:none;" role="status" aria-hidden="true"></span>
+            </button>
+            <button class="btn flex-grow-1 d-flex align-items-center justify-content-center gap-2 fw-semibold" id="assignDriverBtn"
+              style="height:40px; background:#f37a20; color:#fff; border:none; border-radius:8px; font-size:0.875rem; box-shadow:0 4px 14px rgba(243,122,32,0.35);"
+              onmouseover="this.style.background='#d96010';"
+              onmouseout="this.style.background='#f37a20';">
+              <i class="bi bi-person-check" style="font-size:15px;"></i>
+              <span id="btnText">Assign Driver</span>
+              <span id="btnSpinner" class="spinner-border spinner-border-sm" style="display:none;" role="status" aria-hidden="true"></span>
+            </button>
+          </div>
 
         </div>
       </div>
@@ -203,6 +213,38 @@ require('modules/head.php');
     </div>
   </div>
 </main>
+
+<div class="modal fade" id="cancelRideModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 p-4 text-center" style="border-radius:14px; max-width:420px; margin:auto; box-shadow:0 20px 50px rgba(0,0,0,0.15);">
+
+      <div class="d-flex align-items-center justify-content-center mx-auto mb-3"
+        style="width:60px; height:60px; background:#FFF1F2; border-radius:50%;">
+        <i class="bi bi-exclamation-triangle-fill" style="font-size:1.7rem; color:#E11D48;"></i>
+      </div>
+      <h5 class="fw-bold mb-1" style="color:#18181B; font-size:1.0625rem;">Cancel this ride?</h5>
+      <p class="mb-4" style="font-size:0.875rem; color:#71717A; line-height:1.5;">This ride will be marked as <strong style="color:#18181B;">Cancelled</strong> and cannot be reverted. The passenger will be notified.</p>
+
+      <div class="d-flex justify-content-center gap-2">
+        <button type="button" class="btn fw-semibold px-4"
+          style="height:40px; background:#fff; color:#18181B; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.875rem;"
+          onmouseover="this.style.borderColor='#18181B';"
+          onmouseout="this.style.borderColor='#EBEBEB';"
+          data-bs-dismiss="modal">Keep Ride
+        </button>
+        <button type="button" class="btn fw-semibold px-4 d-inline-flex align-items-center justify-content-center gap-2" id="confirmCancelRideBtn"
+          style="height:40px; background:#E11D48; color:#fff; border:none; border-radius:8px; font-size:0.875rem;"
+          onmouseover="this.style.background='#BE123C';"
+          onmouseout="this.style.background='#E11D48';">
+          <i class="bi bi-x-circle" style="font-size:14px;"></i>
+          <span id="confirmCancelText">Yes, Cancel Ride</span>
+          <span id="confirmCancelSpinner" class="spinner-border spinner-border-sm" style="display:none;" role="status" aria-hidden="true"></span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 <div class="modal fade" id="driverAssignedModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
   <div class="modal-dialog modal-dialog-centered">
@@ -781,13 +823,13 @@ function validateOrderAssignedForm() {
   return true;
 }
 
-function showToast(message) {
+function showToast(message, isSuccess = false) {
   const toastEl = document.getElementById('globalToast');
   const toastMsg = document.getElementById('toastMessage');
   if (!toastEl || !toastMsg) return;
 
   toastMsg.textContent = message;
-  toastEl.className = 'toast align-items-center text-white bg-danger border-0';
+  toastEl.className = `toast align-items-center text-white ${isSuccess ? 'bg-success' : 'bg-danger'} border-0`;
   
   const bsToast = bootstrap.Toast.getOrCreateInstance(toastEl, {
     autohide: true,
@@ -897,6 +939,61 @@ async function assignDriver() {
   }
 }
 
+function openCancelRideModal() {
+  if (!currentRideId) {
+    showToast('No ride selected to cancel.');
+    return;
+  }
+  const modalEl = document.getElementById('cancelRideModal');
+  if (!modalEl) return;
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  modal.show();
+}
+
+async function confirmCancelRide() {
+  if (!currentRideId) {
+    showToast('No ride selected to cancel.');
+    return;
+  }
+
+  const confirmBtn = document.getElementById('confirmCancelRideBtn');
+  const confirmText = document.getElementById('confirmCancelText');
+  const confirmSpinner = document.getElementById('confirmCancelSpinner');
+
+  if (confirmBtn) confirmBtn.disabled = true;
+  if (confirmText) confirmText.textContent = 'Cancelling...';
+  if (confirmSpinner) confirmSpinner.style.display = 'inline-block';
+
+  try {
+    const response = await fetch('api/update_ride_status.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ride_id: currentRideId, status: 'cancelled' })
+    });
+
+    if (response.status === 401) { window.location.href = '/'; return; }
+    const result = await response.json();
+
+    if (result.success) {
+      const modalEl = document.getElementById('cancelRideModal');
+      if (modalEl) bootstrap.Modal.getInstance(modalEl)?.hide();
+      showToast('Ride cancelled successfully', true);
+      setTimeout(() => { window.location.href = 'preorder.php'; }, 900);
+    } else {
+      showToast('Error cancelling ride: ' + (result.error || 'Unknown error'));
+      if (confirmBtn) confirmBtn.disabled = false;
+      if (confirmText) confirmText.textContent = 'Yes, Cancel Ride';
+      if (confirmSpinner) confirmSpinner.style.display = 'none';
+    }
+  } catch (error) {
+    console.error('Error cancelling ride:', error);
+    showToast('Failed to cancel ride. Please try again.');
+    if (confirmBtn) confirmBtn.disabled = false;
+    if (confirmText) confirmText.textContent = 'Yes, Cancel Ride';
+    if (confirmSpinner) confirmSpinner.style.display = 'none';
+  }
+}
+
 // Initialize event listener when document is ready
 document.addEventListener('DOMContentLoaded', function() {
   const assignBtn = document.getElementById('assignDriverBtn');
@@ -904,6 +1001,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Remove any existing listeners and add new one
     assignBtn.replaceWith(assignBtn.cloneNode(true));
     document.getElementById('assignDriverBtn').addEventListener('click', assignDriver);
+  }
+
+  const cancelBtn = document.getElementById('cancelRideBtn');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', openCancelRideModal);
+  }
+
+  const confirmCancelBtn = document.getElementById('confirmCancelRideBtn');
+  if (confirmCancelBtn) {
+    confirmCancelBtn.addEventListener('click', confirmCancelRide);
   }
 });
 

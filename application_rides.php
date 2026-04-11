@@ -22,16 +22,18 @@ require('modules/head.php');
       <table class="table mb-0" style="border-collapse:collapse;">
         <thead>
           <tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
-            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Ride ID</th>
-            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Company</th>
-            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Employee</th>
-            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Email</th>
-            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
-            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
-            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
-            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
-            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
-            <th class="fw-semibold text-nowrap px-4 py-2 text-end" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Action</th>
+            <?php /* Ride ID and Company columns hidden on request
+            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Ride ID</th>
+            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Company</th>
+            */ ?>
+            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Employee</th>
+            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Email</th>
+            <th class="fw-semibold px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:260px;">Pickup</th>
+            <th class="fw-semibold px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:260px;">Destination</th>
+            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
+            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
+            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+            <th class="fw-semibold text-nowrap px-4 py-2 text-end" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Action</th>
           </tr>
         </thead>
         <tbody id="ridesTableBody"></tbody>
@@ -54,10 +56,41 @@ require('modules/head.php');
   #ridesTableBody tr:hover { background: #FAFAFA; }
   #ridesTableBody td {
     padding: 14px 24px;
-    font-size: 0.845rem;
+    font-size: 0.8125rem;
     color: #18181B;
     vertical-align: middle;
     border: none;
+  }
+  #ridesTableBody td.ride-addr-cell {
+    min-width: 260px;
+    max-width: 340px;
+    white-space: normal;
+    line-height: 1.35;
+    color: #27272A;
+  }
+  #ridesTableBody td.ride-action-cell {
+    white-space: nowrap;
+    min-width: 110px;
+  }
+  .ride-action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid #E4E4E7;
+    background: #fff;
+    color: #52525B;
+    font-size: 14px;
+    transition: all 0.15s;
+  }
+  .ride-action-btn:hover {
+    border-color: #f37a20;
+    color: #f37a20;
+    background: #FFF7ED;
+  }
+  .ride-action-btn--danger:hover {
+    border-color: #E11D48;
+    color: #E11D48;
+    background: #FFF1F2;
   }
 </style>
 
@@ -167,7 +200,7 @@ require('modules/head.php');
         try {
           const tbody = document.getElementById('ridesTableBody');
           if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-muted">Loading rides...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">Loading rides...</td></tr>';
           }
 
           const response = await fetch(`api/get_rides.php?page=${page}&limit=${limit}`);
@@ -189,7 +222,7 @@ require('modules/head.php');
           } else {
             console.error('Error loading rides:', data.error || 'Unknown error');
             if (tbody) {
-              tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-muted">No rides to show</td></tr>';
+              tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">No rides to show</td></tr>';
             }
             if (ridesPagination) {
               ridesPagination.update(0, page);
@@ -199,7 +232,7 @@ require('modules/head.php');
           console.error('Error loading rides:', error);
           const tbody = document.getElementById('ridesTableBody');
           if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-danger">Error loading rides. Please refresh the page.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-danger">Error loading rides. Please refresh the page.</td></tr>';
           }
           if (ridesPagination) {
             ridesPagination.update(0, 1);
@@ -215,61 +248,59 @@ require('modules/head.php');
         tbody.innerHTML = '';
 
         if (!rides || rides.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-muted">No rides to show</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">No rides to show</td></tr>';
           return;
         }
 
         rides.forEach((ride) => {
-          const rideId = ride.id ? ride.id.substring(0, 8).toUpperCase() : 'N/A';
-
           const pickup = ride.pickup_addr || ride.actual_start_addr || 'N/A';
           const destination = ride.dest_addr || ride.actual_end_addr || 'N/A';
 
           const payment = ride.payment_method || 'N/A';
-          
+
           const fare = ride.fare_eur ? `€${parseFloat(ride.fare_eur).toFixed(2)}` : 'N/A';
-          
+
           const status = ride.status || 'N/A';
           const statusClass = getStatusClass(status);
           const statusText = formatStatus(status);
-          
-          const company = ride.company || 'N/A';
+
           const employee = ride.passenger_name || 'N/A';
           const email = ride.passenger_email || 'N/A';
 
           const row = document.createElement('tr');
           row.style.transition = 'none';
           row.innerHTML = `
-            <td>${rideId}</td>
-            <td>${company}</td>
             <td>${employee}</td>
             <td>${email}</td>
-            <td>${pickup}</td>
-            <td>${destination}</td>
+            <td class="ride-addr-cell">${pickup}</td>
+            <td class="ride-addr-cell">${destination}</td>
             <td>${payment}</td>
-            <td class="text-success">${fare}</td>
+            <td class="text-success fw-semibold">${fare}</td>
             <td>
               <span class="${statusClass} px-2 py-1">${statusText}</span>
             </td>
-            <td class="text-end pe-4">
-              <button
-                class="btn btn-sm p-0 me-2 text-muted"
-                data-bs-toggle="modal"
-                data-bs-target="#editModal"
-                data-ride-id="${ride.id}"
-                data-ride-status="${ride.status}"
-              >
-                <i class="bi bi-pencil-square fs-6"></i>
-              </button>
-              <button
-                class="btn btn-sm p-0 text-muted"
-                data-bs-toggle="modal"
-                data-bs-target="#deleteModal"
-                data-ride-id="${ride.id}"
-                aria-label="Delete"
-              >
-                <i class="bi bi-trash fs-6"></i>
-              </button>
+            <td class="ride-action-cell text-end pe-4">
+              <div class="d-inline-flex align-items-center gap-2 justify-content-end">
+                <button
+                  class="btn btn-sm p-0 d-inline-flex align-items-center justify-content-center ride-action-btn"
+                  data-bs-toggle="modal"
+                  data-bs-target="#editModal"
+                  data-ride-id="${ride.id}"
+                  data-ride-status="${ride.status}"
+                  aria-label="Edit"
+                >
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+                <button
+                  class="btn btn-sm p-0 d-inline-flex align-items-center justify-content-center ride-action-btn ride-action-btn--danger"
+                  data-bs-toggle="modal"
+                  data-bs-target="#deleteModal"
+                  data-ride-id="${ride.id}"
+                  aria-label="Delete"
+                >
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
             </td>
           `;
           tbody.appendChild(row);
@@ -327,20 +358,20 @@ require('modules/head.php');
 
         rows.forEach(row => {
           const cells = row.querySelectorAll('td');
-          if (cells.length < 9) {
+          if (cells.length < 7) {
             row.style.display = '';
             return;
           }
 
-          const company = cells[1].textContent.toLowerCase();
-          const employee = cells[2].textContent.toLowerCase();
-          const pickup = cells[4].textContent.toLowerCase();
-          const destination = cells[5].textContent.toLowerCase();
-          const statusText = cells[8].textContent.toLowerCase();
+          const employee = cells[0].textContent.toLowerCase();
+          const email = cells[1].textContent.toLowerCase();
+          const pickup = cells[2].textContent.toLowerCase();
+          const destination = cells[3].textContent.toLowerCase();
+          const statusText = cells[6].textContent.toLowerCase();
 
           const matches =
-            company.includes(term) ||
             employee.includes(term) ||
+            email.includes(term) ||
             pickup.includes(term) ||
             destination.includes(term) ||
             statusText.includes(term);

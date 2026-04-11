@@ -1,3 +1,48 @@
+:root {
+  --fs-xs: 0.8125rem;
+  --fs-sm: 0.875rem;
+  --fs-base: 0.9375rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.3125rem;
+  --fs-2xl: 1.625rem;
+  --color-fg: #18181B;
+  --color-fg-muted: #71717A;
+  --color-fg-subtle: #A1A1AA;
+  --color-border: #E4E4E7;
+  --color-border-soft: #EBEBEB;
+  --color-bg: #F4F4F5;
+  --color-primary: #f37a20;
+}
+html {
+  font-size: 16.5px;
+}
+body {
+  font-size: var(--fs-base);
+  color: var(--color-fg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+#ridesTableBody td,
+.table tbody td {
+  font-size: var(--fs-sm) !important;
+}
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.015em;
+  color: var(--color-fg);
+}
+.table { font-size: var(--fs-sm); }
+.table thead th {
+  font-size: var(--fs-xs);
+  color: var(--color-fg-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.form-label { font-size: var(--fs-sm); font-weight: 500; color: var(--color-fg); }
+.form-control, .form-select { font-size: var(--fs-sm); }
+.btn { font-size: var(--fs-sm); }
+.dropdown-menu { font-size: var(--fs-sm); }
 .password-toggle {
   position: absolute;
   right: 15px;
@@ -146,4 +191,28 @@
 }
 .table-responsive {
   flex: 1;
+}
+
+.view-details-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #f37a20;
+  background: #FFF7ED;
+  border: 1px solid #FED7AA;
+  border-radius: 6px;
+  text-decoration: none;
+  line-height: 1;
+  white-space: nowrap;
+}
+.view-details-btn i {
+  font-size: 11px;
+  line-height: 1;
+}
+.view-details-btn:focus-visible {
+  outline: 2px solid #f37a20;
+  outline-offset: 1px;
 }

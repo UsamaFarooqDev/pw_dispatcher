@@ -464,8 +464,7 @@ try {
                     $input['pickup_addr'] ?? '',
                     $input['dest_addr'] ?? '',
                     $input['service_type'] ?? '',
-                    isset($newRide['fare_eur']) ? $newRide['fare_eur'] : $fareEur,
-                    $driverName
+                    isset($newRide['fare_eur']) ? $newRide['fare_eur'] : $fareEur
                 );
                 if ($emailResult !== true) {
                     error_log('Ride-assigned email (create_order) failed: ' . (is_string($emailResult) ? $emailResult : 'unknown'));

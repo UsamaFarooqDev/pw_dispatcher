@@ -43,7 +43,7 @@ require_once __DIR__ . '/auth/config.php';
   </div>
   <h4 class="fw-bold m-0 d-flex align-items-center gap-2" style="font-size:1.25rem; color:#18181B; letter-spacing:-0.02em; line-height:1.3;">
     <?php echo $icon; ?>
-    Good <?php echo $greeting; ?>, <?php echo $firstName; ?>
+    Good <?php echo $greeting; ?>, <span id="homeGreetingFirstName"><?php echo $firstName; ?></span>
   </h4>
 </div>
 
@@ -56,62 +56,70 @@ require_once __DIR__ . '/auth/config.php';
     <div class="row g-3 mb-3">
 
       <div class="col-sm-6 col-xl-3">
-        <div class="rounded-3 p-4 h-100 position-relative overflow-hidden" style="background:linear-gradient(135deg,#f37a20 0%,#c95e0a 100%); box-shadow:0 8px 24px rgba(243,122,32,0.30);">
-          <div class="position-absolute" style="top:-18px; right:-18px; width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.10);"></div>
-          <div class="position-absolute" style="bottom:-30px; right:20px; width:70px; height:70px; border-radius:50%; background:rgba(255,255,255,0.07);"></div>
+        <div class="h-100 p-4" style="background:#fff; border:1px solid #E4E4E7; border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,0.04); transition:border-color 0.15s, box-shadow 0.15s;"
+          onmouseover="this.style.borderColor='#D4D4D8'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.06)';"
+          onmouseout="this.style.borderColor='#E4E4E7'; this.style.boxShadow='0 1px 2px rgba(0,0,0,0.04)';">
           <div class="d-flex align-items-center justify-content-between mb-3">
-            <div class="d-flex align-items-center justify-content-center rounded-2" style="width:40px; height:40px; background:rgba(255,255,255,0.20);">
-              <i class="bi bi-person-badge-fill" style="color:#fff; font-size:18px;"></i>
+            <span style="font-size:0.8125rem; color:#71717A; font-weight:500;">Registered Drivers</span>
+            <div class="d-flex align-items-center justify-content-center" style="width:32px; height:32px; background:#FFF3E8; border-radius:8px;">
+              <i class="bi bi-person-badge-fill" style="color:#f37a20; font-size:15px;"></i>
             </div>
-            <span class="rounded-pill px-2 py-1 fw-bold" style="font-size:0.7rem; background:rgba(255,255,255,0.20); color:#fff;">Total</span>
           </div>
-          <div style="font-size:2.2rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statTotalDrivers">0</div>
-          <div style="font-size:0.8rem; color:rgba(255,255,255,0.80); font-weight:500; margin-top:6px;">Registered Drivers</div>
+          <div id="statTotalDrivers" style="font-size:1.875rem; font-weight:700; color:#18181B; letter-spacing:-0.025em; line-height:1.1;">0</div>
+          <div class="mt-2 d-flex align-items-center gap-1" style="font-size:0.75rem; color:#A1A1AA; font-weight:500;">
+            <i class="bi bi-people" style="font-size:12px;"></i> All registered
+          </div>
         </div>
       </div>
 
       <div class="col-sm-6 col-xl-3">
-        <div class="rounded-3 p-4 h-100 position-relative overflow-hidden" style="background:#18181B; box-shadow:0 8px 24px rgba(0,0,0,0.18);">
-          <div class="position-absolute" style="top:-18px; right:-18px; width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.04);"></div>
-          <div class="position-absolute" style="bottom:-30px; right:20px; width:70px; height:70px; border-radius:50%; background:rgba(255,255,255,0.03);"></div>
+        <div class="h-100 p-4" style="background:#fff; border:1px solid #E4E4E7; border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,0.04); transition:border-color 0.15s, box-shadow 0.15s;"
+          onmouseover="this.style.borderColor='#D4D4D8'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.06)';"
+          onmouseout="this.style.borderColor='#E4E4E7'; this.style.boxShadow='0 1px 2px rgba(0,0,0,0.04)';">
           <div class="d-flex align-items-center justify-content-between mb-3">
-            <div class="d-flex align-items-center justify-content-center rounded-2" style="width:40px; height:40px; background:rgba(255,255,255,0.10);">
-              <i class="bi bi-people-fill" style="color:#fff; font-size:18px;"></i>
+            <span style="font-size:0.8125rem; color:#71717A; font-weight:500;">Registered Passengers</span>
+            <div class="d-flex align-items-center justify-content-center" style="width:32px; height:32px; background:#F4F4F5; border-radius:8px;">
+              <i class="bi bi-people-fill" style="color:#18181B; font-size:15px;"></i>
             </div>
-            <span class="rounded-pill px-2 py-1 fw-bold" style="font-size:0.7rem; background:rgba(255,255,255,0.10); color:rgba(255,255,255,0.80);">Total</span>
           </div>
-          <div style="font-size:2.2rem; font-weight:800; color:#fff; letter-spacing:-0.04em; line-height:1;" id="statTotalPassengers">0</div>
-          <div style="font-size:0.8rem; color:rgba(255,255,255,0.55); font-weight:500; margin-top:6px;">Registered Passengers</div>
+          <div id="statTotalPassengers" style="font-size:1.875rem; font-weight:700; color:#18181B; letter-spacing:-0.025em; line-height:1.1;">0</div>
+          <div class="mt-2 d-flex align-items-center gap-1" style="font-size:0.75rem; color:#A1A1AA; font-weight:500;">
+            <i class="bi bi-person-check" style="font-size:12px;"></i> Active accounts
+          </div>
         </div>
       </div>
 
       <div class="col-sm-6 col-xl-3">
-        <div class="rounded-3 p-4 h-100 position-relative overflow-hidden" style="background:#fff; border:1.5px solid #EBEBEB; box-shadow:0 4px 16px rgba(0,0,0,0.05);">
-          <div class="position-absolute" style="top:-18px; right:-18px; width:100px; height:100px; border-radius:50%; background:#F4F4F5;"></div>
+        <div class="h-100 p-4" style="background:#fff; border:1px solid #E4E4E7; border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,0.04); transition:border-color 0.15s, box-shadow 0.15s;"
+          onmouseover="this.style.borderColor='#D4D4D8'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.06)';"
+          onmouseout="this.style.borderColor='#E4E4E7'; this.style.boxShadow='0 1px 2px rgba(0,0,0,0.04)';">
           <div class="d-flex align-items-center justify-content-between mb-3">
-            <div class="d-flex align-items-center justify-content-center rounded-2" style="width:40px; height:40px; background:#FFF3E8;">
-              <i class="bi bi-car-front-fill" style="color:#f37a20; font-size:18px;"></i>
+            <span style="font-size:0.8125rem; color:#71717A; font-weight:500;">Application Rides</span>
+            <div class="d-flex align-items-center justify-content-center" style="width:32px; height:32px; background:#FFF3E8; border-radius:8px;">
+              <i class="bi bi-car-front-fill" style="color:#f37a20; font-size:15px;"></i>
             </div>
-            <span class="rounded-pill px-2 py-1 fw-bold" style="font-size:0.7rem; background:#F4F4F5; color:#71717A;">All Time</span>
           </div>
-          <div style="font-size:2.2rem; font-weight:800; color:#18181B; letter-spacing:-0.04em; line-height:1;" id="statTotalRides">0</div>
-          <div style="font-size:0.8rem; color:#A1A1AA; font-weight:500; margin-top:6px;">Application Rides</div>
+          <div id="statTotalRides" style="font-size:1.875rem; font-weight:700; color:#18181B; letter-spacing:-0.025em; line-height:1.1;">0</div>
+          <div class="mt-2 d-flex align-items-center gap-1" style="font-size:0.75rem; color:#A1A1AA; font-weight:500;">
+            <i class="bi bi-clock-history" style="font-size:12px;"></i> All time
+          </div>
         </div>
       </div>
 
       <div class="col-sm-6 col-xl-3">
-        <div class="rounded-3 p-4 h-100 position-relative overflow-hidden" style="background:#fff; border:1.5px solid #EBEBEB; box-shadow:0 4px 16px rgba(0,0,0,0.05);">
-          <div class="position-absolute" style="top:-18px; right:-18px; width:100px; height:100px; border-radius:50%; background:#F4F4F5;"></div>
+        <div class="h-100 p-4" style="background:#fff; border:1px solid #E4E4E7; border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,0.04); transition:border-color 0.15s, box-shadow 0.15s;"
+          onmouseover="this.style.borderColor='#D4D4D8'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.06)';"
+          onmouseout="this.style.borderColor='#E4E4E7'; this.style.boxShadow='0 1px 2px rgba(0,0,0,0.04)';">
           <div class="d-flex align-items-center justify-content-between mb-3">
-            <div class="d-flex align-items-center justify-content-center rounded-2" style="width:40px; height:40px; background:#F0FDF4;">
-              <i class="bi bi-calendar-check-fill" style="color:#22C55E; font-size:18px;"></i>
+            <span style="font-size:0.8125rem; color:#71717A; font-weight:500;">Corporate Rides</span>
+            <div class="d-flex align-items-center justify-content-center" style="width:32px; height:32px; background:#F0FDF4; border-radius:8px;">
+              <i class="bi bi-calendar-check-fill" style="color:#22C55E; font-size:15px;"></i>
             </div>
-            <span class="rounded-pill px-2 py-1 fw-bold d-flex align-items-center gap-1" style="font-size:0.7rem; background:#F0FDF4; color:#22C55E;">
-              <span style="width:5px; height:5px; border-radius:50%; background:#22C55E;"></span>All Time
-            </span>
           </div>
-          <div style="font-size:2.2rem; font-weight:800; color:#18181B; letter-spacing:-0.04em; line-height:1;" id="statTodayRides">0</div>
-          <div style="font-size:0.8rem; color:#A1A1AA; font-weight:500; margin-top:6px;">Corporate Rides</div>
+          <div id="statTodayRides" style="font-size:1.875rem; font-weight:700; color:#18181B; letter-spacing:-0.025em; line-height:1.1;">0</div>
+          <div class="mt-2 d-flex align-items-center gap-1" style="font-size:0.75rem; color:#A1A1AA; font-weight:500;">
+            <i class="bi bi-briefcase" style="font-size:12px;"></i> Business bookings
+          </div>
         </div>
       </div>
 

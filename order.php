@@ -279,11 +279,10 @@ require('modules/head.php');
         <h5 class="fw-bold mb-1" style="color:#18181B;">Clear all fields?</h5>
         <p class="mb-4" style="font-size:0.845rem; color:#71717A;">This will reset the entire order form. This action cannot be undone.</p>
         <div class="d-flex justify-content-center gap-2">
-          <button type="button" class="btn fw-semibold px-4"
+          <button type="button" id="clearFieldsYesBtn" class="btn fw-semibold px-4"
             style="height:38px; background:#f37a20; color:#fff; border:none; border-radius:8px; font-size:0.845rem;"
             onmouseover="this.style.background='#d96010';"
-            onmouseout="this.style.background='#f37a20';"
-            onclick="clearAllFields()">Yes, clear it
+            onmouseout="this.style.background='#f37a20';">Yes, clear it
           </button>
           <button type="button" class="btn fw-semibold px-4"
             style="height:38px; background:#fff; color:#18181B; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem;"
@@ -451,7 +450,7 @@ require('modules/head.php');
 
   toastText.innerHTML = `<span style="font-weight: 500; font-size: 14px;">${message}</span>`;
   toastEl.classList.remove('bg-success', 'bg-danger');
-  toastEl.className = 'toast align-items-center text-white bg-danger border-0';
+  toastEl.className = `toast align-items-center text-white ${isSuccess ? 'bg-success' : 'bg-danger'} border-0`;
 
   let bsToast = bootstrap.Toast.getInstance(toastEl);
   if (!bsToast) {
@@ -1040,6 +1039,82 @@ modal.show();
     setButtonLoading(false);
   }
       }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        const yesBtn = document.getElementById('clearFieldsYesBtn');
+        if (yesBtn) {
+          yesBtn.addEventListener('click', function (ev) {
+            ev.preventDefault();
+            try { window.clearAllFields(); }
+            catch (e) { console.error('clearAllFields failed:', e); }
+          });
+        } else {
+          console.warn('clearFieldsYesBtn not found in DOM');
+        }
+      });
+
+      window.clearAllFields = function clearAllFields() {
+        const textIds = [
+          'customerNameInput', 'customerPhone', 'customerId',
+          'pickupInput', 'dropoffInput',
+          'estimatedFare', 'distanceKm', 'travelTime',
+          'rideDate', 'rideTime'
+        ];
+        textIds.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+
+        const selectIds = ['serviceType', 'seatCount'];
+        selectIds.forEach(id => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          if (el.options && el.options.length > 0) {
+            el.selectedIndex = 0;
+          } else {
+            el.value = '';
+          }
+        });
+
+        const checkboxIds = [
+          'creditCard', 'personWithDisabilities', 'childSeat',
+          'extraLuggage', 'petsAllowed', 'delivery'
+        ];
+        checkboxIds.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.checked = false;
+        });
+
+        const suggestions = document.getElementById('customerSuggestions');
+        if (suggestions) {
+          suggestions.innerHTML = '';
+          suggestions.style.display = 'none';
+        }
+
+        try {
+          if (typeof directionsRenderer !== 'undefined' && directionsRenderer) {
+            directionsRenderer.set('directions', null);
+          }
+        } catch (e) { /* ignore map cleanup errors */ }
+
+        try {
+          if (typeof currentDistance !== 'undefined') currentDistance = null;
+          if (typeof currentDuration !== 'undefined') currentDuration = null;
+          if (typeof currentFare !== 'undefined') currentFare = null;
+        } catch (e) { /* vars may not exist */ }
+
+        const modalEl = document.getElementById('clearFieldsModal');
+        if (modalEl && window.bootstrap) {
+          bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        }
+
+        if (typeof showToast === 'function') {
+          showToast('Form cleared', true);
+        }
+
+        const firstField = document.getElementById('customerNameInput');
+        if (firstField) firstField.focus();
+      };
     </script>
   </body>
 </html>

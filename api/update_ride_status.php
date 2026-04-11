@@ -28,7 +28,7 @@ if (!$input || !isset($input['ride_id']) || !isset($input['status'])) {
 }
 
 // Validate status - only allow: searching, assigned, upcoming
-$allowedStatuses = ['searching', 'assigned', 'upcoming'];
+$allowedStatuses = ['searching', 'assigned', 'upcoming', 'cancelled'];
 $status = strtolower(trim($input['status']));
 
 if (!in_array($status, $allowedStatuses)) {

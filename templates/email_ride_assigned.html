@@ -3,40 +3,218 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ride Assigned – PowerCabs</title>
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.5; color: #333; margin: 0; padding: 20px; background: #f5f5f5; }
-    .container { max-width: 560px; margin: 0 auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    .header { background: #f37a20; color: #fff; padding: 20px 24px; }
-    .header h1 { margin: 0; font-size: 1.35rem; font-weight: 700; }
-    .content { padding: 24px; }
-    .content p { margin: 0 0 16px; }
-    .details { background: #f8f9fa; border-radius: 6px; padding: 16px; margin: 16px 0; }
-    .details p { margin: 0 0 8px; }
-    .details p:last-child { margin-bottom: 0; }
-    .label { color: #666; font-size: 0.9em; }
-    .footer { padding: 16px 24px; font-size: 0.85em; color: #666; border-top: 1px solid #eee; }
-  </style>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Your Ride is Confirmed &ndash; PowerCabs</title>
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>Your ride has been assigned</h1>
-    </div>
-    <div class="content">
-      <p>Hello [PASSENGER_NAME],</p>
-      <p>Driver [DRIVER_NAME] has been assigned to your ride. You will be picked up and dropped off as below.</p>
-      <div class="details">
-        <p><span class="label">Pick-up:</span><br>[PICKUP_ADDRESS]</p>
-        <p><span class="label">Drop-off:</span><br>[DEST_ADDRESS]</p>
-        <p><span class="label">Service:</span> [RIDE_TYPE]</p>
-        <p><span class="label">Fare:</span> [FARE_EUR]</p>
-      </div>
-      <p>Thank you for choosing PowerCabs.</p>
-    </div>
-    <div class="footer">
-      PowerCabs – Ride assigned notification
-    </div>
+<body style="margin:0; padding:0; background:#F4F4F5; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:#18181B; -webkit-font-smoothing:antialiased;">
+
+  <!-- Preheader (hidden) -->
+  <div style="display:none; max-height:0; overflow:hidden; mso-hide:all;">
+    Your PowerCabs ride is confirmed. See pickup, drop-off and fare details inside.
   </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F4F4F5; padding:32px 16px;">
+    <tr>
+      <td align="center">
+
+        <!-- Main card -->
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
+          style="max-width:600px; width:100%; background:#ffffff; border-radius:14px; overflow:hidden; box-shadow:0 4px 24px rgba(24,24,27,0.08); border:1px solid #E4E4E7;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:#f37a20; padding:28px 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="color:#ffffff; font-size:13px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; opacity:0.85;">
+                    PowerCabs
+                  </td>
+                  <td align="right" style="color:#ffffff; font-size:12px; font-weight:500; opacity:0.85;">
+                    Booking Confirmation
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="padding-top:10px;">
+                    <h1 style="margin:0; color:#ffffff; font-size:24px; font-weight:700; letter-spacing:-0.02em; line-height:1.25;">
+                      Your ride is confirmed
+                    </h1>
+                    <p style="margin:6px 0 0; color:#ffffff; opacity:0.92; font-size:14px; line-height:1.5;">
+                      A driver has been assigned and will meet you at your pickup location.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Greeting -->
+          <tr>
+            <td style="padding:28px 32px 8px;">
+              <p style="margin:0 0 6px; font-size:15px; color:#18181B; font-weight:600;">
+                Hi [PASSENGER_NAME],
+              </p>
+              <p style="margin:0; font-size:14px; line-height:1.6; color:#52525B;">
+                Thanks for riding with PowerCabs. Here are your trip details &mdash; please keep this email for reference until your journey is complete.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Trip details card -->
+          <tr>
+            <td style="padding:16px 32px 8px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                style="background:#FAFAFA; border:1px solid #EBEBEB; border-radius:10px;">
+                <tr>
+                  <td style="padding:20px 20px 8px;">
+                    <div style="font-size:11px; font-weight:700; color:#A1A1AA; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:14px;">
+                      Trip Details
+                    </div>
+
+                    <!-- Pickup -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:14px;">
+                      <tr>
+                        <td width="28" valign="top" style="padding-top:2px;">
+                          <div style="width:10px; height:10px; border-radius:50%; background:#22C55E; border:2px solid #DCFCE7;"></div>
+                        </td>
+                        <td>
+                          <div style="font-size:11px; font-weight:600; color:#71717A; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:3px;">
+                            Pick-up
+                          </div>
+                          <div style="font-size:14px; font-weight:600; color:#18181B; line-height:1.5;">
+                            [PICKUP_ADDRESS]
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Connector line -->
+                    <div style="border-left:2px dotted #D4D4D8; height:12px; margin-left:4px; margin-bottom:2px;">&nbsp;</div>
+
+                    <!-- Drop-off -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:18px;">
+                      <tr>
+                        <td width="28" valign="top" style="padding-top:2px;">
+                          <div style="width:10px; height:10px; border-radius:50%; background:#f37a20; border:2px solid #FFE4CC;"></div>
+                        </td>
+                        <td>
+                          <div style="font-size:11px; font-weight:600; color:#71717A; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:3px;">
+                            Drop-off
+                          </div>
+                          <div style="font-size:14px; font-weight:600; color:#18181B; line-height:1.5;">
+                            [DEST_ADDRESS]
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Divider -->
+                    <div style="border-top:1px solid #EBEBEB; margin:4px 0 16px;"></div>
+
+                    <!-- Service + Fare -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="50%" valign="top" style="padding-right:8px;">
+                          <div style="font-size:11px; font-weight:600; color:#71717A; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px;">
+                            Service
+                          </div>
+                          <div style="font-size:14px; font-weight:600; color:#18181B;">
+                            [RIDE_TYPE]
+                          </div>
+                        </td>
+                        <td width="50%" valign="top" align="right">
+                          <div style="font-size:11px; font-weight:600; color:#71717A; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px;">
+                            Estimated Fare
+                          </div>
+                          <div style="font-size:18px; font-weight:700; color:#f37a20; letter-spacing:-0.01em;">
+                            [FARE_EUR]
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Important notes -->
+          <tr>
+            <td style="padding:20px 32px 8px;">
+              <div style="background:#FFF7ED; border:1px solid #FED7AA; border-radius:10px; padding:16px 18px;">
+                <div style="font-size:12px; font-weight:700; color:#c2410c; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;">
+                  Before your ride
+                </div>
+                <ul style="margin:0; padding:0 0 0 18px; color:#52525B; font-size:13px; line-height:1.7;">
+                  <li>Please be ready at the pickup point 5 minutes before the scheduled time.</li>
+                  <li>The fare shown above is an estimate. Toll charges, waiting time and route changes may affect the final amount.</li>
+                  <li>Cancellations made less than 15 minutes before pickup may incur a cancellation fee.</li>
+                  <li>Keep your phone reachable &mdash; the driver may contact you on arrival.</li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Support -->
+          <tr>
+            <td style="padding:18px 32px 24px;">
+              <p style="margin:0 0 8px; font-size:13px; line-height:1.6; color:#52525B;">
+                Need to make changes or have a question about this ride? Our support team is available 24/7.
+              </p>
+              <p style="margin:0; font-size:13px; line-height:1.6; color:#52525B;">
+                Call us at <a href="tel:+35315000000" style="color:#f37a20; text-decoration:none; font-weight:600;">+353 1 500 0000</a>
+                or email <a href="mailto:support@powercabs.ie" style="color:#f37a20; text-decoration:none; font-weight:600;">support@powercabs.ie</a>.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding:0 32px;">
+              <div style="border-top:1px solid #EBEBEB;"></div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 32px 28px; background:#FAFAFA;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="font-size:12px; color:#71717A; line-height:1.6;">
+                    <div style="font-weight:700; color:#18181B; margin-bottom:4px;">PowerCabs Ireland</div>
+                    Dublin, Ireland &middot; <a href="https://powercabs.ie" style="color:#71717A; text-decoration:underline;">powercabs.ie</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-top:12px; font-size:11px; color:#A1A1AA; line-height:1.6;">
+                    This is an automated booking confirmation &mdash; please do not reply to this email. By using PowerCabs you agree to our
+                    <a href="https://powercabs.ie/terms" style="color:#A1A1AA; text-decoration:underline;">Terms of Service</a> and
+                    <a href="https://powercabs.ie/privacy" style="color:#A1A1AA; text-decoration:underline;">Privacy Policy</a>.
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-top:10px; font-size:11px; color:#A1A1AA;">
+                    &copy; PowerCabs Ireland. All rights reserved.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+        <!-- /Main card -->
+
+        <!-- Tagline -->
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%;">
+          <tr>
+            <td align="center" style="padding:18px 16px 8px; font-size:11px; color:#A1A1AA; line-height:1.5;">
+              Safe. Reliable. On&nbsp;time. &mdash; Your trusted ride in Ireland.
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
 </body>
 </html>

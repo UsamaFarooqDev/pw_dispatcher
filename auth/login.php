@@ -71,6 +71,19 @@ if ($httpCode === 200 && isset($data['access_token']) && isset($data['user']['em
         'aud' => $data['user']['aud'] ?? null
     ];
 
+    // Resolve display name from user metadata so the UI doesn't flash default values
+    $userMetadata = $data['user']['user_metadata'] ?? [];
+    $displayName = $userMetadata['name'] ?? $userMetadata['full_name'] ?? '';
+    if ($displayName === '') {
+        $emailParts = explode('@', $returnedEmail);
+        $displayName = ucfirst($emailParts[0]);
+    }
+    $_SESSION['user_name']  = $displayName;
+    $_SESSION['user_email'] = $returnedEmail;
+    if (!empty($userMetadata['avatar_url'])) {
+        $_SESSION['profile_image'] = $userMetadata['avatar_url'];
+    }
+
     echo json_encode(['success' => true, 'message' => 'Login successful.']);
     exit;
 }

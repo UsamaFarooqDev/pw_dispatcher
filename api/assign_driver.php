@@ -86,8 +86,7 @@ try {
             $pickupAddr,
             $destAddr,
             $rideType,
-            $fareEur,
-            $driverName
+            $fareEur
         );
         if ($emailResult !== true) {
             error_log('Ride-assigned email failed: ' . (is_string($emailResult) ? $emailResult : 'unknown'));
