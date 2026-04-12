@@ -21,14 +21,22 @@ try {
     
     // Get pagination parameters
     $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-    $limit = isset($_GET['limit']) ? max(1, min(100, intval($_GET['limit']))) : 10; // Default 10, max 100
-    
+    $limit = isset($_GET['limit']) ? max(1, min(500, intval($_GET['limit']))) : 10;
+
     // Fetch paginated data
     $drivers = $db->fetchData('drivers', [
         'order' => 'created_at.desc',
         'page' => $page,
         'limit' => $limit
     ]);
+
+    // Optional status filter (e.g. ?status=approved)
+    if (isset($_GET['status']) && $_GET['status'] !== '') {
+        $statusFilter = strtolower(trim($_GET['status']));
+        $drivers = array_values(array_filter($drivers, function ($d) use ($statusFilter) {
+            return strtolower(trim($d['status'] ?? '')) === $statusFilter;
+        }));
+    }
 
     // Enrich each driver with total completed rides (all-time)
     if (is_array($drivers)) {

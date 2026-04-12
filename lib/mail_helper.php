@@ -1,8 +1,4 @@
 <?php
-/**
- * Mail helper for PowerCabs Dispatcher.
- * Uses same SMTP credentials as reminderemail (admin@powercabs.ie / mail.powercabs.ie).
- */
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
@@ -13,18 +9,11 @@ require_once $mailerBase . '/Exception.php';
 require_once $mailerBase . '/PHPMailer.php';
 require_once $mailerBase . '/SMTP.php';
 
-/** SMTP config – same as reminderemail.php (PowerCabs) */
  define('MAIL_USERNAME', 'admin@powercabs.ie');
  define('MAIL_HOST', 'mail.powercabs.ie');
  define('MAIL_PASSWORD', 'Pwcabs@_1234');
  define('MAIL_FROM_ADDRESS', 'admin@powercabs.ie');
  define('MAIL_FROM_NAME', 'PowerCabs Admin');
-
-//define('MAIL_HOST', 'smtp.gmail.com');
-//define('MAIL_USERNAME', 'arsalar286@gmail.com');
-//define('MAIL_PASSWORD', 'qrpa qtqt qwgr zvus');
-//define('MAIL_FROM_ADDRESS', 'arsalar286@gmail.com');
-//define('MAIL_FROM_NAME', 'PowerCabs Admin');
 
 /**
  * Send ride-assigned notification to passenger.

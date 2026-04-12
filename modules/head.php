@@ -12,5 +12,6 @@ if (!isset($pageTitle)) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="stylesheet" href="/global.css" />
+    <script src="js/status-badge.js"></script>
     <script src="js/beep-monitor.js"></script>
 </head>

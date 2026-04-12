@@ -25,7 +25,7 @@ if ($user_name === '' && $user_email !== '') {
 }
 ?>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top px-4" style="height:52px; box-shadow: 0 1px 0 #EBEBEB, 0 4px 20px rgba(0,0,0,0.05); z-index:1030;">
+<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top px-4" style="height:56px; box-shadow: 0 1px 0 #EBEBEB, 0 4px 20px rgba(0,0,0,0.05); z-index:1030;">
   <div class="d-flex align-items-center w-100 gap-2">
 
     <button

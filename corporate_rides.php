@@ -23,7 +23,7 @@ require('modules/head.php');
   onmouseout="this.style.background='#f37a20';"
   id="openCorporateModalBtn">
   <i class="bi bi-building-add" style="font-size:15px;"></i>
-  New Corporate Account
+  Create New Corporate
 </button>
   </div>
 

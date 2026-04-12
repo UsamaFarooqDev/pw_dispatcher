@@ -186,21 +186,24 @@ require('modules/head.php');
 
     <div class="col-md-6 d-flex flex-column gap-4">
 
-      <div class="rounded-3 border overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <div class="rounded-3 border" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:visible;">
         <div class="p-4">
 
           <div class="mb-3 pb-2" style="border-bottom:1px solid #EBEBEB;">
             <span class="fw-bold" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Assign Driver</span>
           </div>
 
-          <div>
+          <div class="position-relative" style="z-index:1060;">
             <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Select Driver</label>
-            <select class="form-select" id="driverSelect"
+            <input type="text" id="driverSearchInput" class="form-control" placeholder="Type to search driver..."
+              autocomplete="off"
               style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; color:#18181B; background:#FAFAFA;"
-              onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
-              onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';">
-              <option value="" disabled selected>Select a driver from the list</option>
-            </select>
+              onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)'; showDriverDropdown();"
+              onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none'; setTimeout(hideDriverDropdown,200);" />
+            <input type="hidden" id="driverSelect" value="" />
+            <div id="driverDropdownList" class="list-group position-absolute w-100"
+              style="z-index:1060; max-height:220px; overflow-y:auto; display:none; border:1px solid #E4E4E7; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.10); background:#fff; margin-top:2px;">
+            </div>
           </div>
 
         </div>
@@ -739,35 +742,96 @@ function setupPassengerSelect() {
   });
 }
 
-// Load drivers from database
+// Load approved drivers from database
+let approvedDrivers = [];
+
 async function loadDrivers() {
   try {
-    const response = await fetch('api/get_drivers.php');
+    const response = await fetch('api/get_drivers.php?status=approved&limit=500');
     if (response.status === 401) { window.location.href = '/'; return; }
-    if (!response.ok) {
-      throw new Error('Failed to fetch drivers');
-    }
-    
+    if (!response.ok) throw new Error('Failed to fetch drivers');
     const result = await response.json();
-    const driverSelect = document.getElementById('driverSelect');
-    
-    if (result.success && result.data && driverSelect) {
-      // Clear existing options except the first one
-      driverSelect.innerHTML = '<option value="" selected disabled>Select a driver from the list</option>';
-      
-      result.data.forEach((driver) => {
-        const driverName = driver.full_name || driver.name || 'N/A';
-        const vehicleMake = driver.vehicle_make || '';
-        const option = document.createElement('option');
-        option.value = driver.id;
-        option.textContent = `${driverName} — ${vehicleMake}`;
-        driverSelect.appendChild(option);
-      });
+    if (result.success && result.data) {
+      approvedDrivers = result.data;
+      renderDriverDropdown(approvedDrivers);
     }
   } catch (error) {
     console.error('Error loading drivers:', error);
   }
 }
+
+function renderDriverDropdown(drivers) {
+  const list = document.getElementById('driverDropdownList');
+  if (!list) return;
+  list.innerHTML = '';
+  if (!drivers || drivers.length === 0) {
+    list.innerHTML = '<div class="px-3 py-2 text-muted" style="font-size:0.8125rem;">No approved drivers found</div>';
+    return;
+  }
+  drivers.forEach((driver) => {
+    const name = driver.full_name || driver.name || 'Driver';
+    const vehicle = driver.vehicle_make || driver.vehicle_number || '';
+    const phone = driver.phone || '';
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'list-group-item list-group-item-action border-0 px-3 py-2';
+    item.style.cssText = 'font-size:0.8125rem; cursor:pointer; border-bottom:1px solid #F4F4F5 !important;';
+    item.innerHTML = `
+      <div class="d-flex align-items-center gap-2">
+        <div style="width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,#f37a20,#d96010); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:10px; flex-shrink:0;">${name.trim().split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase()}</div>
+        <div style="min-width:0;">
+          <div class="fw-semibold text-truncate" style="color:#18181B; font-size:0.8125rem;">${name}</div>
+          <div class="text-truncate" style="font-size:0.72rem; color:#71717A;">${vehicle}${phone ? ' &middot; ' + phone : ''}</div>
+        </div>
+      </div>
+    `;
+    item.addEventListener('mousedown', (e) => { e.preventDefault(); selectDriver(driver); });
+    list.appendChild(item);
+  });
+}
+
+function selectDriver(driver) {
+  const input = document.getElementById('driverSearchInput');
+  const hidden = document.getElementById('driverSelect');
+  const name = driver.full_name || driver.name || 'Driver';
+  if (input) input.value = `${name} — ${driver.vehicle_make || ''}`;
+  if (hidden) hidden.value = driver.id;
+  hideDriverDropdown();
+}
+
+function showDriverDropdown() {
+  const list = document.getElementById('driverDropdownList');
+  if (list) list.style.display = 'block';
+}
+
+function hideDriverDropdown() {
+  const list = document.getElementById('driverDropdownList');
+  if (list) list.style.display = 'none';
+}
+
+// Filter drivers as user types
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('driverSearchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      const term = this.value.toLowerCase().trim();
+      const hidden = document.getElementById('driverSelect');
+      if (hidden) hidden.value = '';
+      if (!term) {
+        renderDriverDropdown(approvedDrivers);
+      } else {
+        const filtered = approvedDrivers.filter(d => {
+          const name = (d.full_name || d.name || '').toLowerCase();
+          const vehicle = (d.vehicle_make || d.vehicle_number || '').toLowerCase();
+          const phone = (d.phone || '').toLowerCase();
+          return name.includes(term) || vehicle.includes(term) || phone.includes(term);
+        });
+        renderDriverDropdown(filtered);
+      }
+      showDriverDropdown();
+    });
+  }
+});
 
 function setButtonLoading(isLoading, customText = null) {
   const btn = document.getElementById('assignDriverBtn');

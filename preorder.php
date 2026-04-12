@@ -726,7 +726,7 @@ require('modules/head.php');
                 <td>${orderTime}</td>
                 <td>${pickup}</td>
                 <td>${destination}</td>
-                <td>${status}</td>
+                <td>${renderStatusBadge(status)}</td>
                 <td class="text-end pe-4">${fare}</td>
                 <td class="text-end pe-4">
                   <a href="orderassigned.php?id=${rideId}" class="view-details-btn">
@@ -905,7 +905,7 @@ require('modules/head.php');
             <td>${orderTime}</td>
             <td>${pickup}</td>
             <td>${destination}</td>
-            <td>${status}</td>
+            <td>${renderStatusBadge(status)}</td>
             <td class="text-end pe-4">${fare}</td>
             <td class="text-end pe-4">
               <a href="preorder/${ride.id}" class="view-details-btn">
@@ -1030,7 +1030,7 @@ require('modules/head.php');
             <td>${orderTime}</td>
             <td>${pickup}</td>
             <td>${destination}</td>
-            <td>${status}</td>
+            <td>${renderStatusBadge(status)}</td>
             <td class="text-end pe-4">${fare}</td>
           `;
           tbody.appendChild(row);
@@ -1095,7 +1095,7 @@ require('modules/head.php');
             <td>${orderTime}</td>
             <td>${pickup}</td>
             <td>${destination}</td>
-            <td>${status}</td>
+            <td>${renderStatusBadge(status)}</td>
             <td class="text-end pe-4">${fare}</td>
           `;
           tbody.appendChild(row);
@@ -1160,7 +1160,7 @@ require('modules/head.php');
             <td>${orderTime}</td>
             <td>${pickup}</td>
             <td>${destination}</td>
-            <td>${status}</td>
+            <td>${renderStatusBadge(status)}</td>
             <td class="text-end pe-4">${fare}</td>
           `;
           tbody.appendChild(row);
@@ -1292,7 +1292,7 @@ require('modules/head.php');
             <td>${orderTime}</td>
             <td>${pickup}</td>
             <td>${destination}</td>
-            <td>${status}</td>
+            <td>${renderStatusBadge(status)}</td>
             <td class="text-end pe-4">${fare}</td>
           `;
           tbody.appendChild(row);

@@ -261,8 +261,6 @@ require('modules/head.php');
           const fare = ride.fare_eur ? `€${parseFloat(ride.fare_eur).toFixed(2)}` : 'N/A';
 
           const status = ride.status || 'N/A';
-          const statusClass = getStatusClass(status);
-          const statusText = formatStatus(status);
 
           const employee = ride.passenger_name || 'N/A';
           const email = ride.passenger_email || 'N/A';
@@ -277,7 +275,7 @@ require('modules/head.php');
             <td>${payment}</td>
             <td class="text-success fw-semibold">${fare}</td>
             <td>
-              <span class="${statusClass} px-2 py-1">${statusText}</span>
+              ${renderStatusBadge(status)}
             </td>
             <td class="ride-action-cell text-end pe-4">
               <div class="d-inline-flex align-items-center gap-2 justify-content-end">
@@ -310,27 +308,7 @@ require('modules/head.php');
         applyCorporateSearchFilter();
       }
 
-      function getStatusClass(status) {
-        const statusLower = (status || '').toLowerCase();
-        if (statusLower === 'completed' || statusLower === 'finished') {
-          return 'text-success';
-        } else if (statusLower === 'pending' || statusLower === 'waiting') {
-          return 'text-warning';
-        } else if (statusLower === 'on progress' || statusLower === 'in_progress' || statusLower === 'active') {
-          return 'text-info';
-        } else if (statusLower === 'cancelled' || statusLower === 'canceled') {
-          return 'text-danger';
-        } else {
-          return 'text-muted';
-        }
-      }
-
-      function formatStatus(status) {
-        if (!status) return 'N/A';
-        return status.split('_').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ');
-      }
+      // Status badge rendering is handled by the shared renderStatusBadge() from js/status-badge.js
 
       function setupCorporateSearch() {
         const searchInput = document.getElementById('globalSearchInput');

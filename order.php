@@ -349,14 +349,17 @@ require('modules/head.php');
           <h5 class="fw-bold mb-1" style="color:#18181B;">Assign Driver Manually</h5>
           <p style="font-size:0.8rem; color:#A1A1AA; margin:0;">Select a driver and vehicle to assign this order</p>
         </div>
-        <div class="mb-3">
+        <div class="mb-3 position-relative">
           <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Driver</label>
-          <select class="form-select" id="driverSelectModal"
-            style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem;"
-            onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
-            onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';">
-            <option selected disabled>Select driver</option>
-          </select>
+          <input type="text" id="driverSearchModal" class="form-control" placeholder="Type to search driver..."
+            autocomplete="off"
+            style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; color:#18181B; background:#FAFAFA;"
+            onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)'; showOrderDriverDropdown();"
+            onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none'; setTimeout(hideOrderDriverDropdown,200);" />
+          <input type="hidden" id="driverSelectModal" value="" />
+          <div id="orderDriverDropdownList" class="list-group position-absolute w-100"
+            style="z-index:100; max-height:200px; overflow-y:auto; display:none; border:1px solid #E4E4E7; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.10); background:#fff; margin-top:2px;">
+          </div>
         </div>
         <div class="mb-3">
           <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Driver Phone</label>
@@ -543,48 +546,102 @@ require('modules/head.php');
       /* ---------------------- Drivers ---------------------- */
       async function fetchDrivers() {
         try {
-          const res = await fetch('api/get_drivers.php');
+          const res = await fetch('api/get_drivers.php?status=approved&limit=500');
           const data = await res.json();
           if (data.success && data.data) {
             drivers = data.data;
-            populateDriverSelects();
+            renderOrderDriverDropdown(drivers);
           }
         } catch (err) {
           console.error('Error fetching drivers', err);
         }
       }
 
-      function populateDriverSelects() {
-        const modalSelect = document.getElementById('driverSelectModal');
-        const driverSelect = document.getElementById('driverSelectModal');
-        if (!modalSelect) return;
-        modalSelect.innerHTML = '<option selected disabled>Select driver</option>';
-        drivers.forEach((d) => {
-          const opt = document.createElement('option');
-          opt.value = d.id;
-          opt.textContent = `${d.full_name || d.name || 'Driver'} — ${d.vehicle_make || ''}`;
-          modalSelect.appendChild(opt);
+      function renderOrderDriverDropdown(list) {
+        const container = document.getElementById('orderDriverDropdownList');
+        if (!container) return;
+        container.innerHTML = '';
+        if (!list || list.length === 0) {
+          container.innerHTML = '<div class="px-3 py-2 text-muted" style="font-size:0.8125rem;">No approved drivers found</div>';
+          return;
+        }
+        list.forEach(d => {
+          const name = d.full_name || d.name || 'Driver';
+          const vehicle = d.vehicle_make || d.vehicle_number || '';
+          const phone = d.phone || '';
+          const initials = name.trim().split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase();
+          const item = document.createElement('button');
+          item.type = 'button';
+          item.className = 'list-group-item list-group-item-action border-0 px-3 py-2';
+          item.style.cssText = 'font-size:0.8125rem; cursor:pointer; border-bottom:1px solid #F4F4F5 !important;';
+          item.innerHTML = `
+            <div class="d-flex align-items-center gap-2">
+              <div style="width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#f37a20,#d96010); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:9px; flex-shrink:0;">${initials}</div>
+              <div style="min-width:0;">
+                <div class="fw-semibold text-truncate" style="color:#18181B; font-size:0.8125rem;">${name}</div>
+                <div class="text-truncate" style="font-size:0.72rem; color:#71717A;">${vehicle}${phone ? ' &middot; ' + phone : ''}</div>
+              </div>
+            </div>
+          `;
+          item.addEventListener('mousedown', (e) => { e.preventDefault(); selectOrderDriver(d); });
+          container.appendChild(item);
         });
       }
 
-      function setupDriverModal() {
-        const driverSelect = document.getElementById('driverSelectModal');
+      function selectOrderDriver(driver) {
+        const searchInput = document.getElementById('driverSearchModal');
+        const hiddenInput = document.getElementById('driverSelectModal');
         const phoneInput = document.getElementById('driverPhoneModal');
         const vehicleSelect = document.getElementById('vehicleSelectModal');
+        const name = driver.full_name || driver.name || 'Driver';
+
+        if (searchInput) searchInput.value = `${name} — ${driver.vehicle_make || ''}`;
+        if (hiddenInput) hiddenInput.value = driver.id;
+
+        selectedDriverId = driver.id;
+        if (phoneInput) phoneInput.value = (driver.phone || '').replace('+353', '');
+        if (vehicleSelect) {
+          vehicleSelect.innerHTML = '';
+          const opt = document.createElement('option');
+          opt.value = driver.vehicle_number || '';
+          opt.textContent = driver.vehicle_number || 'Vehicle';
+          vehicleSelect.appendChild(opt);
+        }
+        selectedVehicleNumber = driver.vehicle_number || null;
+        hideOrderDriverDropdown();
+      }
+
+      function showOrderDriverDropdown() {
+        const el = document.getElementById('orderDriverDropdownList');
+        if (el) el.style.display = 'block';
+      }
+      function hideOrderDriverDropdown() {
+        const el = document.getElementById('orderDriverDropdownList');
+        if (el) el.style.display = 'none';
+      }
+
+      function setupDriverModal() {
+        const searchInput = document.getElementById('driverSearchModal');
         const confirmBtn = document.getElementById('confirmAssignDriverBtn');
 
-        if (driverSelect) {
-          driverSelect.addEventListener('change', () => {
-            const driver = drivers.find((d) => d.id == driverSelect.value);
-            if (!driver) return;
-            selectedDriverId = driver.id;
-            phoneInput.value = (driver.phone || '').replace('+353', '');
-            vehicleSelect.innerHTML = '';
-            const opt = document.createElement('option');
-            opt.value = driver.vehicle_number || '';
-            opt.textContent = driver.vehicle_number || 'Vehicle';
-            vehicleSelect.appendChild(opt);
-            selectedVehicleNumber = driver.vehicle_number || null;
+        if (searchInput) {
+          searchInput.addEventListener('input', function() {
+            const term = this.value.toLowerCase().trim();
+            const hiddenInput = document.getElementById('driverSelectModal');
+            if (hiddenInput) hiddenInput.value = '';
+            selectedDriverId = null;
+            if (!term) {
+              renderOrderDriverDropdown(drivers);
+            } else {
+              const filtered = drivers.filter(d => {
+                const n = (d.full_name || d.name || '').toLowerCase();
+                const v = (d.vehicle_make || d.vehicle_number || '').toLowerCase();
+                const p = (d.phone || '').toLowerCase();
+                return n.includes(term) || v.includes(term) || p.includes(term);
+              });
+              renderOrderDriverDropdown(filtered);
+            }
+            showOrderDriverDropdown();
           });
         }
 
