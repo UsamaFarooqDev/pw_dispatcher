@@ -188,6 +188,18 @@ require('modules/head.php');
             <div class="mb-3" style="border-top:1px solid #EBEBEB;"></div>
 
             <div class="mb-3">
+              <span class="fw-bold d-block mb-2" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Payment</span>
+              <a href="https://buy.stripe.com/14A5kDeAx6fFec5fMjfQI05" target="_blank" rel="noopener noreferrer"
+                 class="d-inline-flex align-items-center gap-2 text-decoration-none fw-semibold"
+                 style="background:#635BFF; color:#fff; font-size:0.8125rem; padding:8px 14px; border-radius:8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                Pay with Stripe
+              </a>
+            </div>
+
+            <div class="mb-3" style="border-top:1px solid #EBEBEB;"></div>
+
+            <div class="mb-3">
               <span class="fw-bold d-block mb-1" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Special Cost</span>
               <p class="mb-3" style="font-size:0.78rem; color:#A1A1AA;">Leave blank to use default fare calculation</p>
               <div class="row g-2 mb-2">

@@ -58,6 +58,58 @@ try {
     // Per your request, show On Trip as 0.
     $onTrip = 0;
 
+    // ---- Analytics: rides last 7 days (grouped per day, timezone Europe/Dublin) ----
+    $tz = new DateTimeZone('Europe/Dublin');
+    $today = new DateTime('now', $tz);
+    $startOfRange = (clone $today)->modify('-6 days')->setTime(0, 0, 0);
+    $sinceIso = $startOfRange->format('Y-m-d\TH:i:sP');
+
+    $ch = curl_init(SUPABASE_URL . '/rest/v1/rides?select=created_at,status&created_at=gte.' . urlencode($sinceIso) . '&limit=5000');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => [
+            'apikey: ' . SUPABASE_SERVICE_ROLE_KEY,
+            'Authorization: Bearer ' . SUPABASE_SERVICE_ROLE_KEY,
+            'Content-Type: application/json',
+        ],
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => false,
+        CURLOPT_TIMEOUT => 30,
+    ]);
+    $recentRaw = curl_exec($ch);
+    $recentRides = json_decode($recentRaw, true);
+    if (!is_array($recentRides)) $recentRides = [];
+
+    $daily = [];
+    for ($i = 6; $i >= 0; $i--) {
+        $day = (clone $today)->modify("-$i days")->format('Y-m-d');
+        $daily[$day] = ['total' => 0, 'completed' => 0, 'cancelled' => 0];
+    }
+    foreach ($recentRides as $r) {
+        if (empty($r['created_at'])) continue;
+        try {
+            $d = (new DateTime($r['created_at']))->setTimezone($tz)->format('Y-m-d');
+        } catch (Exception $e) {
+            continue;
+        }
+        if (!isset($daily[$d])) continue;
+        $daily[$d]['total']++;
+        $status = strtolower($r['status'] ?? '');
+        if ($status === 'completed' || $status === 'finished') $daily[$d]['completed']++;
+        if ($status === 'cancelled' || $status === 'canceled') $daily[$d]['cancelled']++;
+    }
+    $ridesLast7 = [];
+    foreach ($daily as $date => $counts) {
+        $ridesLast7[] = array_merge(['date' => $date], $counts);
+    }
+
+    // ---- Analytics: driver verification breakdown ----
+    $driversStatus = [
+        'approved' => $db->getCount('drivers', ['filter' => ['status' => 'ilike.approved']]),
+        'pending'  => $db->getCount('drivers', ['filter' => ['status' => 'ilike.pending']]),
+        'rejected' => $db->getCount('drivers', ['filter' => ['status' => 'ilike.rejected']]),
+    ];
+
     echo json_encode([
         'success' => true,
         'data' => [
@@ -71,6 +123,8 @@ try {
             'scheduled' => $scheduled,
             'completed' => $completed,
             'cancelled' => $cancelled,
+            'rides_last_7_days' => $ridesLast7,
+            'drivers_status' => $driversStatus,
         ],
     ], JSON_PRETTY_PRINT);
 } catch (Exception $e) {

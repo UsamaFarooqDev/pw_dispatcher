@@ -280,6 +280,14 @@ let currentDuration = null;
 let currentFare = null;
 let hasDbFare = false;
 let passengersList = [];
+let corporateEmployeesList = [];
+let isCorporateMode = false;
+let isCorporateViewMode = false;
+let currentCorpId = null;
+let currentPickupLat = null;
+let currentPickupLng = null;
+let currentDropLat = null;
+let currentDropLng = null;
 
 // Wait for Google Maps API to load (called by script callback when API is ready)
 function initGoogleMaps() {
@@ -380,15 +388,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('assignToMeBtn')?.remove();
   document.getElementById('goBackBtn')?.remove();
 
-  // Load passengers first so dropdown is ready for prefill
-  await loadPassengers();
-  setupPassengerSelect();
-
-  // Fetch and prefill ride data if ID is present in URL
+  // Detect mode from URL: corporate-ride mode has ?corp_id=, normal has ?id=
   const urlParams = new URLSearchParams(window.location.search);
   const rideId = urlParams.get('id');
+  const corpId = urlParams.get('corp_id');
+  isCorporateMode = !!corpId;
+  isCorporateViewMode = isCorporateMode && urlParams.get('view') === '1';
 
-  if (rideId) {
+  if (isCorporateMode) {
+    // Relabel the "Passenger" dropdown for corporate context
+    const passengerLabel = document.querySelector('label[for="customerNameSelect"]')
+      || document.querySelector('#customerNameSelect')?.previousElementSibling;
+    if (passengerLabel && passengerLabel.tagName === 'LABEL') {
+      passengerLabel.textContent = 'Corporate Employee';
+    }
+    const customerNameSelect = document.getElementById('customerNameSelect');
+    if (customerNameSelect) {
+      customerNameSelect.innerHTML = '<option value="">Select corporate employee from list</option>';
+    }
+    await loadCorporateRide(corpId);
+    setupCorporateEmployeeSelect();
+  } else {
+    // Normal flow: load passengers dropdown, then prefill from rides table
+    await loadPassengers();
+    setupPassengerSelect();
+  }
+
+  if (rideId && !isCorporateMode) {
     try {
       const response = await fetch(`api/get_ride.php?id=${encodeURIComponent(rideId)}`);
       if (response.status === 401) { window.location.href = '/'; return; }
@@ -607,6 +633,16 @@ function calculateRouteAndFare(pickup, dropoff) {
       const leg = result.routes[0].legs[0];
       const distanceInKm = leg.distance.value / 1000;
       const durationInMin = Math.round(leg.duration.value / 60);
+
+      // Capture lat/lng so corporate-ride inserts can satisfy NOT NULL columns on rides
+      if (leg.start_location) {
+        currentPickupLat = leg.start_location.lat();
+        currentPickupLng = leg.start_location.lng();
+      }
+      if (leg.end_location) {
+        currentDropLat = leg.end_location.lat();
+        currentDropLng = leg.end_location.lng();
+      }
       
       // Update fields
       const distanceElem = document.getElementById('distance');
@@ -740,6 +776,196 @@ function setupPassengerSelect() {
       if (customerIdInput) customerIdInput.value = id;
     }
   });
+}
+
+function stripIrelandCountryCode(raw) {
+  let phone = String(raw ?? '').trim();
+  if (phone.startsWith('+353')) phone = phone.substring(4).trim();
+  else if (phone.startsWith('353')) phone = phone.substring(3).trim();
+  return phone;
+}
+
+async function loadCorporateRide(corpId) {
+  try {
+    const response = await fetch(`api/get_corporate_ride.php?id=${encodeURIComponent(corpId)}`);
+    if (response.status === 401) { window.location.href = '/'; return; }
+    if (!response.ok) throw new Error('Failed to fetch corporate ride');
+    const result = await response.json();
+    if (!result.success || !result.data) {
+      showToast(result.error || 'Corporate ride not found');
+      return;
+    }
+
+    const ride = result.data.ride || {};
+    const employees = Array.isArray(result.data.employees) ? result.data.employees : [];
+    corporateEmployeesList = employees;
+    currentCorpId = corpId;
+
+    // Populate the employees dropdown
+    const select = document.getElementById('customerNameSelect');
+    if (select) {
+      select.innerHTML = '<option value="">Select corporate employee from list</option>';
+      employees.forEach((emp) => {
+        const opt = document.createElement('option');
+        opt.value = emp.id;
+        opt.textContent = emp.name || 'Unknown';
+        select.appendChild(opt);
+      });
+      // Ensure the current ride's employee is in the list (fallback option if missing)
+      if (ride.employee_id) {
+        const exists = employees.some((e) => String(e.id) === String(ride.employee_id));
+        if (!exists) {
+          const opt = document.createElement('option');
+          opt.value = ride.employee_id;
+          opt.textContent = (ride.employee || '').trim() || 'Employee';
+          select.appendChild(opt);
+        }
+        select.value = String(ride.employee_id);
+      }
+    }
+    const customerIdInput = document.getElementById('customerId');
+    if (customerIdInput) customerIdInput.value = ride.employee_id || '';
+
+    // Phone: try to match by employee_id
+    const phoneInput = document.getElementById('phoneNumber');
+    if (phoneInput) {
+      const matchedEmp = employees.find((e) => String(e.id) === String(ride.employee_id));
+      phoneInput.value = matchedEmp ? stripIrelandCountryCode(matchedEmp.phone) : '';
+    }
+
+    // Service type (carType)
+    const serviceType = document.getElementById('serviceType');
+    if (serviceType && ride.carType) {
+      const val = String(ride.carType).trim();
+      const has = Array.from(serviceType.options).some((o) => o.value === val);
+      if (!has) {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = val;
+        serviceType.appendChild(opt);
+      }
+      serviceType.value = val;
+    }
+
+    // Date + time from pickupTime
+    if (ride.pickupTime) {
+      const d = new Date(ride.pickupTime);
+      if (!isNaN(d.getTime())) {
+        const dateInput = document.getElementById('rideDate');
+        const timeInput = document.getElementById('rideTime');
+        if (dateInput) {
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          dateInput.value = `${yyyy}-${mm}-${dd}`;
+        }
+        if (timeInput) {
+          const hh = String(d.getHours()).padStart(2, '0');
+          const min = String(d.getMinutes()).padStart(2, '0');
+          timeInput.value = `${hh}:${min}`;
+        }
+      }
+    }
+
+    // Pickup / drop-off
+    const pickupLocation = document.getElementById('pickupLocation');
+    const dropoffLocation = document.getElementById('dropoffLocation');
+    if (pickupLocation) pickupLocation.value = ride.pickup || '';
+    if (dropoffLocation) dropoffLocation.value = ride.destination || '';
+
+    // Recalculate route on the map
+    if (pickupLocation && dropoffLocation && pickupLocation.value && dropoffLocation.value) {
+      setTimeout(() => {
+        calculateRouteAndFare(pickupLocation.value, dropoffLocation.value);
+      }, 1000);
+    }
+
+    // Fare / distance / eta
+    const estimatedFare = document.getElementById('estimatedFare');
+    if (estimatedFare && ride.fare != null && ride.fare !== '') {
+      const numericFare = parseFloat(ride.fare);
+      if (!isNaN(numericFare)) {
+        estimatedFare.value = `€${numericFare.toFixed(2)}`;
+        currentFare = numericFare;
+        hasDbFare = true;
+      }
+    }
+    const distance = document.getElementById('distance');
+    if (distance && ride.distance != null && ride.distance !== '') {
+      const distKm = parseFloat(ride.distance);
+      if (!isNaN(distKm)) {
+        distance.value = `${distKm} km`;
+        currentDistance = distKm;
+      }
+    }
+    const estimatedTime = document.getElementById('estimatedTime');
+    if (estimatedTime && ride.eta != null && ride.eta !== '') {
+      const mins = parseInt(ride.eta, 10);
+      if (!isNaN(mins)) {
+        const hours = Math.floor(mins / 60);
+        const rem = mins % 60;
+        currentDuration = mins;
+        estimatedTime.value = hours > 0 ? `${hours}h ${rem}m` : `${rem}m`;
+      }
+    }
+
+    // Prefill selected driver if ride is already assigned
+    const driver = result.data.driver;
+    if (driver) {
+      const driverInput = document.getElementById('driverSearchInput');
+      const driverHidden = document.getElementById('driverSelect');
+      const name = driver.full_name || driver.name || 'Driver';
+      if (driverInput) driverInput.value = `${name} — ${driver.vehicle_make || ''}`;
+      if (driverHidden) driverHidden.value = driver.id;
+    }
+
+    if (isCorporateViewMode) {
+      applyCorporateViewMode();
+    }
+  } catch (err) {
+    console.error('Error loading corporate ride:', err);
+    showToast('Failed to load corporate ride data');
+  }
+}
+
+function setupCorporateEmployeeSelect() {
+  const select = document.getElementById('customerNameSelect');
+  const phoneInput = document.getElementById('phoneNumber');
+  const customerIdInput = document.getElementById('customerId');
+  if (!select || !phoneInput) return;
+  select.addEventListener('change', () => {
+    const id = select.value;
+    if (!id) {
+      phoneInput.value = '';
+      if (customerIdInput) customerIdInput.value = '';
+      return;
+    }
+    const emp = corporateEmployeesList.find((e) => String(e.id) === String(id));
+    if (emp) {
+      phoneInput.value = stripIrelandCountryCode(emp.phone);
+      if (customerIdInput) customerIdInput.value = id;
+    }
+  });
+}
+
+function applyCorporateViewMode() {
+  // Disable every form control on the page for read-only inspection
+  const root = document.querySelector('main');
+  if (root) {
+    root.querySelectorAll('input, select, textarea').forEach((el) => {
+      el.setAttribute('disabled', 'disabled');
+    });
+  }
+  const assignBtn = document.getElementById('assignDriverBtn');
+  if (assignBtn) {
+    assignBtn.disabled = true;
+    assignBtn.style.opacity = '0.55';
+    assignBtn.style.cursor = 'not-allowed';
+    const btnText = document.getElementById('btnText');
+    if (btnText) btnText.textContent = 'Driver Assigned';
+  }
+  const cancelBtn = document.getElementById('cancelRideBtn');
+  if (cancelBtn) cancelBtn.style.display = 'none';
 }
 
 // Load approved drivers from database
@@ -930,7 +1156,7 @@ async function assignDriver() {
     return;
   }
 
-  if (!currentRideId) {
+  if (!currentRideId && !currentCorpId) {
     showToast('No order selected. Please open this page from an order (e.g. from the orders list) to assign a driver.');
     return;
   }
@@ -942,7 +1168,7 @@ async function assignDriver() {
     showToast('Please select a driver');
     return;
   }
-  
+
   if (!currentDistance || !currentDuration || !currentFare) {
     showToast('Please ensure route is calculated. Make sure pickup and drop-off locations are filled.');
     return;
@@ -954,41 +1180,64 @@ async function assignDriver() {
   // Set loading state before API call
   setButtonLoading(true, 'Assigning Driver...');
 
-  try {
-    const response = await fetch('api/assign_driver.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+  const endpoint = isCorporateMode ? 'api/assign_corporate_driver.php' : 'api/assign_driver.php';
+  const pickupLocationVal = document.getElementById('pickupLocation')?.value || '';
+  const dropoffLocationVal = document.getElementById('dropoffLocation')?.value || '';
+  const rideDateVal = document.getElementById('rideDate')?.value || '';
+  const rideTimeVal = document.getElementById('rideTime')?.value || '';
+  const pickupTimeIso = (rideDateVal && rideTimeVal) ? `${rideDateVal}T${rideTimeVal}:00` : '';
+
+  const payload = isCorporateMode
+    ? {
+        corp_id: currentCorpId,
+        driver_id: selectedDriverId,
+        distance_km: currentDistance,
+        duration_min: currentDuration,
+        fare_eur: currentFare,
+        service_type: serviceType,
+        pickup: pickupLocationVal,
+        destination: dropoffLocationVal,
+        pickup_time: pickupTimeIso,
+        pickup_lat: currentPickupLat,
+        pickup_lng: currentPickupLng,
+        dest_lat: currentDropLat,
+        dest_lng: currentDropLng,
+      }
+    : {
         ride_id: currentRideId,
         driver_id: selectedDriverId,
         distance_km: currentDistance,
         duration_min: currentDuration,
         fare_eur: currentFare,
         service_type: serviceType,
-      }),
+      };
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
     });
-       if (response.status === 401) { 
-      window.location.href = '/'; 
-      return; 
+    if (response.status === 401) {
+      window.location.href = '/';
+      return;
     }
-    
+
     const result = await response.json();
-    
+
     if (result.success) {
       const modal = new bootstrap.Modal(
         document.getElementById('driverAssignedModal')
       );
       modal.show();
 
-      // Remove existing event listener to prevent multiple redirects
       const goToPreorderBtn = document.getElementById('goToPreorderBtn');
       const newBtn = goToPreorderBtn.cloneNode(true);
       goToPreorderBtn.parentNode.replaceChild(newBtn, goToPreorderBtn);
-      
+
+      const redirectTo = isCorporateMode ? 'corporate_rides.php' : 'preorder.php';
       newBtn.addEventListener('click', () => {
-        window.location.href = 'preorder.php';
+        window.location.href = redirectTo;
       });
 
     } else {
@@ -1004,7 +1253,7 @@ async function assignDriver() {
 }
 
 function openCancelRideModal() {
-  if (!currentRideId) {
+  if (!currentRideId && !currentCorpId) {
     showToast('No ride selected to cancel.');
     return;
   }
@@ -1015,7 +1264,7 @@ function openCancelRideModal() {
 }
 
 async function confirmCancelRide() {
-  if (!currentRideId) {
+  if (!currentRideId && !currentCorpId) {
     showToast('No ride selected to cancel.');
     return;
   }
@@ -1028,11 +1277,17 @@ async function confirmCancelRide() {
   if (confirmText) confirmText.textContent = 'Cancelling...';
   if (confirmSpinner) confirmSpinner.style.display = 'inline-block';
 
+  const endpoint = isCorporateMode ? 'api/update_corporate_ride_status.php' : 'api/update_ride_status.php';
+  const payload = isCorporateMode
+    ? { corp_id: currentCorpId, status: 'Cancelled' }
+    : { ride_id: currentRideId, status: 'cancelled' };
+  const redirectTo = isCorporateMode ? 'corporate_rides.php' : 'preorder.php';
+
   try {
-    const response = await fetch('api/update_ride_status.php', {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ride_id: currentRideId, status: 'cancelled' })
+      body: JSON.stringify(payload),
     });
 
     if (response.status === 401) { window.location.href = '/'; return; }
@@ -1042,7 +1297,7 @@ async function confirmCancelRide() {
       const modalEl = document.getElementById('cancelRideModal');
       if (modalEl) bootstrap.Modal.getInstance(modalEl)?.hide();
       showToast('Ride cancelled successfully', true);
-      setTimeout(() => { window.location.href = 'preorder.php'; }, 900);
+      setTimeout(() => { window.location.href = redirectTo; }, 900);
     } else {
       showToast('Error cancelling ride: ' + (result.error || 'Unknown error'));
       if (confirmBtn) confirmBtn.disabled = false;

@@ -56,18 +56,21 @@ h1, h2, h3, h4, h5, h6 {
   object-fit: cover;
 }
 .sidebar {
-  width: 220px;
+  width: 240px;
   height: 100vh;
   position: fixed;
   left: 0;
   top: 0;
-  background-color: #ffffff;
+  background-color: #0B1220;
   transition: transform 0.3s ease;
   z-index: 1000;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.08);
 }
 .main-content {
-  margin-left: 220px;
+  margin-left: 240px;
+  padding-right: 8px;
+  min-height: 100vh;
+  background: #F4F4F5;
   transition: margin 0.3s ease;
 }
 @media (max-width: 768px) {

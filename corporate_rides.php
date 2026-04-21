@@ -54,11 +54,12 @@ require('modules/head.php');
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2 text-end" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Action</th>
             </tr>
           </thead>
           <tbody id="corporateRidesBody">
             <tr>
-              <td colspan="8" class="text-center py-5" style="border:none;">
+              <td colspan="9" class="text-center py-5" style="border:none;">
                 <div style="font-size:1.5rem; color:#EBEBEB; margin-bottom:8px;"><i class="bi bi-building"></i></div>
                 <div style="font-size:0.845rem; color:#A1A1AA;">Loading corporate rides…</div>
               </td>
@@ -493,7 +494,7 @@ require('modules/head.php');
     async function loadCorporateRides(page = 1) {
       currentPage = page;
       const tbody = document.getElementById('corporateRidesBody');
-      tbody.innerHTML = `<tr><td colspan="8" class="text-center py-5" style="border:none; color:#A1A1AA; font-size:0.845rem;">
+      tbody.innerHTML = `<tr><td colspan="9" class="text-center py-5" style="border:none; color:#A1A1AA; font-size:0.845rem;">
         <i class="bi bi-arrow-repeat d-block mb-2" style="font-size:1.4rem; color:#EBEBEB;"></i>Loading…</td></tr>`;
       
       try {
@@ -513,7 +514,7 @@ require('modules/head.php');
         const total = Number(data.pagination?.total ?? 0);
 
         if (rows.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="8" class="text-center py-5" style="border:none;">
+          tbody.innerHTML = `<tr><td colspan="9" class="text-center py-5" style="border:none;">
             <i class="bi bi-building d-block mb-2" style="font-size:1.5rem; color:#EBEBEB;"></i>
             <span style="font-size:0.845rem; color:#A1A1AA;">No corporate rides found${currentSearch ? ' for this search' : ''}</span>
           </td></tr>`;
@@ -540,21 +541,46 @@ require('modules/head.php');
             .toLowerCase()
             .replace(/\s+/g, '_');
           const s = statusConfig[normalizedStatusKey] ?? { bg:'#F4F4F5', color:'#71717A', label: ride.status ?? '—' };
+
           const dateSource = ride.pickupTime ?? ride.date ?? ride.created_at ?? null;
-          const date = dateSource
-            ? new Date(dateSource).toLocaleDateString('en-IE', { day:'2-digit', month:'short', year:'numeric' })
-            : '—';
+          let dateCell = '<span style="color:#A1A1AA;">—</span>';
+          if (dateSource) {
+            const d = new Date(dateSource);
+            if (!isNaN(d.getTime())) {
+              const datePart = d.toLocaleDateString('en-IE', { day: '2-digit', month: 'short', year: 'numeric' });
+              const timePart = d.toLocaleTimeString('en-IE', { hour: '2-digit', minute: '2-digit', hour12: false });
+              dateCell = `<div style="white-space:nowrap; line-height:1.25;">
+                <div style="color:#18181B;">${escapeHtml(datePart)}</div>
+                <div style="color:#71717A; font-size:0.75rem;">${escapeHtml(timePart)}</div>
+              </div>`;
+            }
+          }
+
           const company = ride.company_name ?? ride.company ?? '—';
           const employee = ride.employee_name ?? ride.employee ?? ride.passenger_name ?? '—';
           const pickup = ride.pickup ?? ride.pickup_location ?? '—';
           const destination = ride.destination ?? ride.dropoff ?? ride.destination_location ?? '—';
           const payment = ride.payment_method ?? ride.payment_source ?? ride.payment ?? '—';
           const fare = ride.fare ?? ride.price ?? null;
+          const rideId = ride.id ?? '';
+
+          let actionCell = '';
+          if (normalizedStatusKey === 'pending') {
+            actionCell = `<a href="orderassigned.php?corp_id=${encodeURIComponent(rideId)}" class="view-details-btn">
+                 <span>Assign</span>
+                 <i class="bi bi-chevron-right"></i>
+               </a>`;
+          } else if (normalizedStatusKey === 'assigned') {
+            actionCell = `<a href="orderassigned.php?corp_id=${encodeURIComponent(rideId)}&view=1" class="view-details-btn">
+                 <span>View Details</span>
+                 <i class="bi bi-chevron-right"></i>
+               </a>`;
+          }
 
           return `<tr>
             <td>${escapeHtml(company)}</td>
             <td>${escapeHtml(employee)}</td>
-            <td style="color:#71717A; font-size:0.8rem; white-space:nowrap;">${escapeHtml(date)}</td>
+            <td>${dateCell}</td>
             <td style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(pickup)}">${escapeHtml(pickup)}</td>
             <td style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(destination)}">${escapeHtml(destination)}</td>
             <td>${escapeHtml(payment)}</td>
@@ -565,6 +591,7 @@ require('modules/head.php');
                 ${escapeHtml(s.label)}
               </span>
             </td>
+            <td class="text-end">${actionCell}</td>
           </tr>`;
         }).join('');
 
@@ -576,7 +603,7 @@ require('modules/head.php');
 
       } catch (err) {
         console.error('Corporate rides error:', err);
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4" style="border:none; color:#E11D48; font-size:0.845rem;">
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4" style="border:none; color:#E11D48; font-size:0.845rem;">
           Failed to load — please refresh.</td></tr>`;
       }
     }

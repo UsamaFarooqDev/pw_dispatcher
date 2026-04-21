@@ -27,9 +27,9 @@ require('modules/head.php');
             <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Company</th>
             */ ?>
             <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Employee</th>
-            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Email</th>
             <th class="fw-semibold px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:260px;">Pickup</th>
             <th class="fw-semibold px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:260px;">Destination</th>
+            <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Date &amp; Time</th>
             <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
             <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
             <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
@@ -263,15 +263,28 @@ require('modules/head.php');
           const status = ride.status || 'N/A';
 
           const employee = ride.passenger_name || 'N/A';
-          const email = ride.passenger_email || 'N/A';
+
+          const rideTimeSource = ride.pickup_time || ride.scheduled_at || ride.actual_start_at || ride.created_at || null;
+          let dateTimeHtml = '<span style="color:#A1A1AA;">N/A</span>';
+          if (rideTimeSource) {
+            const d = new Date(rideTimeSource);
+            if (!isNaN(d.getTime())) {
+              const datePart = d.toLocaleDateString('en-IE', { day: '2-digit', month: 'short', year: 'numeric' });
+              const timePart = d.toLocaleTimeString('en-IE', { hour: '2-digit', minute: '2-digit', hour12: false });
+              dateTimeHtml = `<div style="white-space:nowrap; line-height:1.25;">
+                <div style="color:#18181B;">${datePart}</div>
+                <div style="color:#71717A; font-size:0.75rem;">${timePart}</div>
+              </div>`;
+            }
+          }
 
           const row = document.createElement('tr');
           row.style.transition = 'none';
           row.innerHTML = `
             <td>${employee}</td>
-            <td>${email}</td>
             <td class="ride-addr-cell">${pickup}</td>
             <td class="ride-addr-cell">${destination}</td>
+            <td>${dateTimeHtml}</td>
             <td>${payment}</td>
             <td class="text-success fw-semibold">${fare}</td>
             <td>
@@ -342,16 +355,16 @@ require('modules/head.php');
           }
 
           const employee = cells[0].textContent.toLowerCase();
-          const email = cells[1].textContent.toLowerCase();
-          const pickup = cells[2].textContent.toLowerCase();
-          const destination = cells[3].textContent.toLowerCase();
+          const pickup = cells[1].textContent.toLowerCase();
+          const destination = cells[2].textContent.toLowerCase();
+          const dateTimeText = cells[3].textContent.toLowerCase();
           const statusText = cells[6].textContent.toLowerCase();
 
           const matches =
             employee.includes(term) ||
-            email.includes(term) ||
             pickup.includes(term) ||
             destination.includes(term) ||
+            dateTimeText.includes(term) ||
             statusText.includes(term);
 
           row.style.display = matches ? '' : 'none';
