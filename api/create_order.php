@@ -139,6 +139,7 @@ function calcFareFromPassengerFormula($distanceKm, $durationMin, $rideType, $sch
         'Wheelchair Taxi' => 1.1,
         'Pets Taxi' => 1.15,
         'Courier / Parcel' => 0.9,
+        'Parcel Delivery' => 0.9,
     ];
     $multiplier = isset($multipliers[$rideType]) ? $multipliers[$rideType] : 1.0;
     return round((float) ($rawFare * $multiplier), 2);
@@ -321,10 +322,18 @@ try {
     $scheduledDateTime = $scheduledDate . ' ' . $scheduledTime;
 
 
+    // Prefer the frontend-computed fare (which already accounts for any
+    // Special Cost override the dispatcher entered). Fall back to the legacy
+    // base+extra+special breakdown if the frontend didn't send fare_eur.
     $baseFare = isset($input['base_fare']) ? floatval($input['base_fare']) : 0;
     $extraCost = isset($input['extra_cost']) ? floatval($input['extra_cost']) : 0;
     $specialCost = isset($input['special_cost']) ? floatval($input['special_cost']) : 0;
-    $fareEur = $baseFare + $extraCost + $specialCost;
+    $fareExplicit = isset($input['fare_eur']) && is_numeric($input['fare_eur']) && floatval($input['fare_eur']) >= 0;
+    if ($fareExplicit) {
+        $fareEur = floatval($input['fare_eur']);
+    } else {
+        $fareEur = $baseFare + $extraCost + $specialCost;
+    }
 
 
     $metaData = [
@@ -398,8 +407,9 @@ try {
     }
 
 
-    // When no fare was provided, use same formula as passenger app (ride_selection.dart)
-    if ($fareEur == 0) {
+    // When no fare was provided (and the dispatcher didn't explicitly send one),
+    // use the same formula as the passenger app (ride_selection.dart)
+    if (!$fareExplicit && $fareEur == 0) {
         if ($distanceKm > 0 || $durationMin > 0) {
             $fareEur = calcFareFromPassengerFormula(
                 $distanceKm,

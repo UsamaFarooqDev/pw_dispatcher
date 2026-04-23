@@ -2,7 +2,37 @@
 session_start();
 
 require_once 'auth/require_login_redirect.php';
+require_once __DIR__ . '/auth/config.php';
 require('modules/head.php');
+
+/**
+ * Load ride types inline so the pill grid paints on first render — no
+ * round-trip for the browser to wait on. Falls back silently if Supabase
+ * is unreachable; the JS loader still runs as a safety net.
+ */
+$rideTypes = [];
+try {
+    $db = new SupabaseDB(null, true);
+    $rows = $db->fetchData('ride_types', ['order' => 'sort_order.asc', 'limit' => 200]);
+    foreach (is_array($rows) ? $rows : [] as $r) {
+        if (isset($r['is_active']) && $r['is_active'] === false) continue;
+        $rideTypes[] = [
+            'name'       => $r['name'] ?? '',
+            'image_url'  => $r['image_url'] ?? null,
+            'icon_emoji' => $r['icon_emoji'] ?? null,
+            'multiplier' => isset($r['multiplier']) ? floatval($r['multiplier']) : 1.0,
+            'description'=> $r['description'] ?? null,
+        ];
+    }
+} catch (Exception $e) {
+    error_log('order.php: ride_types fetch failed: ' . $e->getMessage());
+}
+
+$defaultRideTypeName = !empty($rideTypes) ? $rideTypes[0]['name'] : '';
+$rideTypeMultiplierMap = [];
+foreach ($rideTypes as $t) {
+    $rideTypeMultiplierMap[$t['name']] = $t['multiplier'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,8 +56,8 @@ require('modules/head.php');
   <div class="rounded-3 border overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
     <div class="p-4">
 
-      <div class="mb-1 pb-2" style="border-bottom:1px solid #EBEBEB;">
-        <span class="fw-bold" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Passenger Details</span>
+      <div class="section-label">
+        <span>Passenger Details</span>
       </div>
 
       <div class="row g-3 mt-1 mb-3">
@@ -54,51 +84,196 @@ require('modules/head.php');
         </div>
       </div>
 
-      <div class="mb-1 pb-2 mt-4" style="border-bottom:1px solid #EBEBEB;">
-        <span class="fw-bold" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Ride Details</span>
+      <div class="section-label mt-4">
+        <span>Ride Details</span>
       </div>
 
       <div class="row g-3 mt-1 mb-4">
-        <div class="col-md-3">
-          <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Service Type</label>
-          <select class="form-select" id="serviceType"
-            style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; color:#18181B; background:#FAFAFA;"
-            onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
-            onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';">
-            <option value="Economy">Economy</option>
-            <option value="Economy XL">Economy XL</option>
-            <option value="Business">Business</option>
-            <option value="Business Plus">Business Plus</option>
-            <option value="Limousine">Limousine</option>
-            <option value="Wheelchair accessible">Wheelchair Accessible</option>
-          </select>
+        <div class="col-12">
+          <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Service Type</label>
+          <input type="hidden" id="serviceType" value="<?php echo htmlspecialchars($defaultRideTypeName, ENT_QUOTES); ?>" />
+          <div class="ride-type-group" data-pill-target="serviceType" id="rideTypePillGroup">
+            <?php if (empty($rideTypes)): ?>
+              <div class="text-muted" style="font-size:0.78rem; grid-column: 1 / -1;">Loading ride types…</div>
+            <?php else: ?>
+              <?php foreach ($rideTypes as $idx => $t): ?>
+                <?php
+                  $isActive   = $idx === 0;
+                  $name       = htmlspecialchars($t['name'], ENT_QUOTES);
+                  $desc       = htmlspecialchars($t['description'] ?? $t['name'], ENT_QUOTES);
+                  $hasImage   = !empty($t['image_url']);
+                  $imageUrl   = htmlspecialchars($t['image_url'] ?? '', ENT_QUOTES);
+                  $emoji      = htmlspecialchars($t['icon_emoji'] ?? '', ENT_QUOTES, 'UTF-8');
+                ?>
+                <button type="button" class="ride-type-btn<?php echo $isActive ? ' active' : ''; ?>" data-value="<?php echo $name; ?>" title="<?php echo $desc; ?>">
+                  <span class="ride-type-icon">
+                    <?php if ($hasImage): ?>
+                      <img src="<?php echo $imageUrl; ?>" alt=""
+                           onerror="this.style.display='none'; const s=this.nextElementSibling; if(s) s.style.display='inline-flex';" />
+                      <?php if ($emoji !== ''): ?>
+                        <span class="ride-type-emoji-fallback" style="display:none; align-items:center; justify-content:center;"><?php echo $emoji; ?></span>
+                      <?php endif; ?>
+                    <?php elseif ($emoji !== ''): ?>
+                      <span class="ride-type-emoji"><?php echo $emoji; ?></span>
+                    <?php else: ?>
+                      <i class="bi bi-car-front"></i>
+                    <?php endif; ?>
+                  </span>
+                  <span class="ride-type-label"><?php echo $name; ?></span>
+                </button>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </div>
         </div>
-        <div class="col-md-3">
-          <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Seats</label>
-          <select class="form-select" id="seatCount"
-            style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; color:#18181B; background:#FAFAFA;"
-            onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
-            onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';">
-            <option value="">Select seats</option>
-            <option>1</option><option>2</option><option>3</option>
-            <option>4</option><option>5</option><option>6</option>
-          </select>
+
+        <div class="col-md-4">
+          <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Seats</label>
+          <input type="hidden" id="seatCount" value="" />
+          <div class="pill-group" data-pill-target="seatCount">
+            <button type="button" class="pill-btn pill-seat" data-value="4">4</button>
+            <button type="button" class="pill-btn pill-seat" data-value="5">5</button>
+            <button type="button" class="pill-btn pill-seat" data-value="6">6</button>
+            <button type="button" class="pill-btn pill-seat" data-value="7">7</button>
+            <button type="button" class="pill-btn pill-seat" data-value="8">8</button>
+          </div>
         </div>
-        <div class="col-md-3">
-          <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Date</label>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Date</label>
           <input type="date" class="form-control" id="rideDate"
-            style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#FAFAFA;"
+            style="height:40px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#FAFAFA;"
             onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
             onblur="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA'; this.style.boxShadow='none';" />
         </div>
-        <div class="col-md-3">
-          <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Time</label>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Time</label>
           <input type="time" class="form-control" id="rideTime"
-            style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#FAFAFA;"
+            style="height:40px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#FAFAFA;"
             onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
             onblur="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA'; this.style.boxShadow='none';" />
         </div>
       </div>
+
+      <style>
+        /* Section headers — uppercase label with subtle orange accent bar */
+        .section-label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding-bottom: 10px;
+          margin-bottom: 4px;
+          border-bottom: 1px solid #EBEBEB;
+        }
+        .section-label::before {
+          content: '';
+          display: inline-block;
+          width: 3px;
+          height: 13px;
+          background: #f37a20;
+          border-radius: 2px;
+        }
+        .section-label > span {
+          font-weight: 700;
+          font-size: 0.78rem;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: #52525B;
+        }
+
+        /* Seat pills — compact horizontal */
+        .pill-group { display:flex; flex-wrap:wrap; gap:6px; }
+        .pill-btn {
+          display:inline-flex; align-items:center; justify-content:center; gap:6px;
+          padding:7px 12px; min-height:40px;
+          background:#FAFAFA; border:1.5px solid #EBEBEB; border-radius:8px;
+          font-size:0.8125rem; font-weight:600; color:#52525B;
+          cursor:pointer; user-select:none; white-space:nowrap;
+          transition:background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .pill-btn:hover { border-color:#D4D4D8; color:#18181B; background:#fff; }
+        .pill-btn.active {
+          background:#FFF3E8; border-color:#f37a20; color:#f37a20;
+          box-shadow:0 0 0 3px rgba(243,122,32,0.10);
+        }
+        .pill-btn:focus-visible { outline:2px solid #f37a20; outline-offset:2px; }
+        .pill-seat { min-width:46px; font-weight:700; font-size:0.9rem; padding:7px 10px; }
+
+        /* Ride-type cards — icon on top center, label below */
+        .ride-type-group {
+          display: grid;
+          grid-template-columns: repeat(7, minmax(0, 1fr));
+          gap: 8px;
+        }
+        @media (max-width: 1399.98px) { .ride-type-group { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 767.98px)  { .ride-type-group { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 479.98px)  { .ride-type-group { grid-template-columns: repeat(2, 1fr); } }
+
+        .ride-type-btn {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          padding: 16px 10px;
+          background: #FAFAFA;
+          border: 1.5px solid #EBEBEB;
+          border-radius: 12px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: #52525B;
+          cursor: pointer;
+          user-select: none;
+          text-align: center;
+          line-height: 1.2;
+          min-height: 112px;
+          transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease, transform .15s ease;
+        }
+        .ride-type-btn:hover {
+          border-color: #D4D4D8;
+          color: #18181B;
+          background: #fff;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .ride-type-btn:focus-visible { outline: 2px solid #f37a20; outline-offset: 2px; }
+        .ride-type-btn.active {
+          background: #FFF3E8;
+          border-color: #f37a20;
+          color: #f37a20;
+          box-shadow: 0 0 0 3px rgba(243,122,32,0.10);
+        }
+        .ride-type-icon {
+          width: 52px;
+          height: 52px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: #fff;
+          border: 1.5px solid #EBEBEB;
+          border-radius: 12px;
+          font-size: 24px;
+          line-height: 1;
+          color: #52525B;
+          transition: background .15s ease, border-color .15s ease, color .15s ease;
+          padding: 4px;
+        }
+        .ride-type-icon img {
+          width: 38px;
+          height: 38px;
+          object-fit: contain;
+        }
+        .ride-type-icon .ride-type-emoji,
+        .ride-type-icon .ride-type-emoji-fallback {
+          font-size: 28px;
+          line-height: 1;
+        }
+        .ride-type-btn:hover .ride-type-icon { color: #18181B; }
+        .ride-type-btn.active .ride-type-icon {
+          background: #fff;
+          border-color: #FED7AA;
+          color: #f37a20;
+        }
+        .ride-type-label { display: block; font-weight: 600; }
+      </style>
 
       <div class="row g-3">
 
@@ -207,7 +382,8 @@ require('modules/head.php');
                   <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Cost</label>
                   <div class="input-group" style="height:38px;">
                     <span class="input-group-text" style="background:#FAFAFA; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; font-size:0.8rem; color:#71717A; height:38px;">EUR</span>
-                    <input type="number" class="form-control" style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px;"
+                    <input type="number" step="0.01" min="0" class="form-control" id="specialCost" placeholder="Override fare"
+                      style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px;"
                       onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
                       onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';" />
                   </div>
@@ -216,7 +392,8 @@ require('modules/head.php');
                   <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Km Included</label>
                   <div class="input-group" style="height:38px;">
                     <span class="input-group-text" style="background:#FAFAFA; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; font-size:0.8rem; color:#71717A; height:38px;">km</span>
-                    <input type="number" class="form-control" style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px;"
+                    <input type="number" step="0.01" min="0" class="form-control" id="specialKm" placeholder="Override distance"
+                      style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px;"
                       onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
                       onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';" />
                   </div>
@@ -226,7 +403,8 @@ require('modules/head.php');
                 <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Minutes Included</label>
                 <div class="input-group" style="height:38px;">
                   <span class="input-group-text" style="background:#FAFAFA; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; font-size:0.8rem; color:#71717A; height:38px;">min</span>
-                  <input type="number" class="form-control" style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px;"
+                  <input type="number" step="1" min="0" class="form-control" id="specialMinutes" placeholder="Override duration"
+                    style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px;"
                     onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
                     onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';" />
                 </div>
@@ -451,6 +629,10 @@ require('modules/head.php');
       let currentDistance = null;
       let currentDuration = null;
       let currentFare = null;
+      // Raw Google-Directions values; specials override these when set
+      let googleDistance = null;
+      let googleDuration = null;
+      let googleFare = null;
       let nearbyDriversList = [];
       let selectedNearbyDriverId = null;
 
@@ -487,7 +669,104 @@ require('modules/head.php');
         setupRouteListeners();
         setupConfirmOrder();
         setupAssignNearestDriver();
+        setupPillGroups();
+        setupSpecialCostListeners();
+        loadRideTypes();
       });
+
+      /* ---------------------- Pill button groups (service type, seats) ---------------------- */
+      function wirePillGroup(group) {
+        if (!group) return;
+        const targetId = group.dataset.pillTarget;
+        const hidden = targetId ? document.getElementById(targetId) : null;
+        group.querySelectorAll('button[data-value]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            group.querySelectorAll('button[data-value]').forEach((b) => b.classList.remove('active'));
+            btn.classList.add('active');
+            if (hidden) {
+              hidden.value = btn.dataset.value ?? '';
+              hidden.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          });
+        });
+      }
+
+      function setupPillGroups() {
+        document.querySelectorAll('[data-pill-target]').forEach(wirePillGroup);
+      }
+
+      /* ---------------------- Ride types (loaded from ride_types table) ---------------------- */
+      // Bootstrapped from PHP so calculateFare has multipliers on first paint — no fetch needed.
+      let rideTypeMultipliers = <?php echo json_encode((object)$rideTypeMultiplierMap, JSON_UNESCAPED_SLASHES); ?>;
+
+      function escapeAttr(v) {
+        return String(v ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+      function escapeText(v) {
+        return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
+      async function loadRideTypes() {
+        // Skip the fetch if the server already rendered the pills (the common case).
+        const group = document.getElementById('rideTypePillGroup');
+        if (!group) return;
+        if (group.querySelector('button[data-value]')) return;
+
+        try {
+          const res = await fetch('api/get_ride_types.php');
+          if (res.status === 401) { window.location.href = '/'; return; }
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const result = await res.json();
+          if (!result || !result.success || !Array.isArray(result.data) || result.data.length === 0) {
+            group.innerHTML = '<div class="text-muted" style="font-size:0.78rem; grid-column: 1 / -1;">No ride types available.</div>';
+            return;
+          }
+          renderRideTypes(result.data);
+        } catch (err) {
+          console.error('Failed to load ride types:', err);
+          group.innerHTML = '<div class="text-danger" style="font-size:0.78rem; grid-column: 1 / -1;">Failed to load ride types. Refresh to retry.</div>';
+        }
+      }
+
+      function renderRideTypes(types) {
+        const group = document.getElementById('rideTypePillGroup');
+        if (!group) return;
+
+        // Keep the multiplier lookup in sync with whatever the DB says.
+        rideTypeMultipliers = {};
+        types.forEach((t) => {
+          rideTypeMultipliers[t.name] = Number(t.multiplier) || 1.0;
+        });
+
+        // Preserve an already-selected value (e.g. if user somehow landed after an earlier pick),
+        // otherwise default to the first ride type.
+        const hidden = document.getElementById('serviceType');
+        const currentValue = hidden?.value || '';
+        const defaultName = types.find((t) => t.name === currentValue) ? currentValue : types[0].name;
+        if (hidden) hidden.value = defaultName;
+
+        group.innerHTML = types.map((t) => {
+          const isActive = t.name === defaultName;
+          const icon = t.image_url
+            ? `<img src="${escapeAttr(t.image_url)}" alt="" style="width:26px; height:26px; object-fit:contain;" onerror="this.style.display='none'; this.nextElementSibling && (this.nextElementSibling.style.display='inline');">`
+              + (t.icon_emoji ? `<span style="display:none; font-size:20px; line-height:1;">${escapeText(t.icon_emoji)}</span>` : '')
+            : (t.icon_emoji
+                ? `<span style="font-size:22px; line-height:1;">${escapeText(t.icon_emoji)}</span>`
+                : `<i class="bi bi-car-front"></i>`);
+
+          return `<button type="button" class="ride-type-btn${isActive ? ' active' : ''}" data-value="${escapeAttr(t.name)}" title="${escapeAttr(t.description || t.name)}">
+            <span class="ride-type-icon">${icon}</span>
+            <span class="ride-type-label">${escapeText(t.name)}</span>
+          </button>`;
+        }).join('');
+
+        wirePillGroup(group);
+
+        // If fare was already computed before types loaded, re-run with the DB multiplier
+        if (googleDistance != null && googleDuration != null) {
+          recalculateFareForCurrentRoute();
+        }
+      }
 
       /* ---------------------- Customers ---------------------- */
       async function fetchPassengers() {
@@ -890,13 +1169,13 @@ require('modules/head.php');
           if (status === google.maps.DirectionsStatus.OK) {
             directionsRenderer.setDirections(result);
             const leg = result.routes[0].legs[0];
-            currentDistance = leg.distance.value / 1000;
-            currentDuration = Math.round(leg.duration.value / 60);
+            googleDistance = leg.distance.value / 1000;
+            googleDuration = Math.round(leg.duration.value / 60);
             const pickupTimeStr = buildPickupDateTime();
-            currentFare = calculateFare(currentDistance, currentDuration, pickupTimeStr, document.getElementById('serviceType')?.value || 'Economy');
-            updateSummaryFields();
+            googleFare = calculateFare(googleDistance, googleDuration, pickupTimeStr, document.getElementById('serviceType')?.value || 'Economy');
             pickupLatLng = leg.start_location;
             dropoffLatLng = leg.end_location;
+            applyFareOverrides();
           }
         });
       }
@@ -924,36 +1203,57 @@ require('modules/head.php');
           ratePerMinute = 0.30;
         }
         const rawFare = initialFare + baseFare + (distanceKm * ratePerKm) + ((durationMin || 0) * ratePerMinute);
-        const multipliers = {
-          'Economy': 1.0,
-          'Economy XL': 1.2,
-          'Business': 1.0,
-          'Business Plus': 1.2,
-          'Limousine': 2.0,
-          'Wheelchair accessible': 1.1,
-          'Wheelchair Taxi': 1.1,
-          'Pets Taxi': 1.15,
-          'Courier / Parcel': 0.9
-        };
-        const multiplier = multipliers[rideType] ?? 1.0;
+        // Prefer DB-backed multipliers (loaded via loadRideTypes from ride_types table).
+        // Fall back to 1.0 when the ride type hasn't been registered in the table.
+        const multiplier = (rideTypeMultipliers && rideTypeMultipliers[rideType] != null)
+          ? rideTypeMultipliers[rideType]
+          : 1.0;
         return Math.round((rawFare * multiplier) * 100) / 100;
       }
 
       function recalculateFareForCurrentRoute() {
-        if (currentDistance == null || currentDuration == null) return;
+        if (googleDistance == null || googleDuration == null) return;
         const pickupTimeStr = buildPickupDateTime();
         const rideType = document.getElementById('serviceType')?.value || 'Economy';
-        currentFare = calculateFare(currentDistance, currentDuration, pickupTimeStr, rideType);
+        googleFare = calculateFare(googleDistance, googleDuration, pickupTimeStr, rideType);
+        applyFareOverrides();
+      }
+
+      /**
+       * Merge Google-derived values with Special Cost overrides and push the
+       * effective values to the read-only summary fields + saved payload.
+       * If a special input is non-empty, it overrides the corresponding
+       * Google value. Empty → fall back to Google.
+       */
+      function applyFareOverrides() {
+        const rawCost = document.getElementById('specialCost')?.value;
+        const rawKm   = document.getElementById('specialKm')?.value;
+        const rawMin  = document.getElementById('specialMinutes')?.value;
+
+        const spCost = rawCost !== '' && rawCost != null ? parseFloat(rawCost) : NaN;
+        const spKm   = rawKm   !== '' && rawKm   != null ? parseFloat(rawKm)   : NaN;
+        const spMin  = rawMin  !== '' && rawMin  != null ? parseFloat(rawMin)  : NaN;
+
+        currentFare     = !isNaN(spCost) ? spCost : googleFare;
+        currentDistance = !isNaN(spKm)   ? spKm   : googleDistance;
+        currentDuration = !isNaN(spMin)  ? spMin  : googleDuration;
         updateSummaryFields();
+      }
+
+      function setupSpecialCostListeners() {
+        ['specialCost', 'specialKm', 'specialMinutes'].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.addEventListener('input', applyFareOverrides);
+        });
       }
 
       function updateSummaryFields() {
         const fareEl = document.getElementById('estimatedFare');
         const distEl = document.getElementById('distanceKm');
         const timeEl = document.getElementById('travelTime');
-        if (fareEl && currentFare != null) fareEl.value = `€${currentFare.toFixed(2)}`;
-        if (distEl && currentDistance != null) distEl.value = currentDistance.toFixed(2);
-        if (timeEl && currentDuration != null) timeEl.value = currentDuration.toString();
+        if (fareEl && currentFare != null) fareEl.value = `€${Number(currentFare).toFixed(2)}`;
+        if (distEl && currentDistance != null) distEl.value = Number(currentDistance).toFixed(2);
+        if (timeEl && currentDuration != null) timeEl.value = Math.round(Number(currentDuration)).toString();
       }
 
       /* ---------------------- Confirm Order ---------------------- */
@@ -1127,22 +1427,29 @@ modal.show();
           'customerNameInput', 'customerPhone', 'customerId',
           'pickupInput', 'dropoffInput',
           'estimatedFare', 'distanceKm', 'travelTime',
-          'rideDate', 'rideTime'
+          'rideDate', 'rideTime',
+          'specialCost', 'specialKm', 'specialMinutes'
         ];
         textIds.forEach(id => {
           const el = document.getElementById(id);
           if (el) el.value = '';
         });
+        // Reset cached route/fare state so a new order starts clean
+        currentDistance = currentDuration = currentFare = null;
+        googleDistance = googleDuration = googleFare = null;
 
-        const selectIds = ['serviceType', 'seatCount'];
-        selectIds.forEach(id => {
-          const el = document.getElementById(id);
-          if (!el) return;
-          if (el.options && el.options.length > 0) {
-            el.selectedIndex = 0;
-          } else {
-            el.value = '';
-          }
+        // Reset pill groups: Service Type → Economy, Seats → none
+        const serviceTypeInput = document.getElementById('serviceType');
+        if (serviceTypeInput) serviceTypeInput.value = 'Economy';
+        const seatCountInput = document.getElementById('seatCount');
+        if (seatCountInput) seatCountInput.value = '';
+        document.querySelectorAll('[data-pill-target]').forEach((group) => {
+          const targetId = group.dataset.pillTarget;
+          const hidden = targetId ? document.getElementById(targetId) : null;
+          const wantValue = hidden ? hidden.value : '';
+          group.querySelectorAll('button[data-value]').forEach((b) => {
+            b.classList.toggle('active', !!wantValue && b.dataset.value === wantValue);
+          });
         });
 
         const checkboxIds = [

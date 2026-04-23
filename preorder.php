@@ -56,7 +56,7 @@ require('modules/head.php');
           <span class="d-flex align-items-center justify-content-center" style="width:18px; height:18px; background:#F4F4F5; border-radius:4px; font-size:10px;">
             <i class="bi bi-calendar-check"></i>
           </span>
-          Scheduled <span class="ms-1 px-2 rounded-pill fw-bold" style="background:#F4F4F5; color:#71717A; font-size:0.7rem;" id="count-scheduled">0</span>
+          Pre-Order <span class="ms-1 px-2 rounded-pill fw-bold" style="background:#F4F4F5; color:#71717A; font-size:0.7rem;" id="count-scheduled">0</span>
         </button>
 
         <button class="btn btn-sm fw-semibold d-flex align-items-center gap-1 tab-btn" id="tab-cancelled"
@@ -1010,7 +1010,7 @@ require('modules/head.php');
 
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="6" class="text-center py-4 text-muted">No scheduled rides to show</td></tr>';
+            '<tr><td colspan="6" class="text-center py-4 text-muted">No pre-orders to show</td></tr>';
           return;
         }
 

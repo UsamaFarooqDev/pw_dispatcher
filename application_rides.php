@@ -120,6 +120,7 @@ require('modules/head.php');
           <option value="searching">Searching</option>
           <option value="assigned">Assigned</option>
           <option value="upcoming">Upcoming</option>
+          <option value="scheduled">Scheduled</option>
         </select>
       </div>
 
@@ -383,7 +384,7 @@ require('modules/head.php');
         const statusSelect = document.getElementById('rideStatusSelect');
         if (statusSelect) {
           // Set the current status, or default to 'searching' if not in allowed list
-          const allowedStatuses = ['searching', 'assigned', 'upcoming'];
+          const allowedStatuses = ['searching', 'assigned', 'upcoming', 'scheduled'];
           if (allowedStatuses.includes(currentStatus)) {
             statusSelect.value = currentStatus;
           } else {

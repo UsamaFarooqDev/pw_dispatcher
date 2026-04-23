@@ -125,7 +125,20 @@ function find_auth_user_id_by_email($email) {
 try {
     $db = new SupabaseDB(null, true);
 
-    // 1. Load the driver (we need vehicle_number for corporate_rides + id for rides.driver_id)
+    // ── Step 1: Validate every piece of input up front ───────────────────
+    // The driver app reads from `rides`, which has strict NOT NULL columns
+    // (lat/lng, ride_type, payment_method, etc). We fail early here so the
+    // corporate_rides row is never flipped to "Assigned" without a working
+    // rides row existing to back it up.
+    $pickupLat = isset($input['pickup_lat']) && is_numeric($input['pickup_lat']) ? floatval($input['pickup_lat']) : null;
+    $pickupLng = isset($input['pickup_lng']) && is_numeric($input['pickup_lng']) ? floatval($input['pickup_lng']) : null;
+    $destLat   = isset($input['dest_lat'])   && is_numeric($input['dest_lat'])   ? floatval($input['dest_lat'])   : null;
+    $destLng   = isset($input['dest_lng'])   && is_numeric($input['dest_lng'])   ? floatval($input['dest_lng'])   : null;
+    if ($pickupLat === null || $pickupLng === null || $destLat === null || $destLng === null) {
+        throw new Exception('Pickup/drop-off coordinates missing. Please wait for the map to calculate the route and try again.');
+    }
+
+    // ── Step 2: Load and validate driver ─────────────────────────────────
     $drivers = $db->findData('drivers', ['id' => $input['driver_id']]);
     if (empty($drivers)) {
         http_response_code(404);
@@ -144,7 +157,7 @@ try {
         exit;
     }
 
-    // 2. Load the corporate ride (we need employee_id, cid, pickup, destination, ...)
+    // ── Step 3: Load the corporate ride (source of truth for the booking) ─
     $corpRows = $db->findData('corporate_rides', ['id' => $input['corp_id']]);
     if (empty($corpRows)) {
         http_response_code(404);
@@ -153,36 +166,10 @@ try {
     }
     $corp = $corpRows[0];
 
-    // 3. Update the corporate_rides row
-    $corpUpdate = [
-        'status' => 'Assigned',
-        'vehicle_number' => $vehicleNumber,
-    ];
-    if (isset($input['service_type']) && trim((string)$input['service_type']) !== '') {
-        $corpUpdate['carType'] = trim((string)$input['service_type']);
-    }
-    if (isset($input['pickup']) && trim((string)$input['pickup']) !== '') {
-        $corpUpdate['pickup'] = trim((string)$input['pickup']);
-    }
-    if (isset($input['destination']) && trim((string)$input['destination']) !== '') {
-        $corpUpdate['destination'] = trim((string)$input['destination']);
-    }
-    if (isset($input['fare_eur'])) {
-        $corpUpdate['fare'] = number_format(floatval($input['fare_eur']), 2, '.', '');
-    }
-    if (isset($input['distance_km'])) {
-        $corpUpdate['distance'] = floatval($input['distance_km']);
-    }
-    if (isset($input['duration_min'])) {
-        $corpUpdate['eta'] = intval($input['duration_min']);
-    }
-    if (isset($input['pickup_time']) && trim((string)$input['pickup_time']) !== '') {
-        $corpUpdate['pickupTime'] = trim((string)$input['pickup_time']);
-    }
-    $updatedCorp = $db->updateData('corporate_rides', $input['corp_id'], $corpUpdate);
-
-    // 4. Find or create a passenger record for the employee so the mirrored
-    //    rides row can satisfy the NOT NULL user_id constraint.
+    // ── Step 4: Resolve the passenger for the employee ───────────────────
+    //   - rides.user_id is NOT NULL and is a FK to auth.users.id
+    //   - Try to reuse an existing passenger matched by email
+    //   - Otherwise mint an auth user via the admin API, then insert passenger
     $employeeId = $corp['employee_id'] ?? null;
     $employeeName = trim((string)($corp['employee'] ?? 'Corporate Employee'));
     $employeeEmail = null;
@@ -207,9 +194,8 @@ try {
         }
     }
     if (!$passengerId) {
-        // passengers.id is a FK to auth.users.id — we must mint an auth user first.
-        // If the corporate employee has no email, synthesize a stable placeholder.
-        $emailForAuth = $employeeEmail ?: ('corp-' . strtolower(preg_replace('/[^a-zA-Z0-9]/', '', (string)$employeeId)) . '@corporate.powercabs.local');
+        $emailForAuth = $employeeEmail
+            ?: ('corp-' . strtolower(preg_replace('/[^a-zA-Z0-9]/', '', (string)$employeeId)) . '@corporate.powercabs.local');
         $authUserId = create_auth_user($emailForAuth, $employeeName ?: 'Corporate Employee');
         if (!$authUserId) {
             throw new Exception('Could not create auth user for corporate employee');
@@ -234,23 +220,19 @@ try {
         throw new Exception('Could not resolve a passenger record for the corporate employee');
     }
 
-    // 5. Build the mirrored-rides payload (driver app reads from `rides`).
-    $pickupAddr = $updatedCorp['pickup'] ?? $corp['pickup'] ?? '';
-    $destAddr = $updatedCorp['destination'] ?? $corp['destination'] ?? '';
-    $rideType = $updatedCorp['carType'] ?? $corp['carType'] ?? 'Economy';
-    $paymentMethod = $corp['payment_source'] ?? null;
-    $fareEur = isset($input['fare_eur']) ? floatval($input['fare_eur']) : (isset($corp['fare']) ? floatval($corp['fare']) : null);
-    $distanceKm = isset($input['distance_km']) ? floatval($input['distance_km']) : (isset($corp['distance']) ? floatval($corp['distance']) : null);
-    $durationMin = isset($input['duration_min']) ? intval($input['duration_min']) : (isset($corp['eta']) ? intval($corp['eta']) : null);
-
-    // Lat/lng are NOT NULL on rides; these come from the page's DirectionsService call.
-    $pickupLat = isset($input['pickup_lat']) && is_numeric($input['pickup_lat']) ? floatval($input['pickup_lat']) : null;
-    $pickupLng = isset($input['pickup_lng']) && is_numeric($input['pickup_lng']) ? floatval($input['pickup_lng']) : null;
-    $destLat   = isset($input['dest_lat'])   && is_numeric($input['dest_lat'])   ? floatval($input['dest_lat'])   : null;
-    $destLng   = isset($input['dest_lng'])   && is_numeric($input['dest_lng'])   ? floatval($input['dest_lng'])   : null;
-    if ($pickupLat === null || $pickupLng === null || $destLat === null || $destLng === null) {
-        throw new Exception('Pickup/drop-off coordinates missing. Please wait for the map to calculate the route and try again.');
-    }
+    // ── Step 5: Write the ride into `rides` (the table the driver app reads) ─
+    //   This is the committed write. Only after it succeeds do we flip
+    //   corporate_rides.status to "Assigned".
+    $pickupAddr = isset($input['pickup']) && trim((string)$input['pickup']) !== ''
+        ? trim((string)$input['pickup']) : ($corp['pickup'] ?? '');
+    $destAddr = isset($input['destination']) && trim((string)$input['destination']) !== ''
+        ? trim((string)$input['destination']) : ($corp['destination'] ?? '');
+    $rideType = isset($input['service_type']) && trim((string)$input['service_type']) !== ''
+        ? trim((string)$input['service_type']) : ($corp['carType'] ?? 'Economy');
+    $paymentMethod = $corp['payment_source'] ?? 'cash';
+    $fareEur = isset($input['fare_eur']) ? floatval($input['fare_eur']) : (isset($corp['fare']) ? floatval($corp['fare']) : 0);
+    $distanceKm = isset($input['distance_km']) ? floatval($input['distance_km']) : (isset($corp['distance']) ? floatval($corp['distance']) : 0);
+    $durationMin = isset($input['duration_min']) ? intval($input['duration_min']) : (isset($corp['eta']) ? intval($corp['eta']) : 0);
 
     $ridePayload = [
         'user_id' => $passengerId,
@@ -262,7 +244,7 @@ try {
         'dest_lat' => $destLat,
         'dest_lng' => $destLng,
         'ride_type' => $rideType,
-        'payment_method' => $paymentMethod ?: 'cash',
+        'payment_method' => $paymentMethod,
         'fare_eur' => $fareEur,
         'distance_km' => $distanceKm,
         'duration_min' => $durationMin,
@@ -277,13 +259,28 @@ try {
         ],
     ];
 
-    // 6. Insert a new mirrored-rides row, or update the existing one if already linked.
     $existingRideId = find_mirror_ride_id((string)$input['corp_id']);
     if ($existingRideId) {
         $mirroredRide = $db->updateData('rides', $existingRideId, $ridePayload);
     } else {
         $mirroredRide = $db->insertData('rides', $ridePayload);
     }
+
+    // ── Step 6: Now that the driver app has the ride, flip corp status ───
+    $corpUpdate = [
+        'status' => 'Assigned',
+        'vehicle_number' => $vehicleNumber,
+        'carType' => $rideType,
+        'pickup' => $pickupAddr,
+        'destination' => $destAddr,
+        'fare' => number_format($fareEur, 2, '.', ''),
+        'distance' => $distanceKm,
+        'eta' => $durationMin,
+    ];
+    if (isset($input['pickup_time']) && trim((string)$input['pickup_time']) !== '') {
+        $corpUpdate['pickupTime'] = trim((string)$input['pickup_time']);
+    }
+    $updatedCorp = $db->updateData('corporate_rides', $input['corp_id'], $corpUpdate);
 
     echo json_encode([
         'success' => true,
