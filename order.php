@@ -139,17 +139,17 @@ foreach ($rideTypes as $t) {
         </div>
         <div class="col-md-4">
           <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Date</label>
-          <input type="date" class="form-control" id="rideDate"
-            style="height:40px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#FAFAFA;"
-            onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
-            onblur="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA'; this.style.boxShadow='none';" />
+          <div class="dt-input-wrap">
+            <i class="bi bi-calendar3 dt-icon"></i>
+            <input type="date" class="form-control dt-input" id="rideDate" />
+          </div>
         </div>
         <div class="col-md-4">
           <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Time</label>
-          <input type="time" class="form-control" id="rideTime"
-            style="height:40px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#FAFAFA;"
-            onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
-            onblur="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA'; this.style.boxShadow='none';" />
+          <div class="dt-input-wrap">
+            <i class="bi bi-clock dt-icon"></i>
+            <input type="time" class="form-control dt-input" id="rideTime" />
+          </div>
         </div>
       </div>
 
@@ -212,8 +212,8 @@ foreach ($rideTypes as $t) {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 10px;
-          padding: 16px 10px;
+          gap: 8px;
+          padding: 14px 8px;
           background: #FAFAFA;
           border: 1.5px solid #EBEBEB;
           border-radius: 12px;
@@ -225,14 +225,7 @@ foreach ($rideTypes as $t) {
           text-align: center;
           line-height: 1.2;
           min-height: 112px;
-          transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease, transform .15s ease;
-        }
-        .ride-type-btn:hover {
-          border-color: #D4D4D8;
-          color: #18181B;
-          background: #fff;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+          transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
         }
         .ride-type-btn:focus-visible { outline: 2px solid #f37a20; outline-offset: 2px; }
         .ride-type-btn.active {
@@ -242,37 +235,123 @@ foreach ($rideTypes as $t) {
           box-shadow: 0 0 0 3px rgba(243,122,32,0.10);
         }
         .ride-type-icon {
-          width: 52px;
-          height: 52px;
+          width: 60px;
+          height: 56px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          background: #fff;
-          border: 1.5px solid #EBEBEB;
+          background: linear-gradient(180deg,#FFFFFF 0%,#F4F4F5 100%);
+          border: 1.5px solid #E4E4E7;
           border-radius: 12px;
           font-size: 24px;
           line-height: 1;
           color: #52525B;
+          padding: 2px;
+          box-shadow: inset 0 -1px 0 rgba(0,0,0,0.03);
           transition: background .15s ease, border-color .15s ease, color .15s ease;
-          padding: 4px;
         }
         .ride-type-icon img {
-          width: 38px;
-          height: 38px;
+          width: 52px;
+          height: 48px;
           object-fit: contain;
+          filter: drop-shadow(0 1px 1px rgba(0,0,0,0.10)) contrast(1.05);
         }
         .ride-type-icon .ride-type-emoji,
         .ride-type-icon .ride-type-emoji-fallback {
-          font-size: 28px;
+          font-size: 30px;
           line-height: 1;
         }
-        .ride-type-btn:hover .ride-type-icon { color: #18181B; }
         .ride-type-btn.active .ride-type-icon {
-          background: #fff;
+          background: linear-gradient(180deg,#FFF7ED 0%,#FFE9D2 100%);
           border-color: #FED7AA;
           color: #f37a20;
         }
         .ride-type-label { display: block; font-weight: 600; }
+
+        /* Date / Time inputs with leading icon */
+        .dt-input-wrap {
+          position: relative;
+          display: flex;
+          align-items: center;
+          height: 40px;
+          background: #FAFAFA;
+          border: 1.5px solid #E4E4E7;
+          border-radius: 8px;
+          padding: 0 10px 0 36px;
+          transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+        }
+        .dt-input-wrap:focus-within {
+          border-color: #f37a20;
+          background: #fff;
+          box-shadow: 0 0 0 3px rgba(243,122,32,0.12);
+        }
+        .dt-input-wrap .dt-icon {
+          position: absolute;
+          left: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #f37a20;
+          font-size: 14px;
+          pointer-events: none;
+        }
+        .dt-input-wrap .dt-input {
+          border: none;
+          background: transparent;
+          box-shadow: none;
+          padding: 0;
+          height: 36px;
+          font-size: 0.845rem;
+          color: #18181B;
+          font-weight: 500;
+          width: 100%;
+        }
+        .dt-input-wrap .dt-input:focus { box-shadow: none; outline: none; background: transparent; }
+        .dt-input-wrap .dt-input::-webkit-calendar-picker-indicator {
+          opacity: 0.55;
+          cursor: pointer;
+          filter: grayscale(0.3);
+        }
+        .dt-input-wrap .dt-input::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
+        /* Google Places autocomplete dropdown */
+        .pac-container {
+          margin-top: 6px;
+          border: 1.5px solid #E4E4E7 !important;
+          border-radius: 10px !important;
+          box-shadow: 0 12px 32px -8px rgba(24,24,27,0.18), 0 4px 10px rgba(24,24,27,0.06) !important;
+          background: #fff;
+          font-family: 'Inter', system-ui, sans-serif;
+          padding: 6px;
+          overflow: hidden;
+        }
+        .pac-container:after { display: none !important; } /* hide the "powered by Google" footer image padding */
+        .pac-item {
+          display: flex;
+          align-items: center;
+          padding: 7px 10px;
+          border: none;
+          border-radius: 8px;
+          font-size: 0.74rem;
+          color: #52525B;
+          line-height: 1.3;
+          cursor: pointer;
+          transition: background .12s ease, color .12s ease;
+        }
+        .pac-item + .pac-item { margin-top: 2px; }
+        .pac-item:hover,
+        .pac-item-selected,
+        .pac-item-selected:hover {
+          background: #FFF3E8;
+          color: #18181B;
+        }
+        .pac-icon { display: none !important; }
+        .pac-item-query {
+          font-size: 0.78rem;
+          font-weight: 500;
+          color: #18181B;
+          padding-right: 4px;
+        }
+        .pac-matched { color: #f37a20; font-weight: 500; }
       </style>
 
       <div class="row g-3">
