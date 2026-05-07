@@ -146,3 +146,102 @@ function buildRideAssignedBody($passengerName, $pickupAddr, $destAddr, $rideType
         . "<strong>Service:</strong> {$type}<br><strong>Fare:</strong> {$fare}</p>"
         . "<p>Thank you for choosing PowerCabs.</p></body></html>";
 }
+
+/**
+ * Send the welcome email to a newly registered corporate account.
+ * Returns true on success, or error string on failure.
+ *
+ * @param string $corporateEmail
+ * @param string $companyName
+ * @param string $appointedPerson
+ * @param string|null $templateDir Optional dir containing email_corporate_welcome.html
+ * @return true|string
+ */
+function sendCorporateWelcomeEmail($corporateEmail, $companyName, $appointedPerson = '', $templateDir = null) {
+    if (empty($corporateEmail) || !filter_var($corporateEmail, FILTER_VALIDATE_EMAIL)) {
+        return 'Invalid or missing corporate email';
+    }
+
+    $mail = new PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->SMTPDebug   = SMTP::DEBUG_OFF;
+        $mail->Debugoutput = function ($str, $level) {
+            error_log("PHPMailer debug (level {$level}): {$str}");
+        };
+        $mail->Host       = MAIL_HOST;
+        $mail->SMTPAuth   = true;
+        $mail->Username   = MAIL_USERNAME;
+        $mail->Password   = MAIL_PASSWORD;
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+        $mail->Timeout    = 20;
+
+        $mail->setFrom(MAIL_FROM_ADDRESS, 'PowerCabs Business');
+        $mail->addAddress($corporateEmail, $companyName ?: '');
+        $mail->addReplyTo('support@powercabs.ie', 'PowerCabs Support');
+        $mail->isHTML(true);
+        $mail->CharSet  = PHPMailer::CHARSET_UTF8;
+        $mail->Encoding = PHPMailer::ENCODING_BASE64;
+        $mail->Subject  = 'Welcome onboard – let\'s get your team moving';
+
+        $mail->Body    = buildCorporateWelcomeBody($companyName, $appointedPerson, $templateDir);
+        $mail->AltBody = buildCorporateWelcomeAltBody($companyName, $appointedPerson);
+
+        $mail->send();
+        return true;
+    } catch (Exception $e) {
+        error_log('Corporate welcome email error: ' . $mail->ErrorInfo);
+        return $mail->ErrorInfo;
+    }
+}
+
+function buildCorporateWelcomeAltBody($companyName, $appointedPerson) {
+    $person  = $appointedPerson ?: ($companyName ?: 'there');
+    $company = $companyName ?: 'your company';
+    return "Dear {$person},\n\n"
+        . "Welcome to PowerCabs Business — we're delighted to have {$company} onboard.\n\n"
+        . "Your account is now set up, giving you access to a reliable and flexible transport solution designed to support your team's daily travel needs.\n\n"
+        . "WHAT YOU CAN DO\n"
+        . "- Book rides instantly or schedule them in advance\n"
+        . "- Arrange transport for employees, clients, or guests\n"
+        . "- Monitor trips in real time\n"
+        . "- Manage your team and control usage\n"
+        . "- Access clear reports and centralized billing\n\n"
+        . "GETTING STARTED\n"
+        . "Booking a ride: log in, enter pickup and destination, choose Book Now or schedule for later, then assign to an employee or guest.\n"
+        . "Managing your team: add employees, set roles, permissions and usage limits.\n"
+        . "Tracking trips: view all active and completed rides from your dashboard.\n\n"
+        . "ADDITIONAL SERVICES\n"
+        . "Delivery on demand — quick, secure delivery for keys, laptops, or documents.\n"
+        . "Meet & Greet (Airport Service) — premium airport pickup and transport for clients or team members.\n\n"
+        . "SUPPORT\n"
+        . "Email: support@powercabs.ie\n"
+        . "Phone: +353 89 972 8089\n\n"
+        . "Kind regards,\n"
+        . "PowerCabs Business Team";
+}
+
+function buildCorporateWelcomeBody($companyName, $appointedPerson, $templateDir = null) {
+    $dir  = $templateDir !== null ? $templateDir : (dirname(__DIR__) . '/templates');
+    $path = rtrim($dir, '/\\') . '/email_corporate_welcome.html';
+
+    $companyEsc = htmlspecialchars($companyName ?: 'your company', ENT_QUOTES, 'UTF-8');
+    $personEsc  = htmlspecialchars($appointedPerson ?: ($companyName ?: 'there'), ENT_QUOTES, 'UTF-8');
+
+    if (is_file($path)) {
+        $html = file_get_contents($path);
+        $html = str_replace('[COMPANY_NAME]',     $companyEsc, $html);
+        $html = str_replace('[APPOINTED_PERSON]', $personEsc,  $html);
+        return $html;
+    }
+    // Fallback inline HTML
+    return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head><body style=\"font-family:Arial,sans-serif;\">"
+        . "<h2 style=\"color:#f37a20;\">Welcome onboard</h2>"
+        . "<p>Dear {$personEsc},</p>"
+        . "<p>Welcome to PowerCabs Business — we're delighted to have <strong>{$companyEsc}</strong> onboard.</p>"
+        . "<p>Your account is now set up. Log in to start booking rides for your team.</p>"
+        . "<p>Need help? Email support@powercabs.ie or call +353 89 972 8089.</p>"
+        . "<p>— PowerCabs Business Team</p>"
+        . "</body></html>";
+}

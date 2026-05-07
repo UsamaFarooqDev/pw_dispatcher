@@ -412,11 +412,13 @@ require('modules/head.php');
         const json = await res.json();
 
         if (json.success) {
+          const companyName = json.data?.company_name || payload.company_name || 'corporate';
+          // Show toast FIRST so its animation isn't disturbed by the modal teardown
+          showToast(`Account for ${companyName} created successfully`, '#22C55E');
           bsModal.hide();
           clearFieldErrors();
           document.querySelectorAll('#newCorporateModal input, #newCorporateModal select, #newCorporateModal textarea')
             .forEach(el => el.value = '');
-          showToast('Corporate account created successfully', '#22C55E');
           loadCorporateRides(1); // refresh table
         } else {
           showToast(json.error ?? 'Something went wrong', '#E11D48');
@@ -437,33 +439,44 @@ require('modules/head.php');
 
     // ── TOAST HELPER ─────────────────────────────────
     function showToast(message, bgColor = '#18181B') {
-      let toast = document.getElementById('corpToast');
-      if (!toast) {
-        toast = document.createElement('div');
-        toast.id = 'corpToast';
-        toast.style.cssText = `
-          position:fixed; bottom:24px; right:24px; z-index:9999;
-          background:${bgColor}; color:#fff; font-size:0.845rem; font-weight:500;
-          padding:12px 20px; border-radius:10px;
-          box-shadow:0 8px 24px rgba(0,0,0,0.18);
-          display:flex; align-items:center; gap:10px;
-          transform:translateY(20px); opacity:0;
-          transition:all 0.25s ease;
-        `;
-        document.body.appendChild(toast);
-      }
-      toast.style.background = bgColor;
-      toast.innerHTML = `
-        <i class="bi ${bgColor === '#22C55E' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'}"></i>
-        ${message}
+      // Always rebuild the toast so the entry animation re-runs cleanly. Reusing
+      // a cached element kept it at its previous final state (opacity:1) and
+      // the browser skipped repainting the intro frame, making the toast look
+      // like it never appeared.
+      const existing = document.getElementById('corpToast');
+      if (existing) existing.remove();
+
+      const toast = document.createElement('div');
+      toast.id = 'corpToast';
+      toast.setAttribute('role', 'status');
+      toast.style.cssText = `
+        position:fixed; bottom:24px; right:24px; z-index:99999;
+        background:${bgColor}; color:#fff; font-size:0.845rem; font-weight:500;
+        padding:12px 18px; border-radius:10px;
+        box-shadow:0 12px 28px rgba(0,0,0,0.22);
+        display:flex; align-items:center; gap:10px;
+        max-width:90vw;
+        transform:translateY(20px); opacity:0;
+        transition:transform 0.25s ease, opacity 0.25s ease;
       `;
-      requestAnimationFrame(() => {
-        toast.style.transform = 'translateY(0)';
-        toast.style.opacity   = '1';
-      });
+      toast.innerHTML = `
+        <i class="bi ${bgColor === '#22C55E' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'}" style="font-size:16px;"></i>
+        <span>${message}</span>
+      `;
+      document.body.appendChild(toast);
+
+      // Force the browser to commit the initial (offscreen) state before
+      // animating to the visible state — without this the two style writes
+      // are batched and the entry transition is skipped entirely.
+      void toast.offsetHeight;
+
+      toast.style.transform = 'translateY(0)';
+      toast.style.opacity   = '1';
+
       setTimeout(() => {
         toast.style.transform = 'translateY(20px)';
         toast.style.opacity   = '0';
+        setTimeout(() => toast.remove(), 300);
       }, 4000);
     }
 

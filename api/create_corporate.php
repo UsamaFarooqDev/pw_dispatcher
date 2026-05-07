@@ -6,6 +6,7 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 session_start();
 require_once '../auth/config.php';
+require_once __DIR__ . '/../lib/mail_helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -196,11 +197,42 @@ $curlError      = curl_error($ch);
 
 // 201 = created successfully
 if ($insertStatus === 201) {
-    echo json_encode([
+    // Respond first, send email after — SMTP can take 5-20s, we don't want to
+    // block the UI toast / table refresh waiting on it.
+    $response = json_encode([
         'success' => true,
         'message' => 'Corporate account created successfully',
         'data'    => ['company_name' => $payload['company_name'], 'email' => $payload['email']]
     ]);
+
+    ignore_user_abort(true);
+    header('Content-Type: application/json');
+    header('Content-Length: ' . strlen($response));
+    header('Connection: close');
+    echo $response;
+
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();   // PHP-FPM: closes the HTTP connection cleanly
+    } else {
+        // Fallback for non-FPM SAPIs — flush all buffers
+        @ob_end_flush();
+        @flush();
+    }
+
+    // Fire welcome email after the response has been delivered
+    try {
+        $emailStatus = sendCorporateWelcomeEmail(
+            $payload['email'],
+            $payload['company_name'],
+            $payload['appointed_person']
+        );
+        if ($emailStatus !== true) {
+            error_log('create_corporate: welcome email failed: ' . (string)$emailStatus);
+        }
+    } catch (Throwable $t) {
+        error_log('create_corporate: welcome email exception: ' . $t->getMessage());
+    }
+
     exit;
 }
 
