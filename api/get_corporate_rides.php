@@ -76,21 +76,42 @@ function execSupabaseRequest($url, $apiKey, $rangeStart, $rangeEnd) {
 try {
     $query = [
         'select' => '*',
-        // corporate_rides does not have created_at in current schema
-        'order' => 'id.desc'
+        'source' => 'ilike.corporate*',
+        'order' => 'created_at.desc'
     ];
 
     if ($search !== '') {
         $safe = str_replace(['%', ','], ['\\%', '\\,'], $search);
-        $query['or'] = '(company.ilike.*' . $safe . '*,employee.ilike.*' . $safe . '*,employee_id.ilike.*' . $safe . '*,pickup.ilike.*' . $safe . '*,destination.ilike.*' . $safe . '*,payment_source.ilike.*' . $safe . '*,status.ilike.*' . $safe . '*,cid.ilike.*' . $safe . '*)';
+        $query['or'] = '(company.ilike.*' . $safe . '*,employee.ilike.*' . $safe . '*,employee_id.ilike.*' . $safe . '*,pickup_addr.ilike.*' . $safe . '*,dest_addr.ilike.*' . $safe . '*,payment_method.ilike.*' . $safe . '*,status.ilike.*' . $safe . '*,cid.ilike.*' . $safe . '*,source.ilike.*' . $safe . '*)';
     }
 
-    $url = $supabaseUrl . '/rest/v1/corporate_rides?' . http_build_query($query);
+    $url = $supabaseUrl . '/rest/v1/rides?' . http_build_query($query);
     $result = execSupabaseRequest($url, $supabaseKey, $offset, $offset + $limit - 1);
+    $records = array_map(function ($r) {
+        $status = trim((string)($r['status'] ?? ''));
+        $normalized = $status === '' ? 'Pending' : ucwords(str_replace('_', ' ', strtolower($status)));
+        return [
+            'id' => (string)($r['id'] ?? ''),
+            'company' => $r['company'] ?? '',
+            'employee' => $r['employee'] ?? '',
+            'employee_id' => $r['employee_id'] ?? '',
+            'pickup' => $r['pickup'] ?? ($r['pickup_addr'] ?? ''),
+            'destination' => $r['destination'] ?? ($r['dest_addr'] ?? ''),
+            'payment_source' => $r['payment_source'] ?? ($r['payment_method'] ?? ''),
+            'fare' => $r['fare'] ?? ($r['fare_eur'] ?? null),
+            'pickupTime' => $r['pickupTime'] ?? null,
+            'date' => $r['created_at'] ?? null,
+            'created_at' => $r['created_at'] ?? null,
+            'status' => $normalized,
+            'vehicle_number' => $r['vehicle_number'] ?? null,
+            'cid' => $r['cid'] ?? null,
+            'source' => $r['source'] ?? null,
+        ];
+    }, $result['records']);
 
     echo json_encode([
         'success' => true,
-        'data' => $result['records'],
+        'data' => $records,
         'pagination' => [
             'page' => $page,
             'limit' => $limit,

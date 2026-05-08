@@ -27,7 +27,7 @@ if (!$corpId) {
 try {
     $db = new SupabaseDB(null, true);
 
-    $rides = $db->findData('corporate_rides', ['id' => $corpId]);
+    $rides = $db->findData('rides', ['id' => $corpId]);
     if (empty($rides)) {
         http_response_code(404);
         echo json_encode([
@@ -39,15 +39,39 @@ try {
     }
 
     $ride = $rides[0];
+    $source = strtolower(trim((string)($ride['source'] ?? '')));
+    if ($source !== 'corporate' && $source !== 'corporate meet_and_greet') {
+        http_response_code(404);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Corporate ride not found',
+            'data' => null
+        ], JSON_PRETTY_PRINT);
+        exit;
+    }
+    $ride['pickup'] = $ride['pickup'] ?? ($ride['pickup_addr'] ?? '');
+    $ride['destination'] = $ride['destination'] ?? ($ride['dest_addr'] ?? '');
+    $ride['payment_source'] = $ride['payment_source'] ?? ($ride['payment_method'] ?? '');
+    $ride['fare'] = $ride['fare'] ?? ($ride['fare_eur'] ?? null);
+    $ride['eta'] = $ride['eta'] ?? ($ride['duration_min'] ?? null);
+    $ride['distance'] = $ride['distance'] ?? ($ride['distance_km'] ?? null);
+    $ride['carType'] = $ride['carType'] ?? ($ride['ride_type'] ?? null);
+    $ride['pickupTime'] = $ride['pickupTime'] ?? ($ride['created_at'] ?? null);
+    $status = trim((string)($ride['status'] ?? ''));
+    $ride['status'] = $status === '' ? 'Pending' : ucwords(str_replace('_', ' ', strtolower($status)));
 
     $employees = [];
     if (!empty($ride['cid'])) {
         $employees = $db->findData('corporate_employees', ['cid' => $ride['cid']]);
     }
 
-    // corporate_rides links to a driver via vehicle_number only
+    // rides links to driver_id; fall back to vehicle number for compatibility.
     $driver = null;
-    if (!empty($ride['vehicle_number'])) {
+    if (!empty($ride['driver_id'])) {
+        $found = $db->findData('drivers', ['id' => $ride['driver_id']]);
+        if (!empty($found)) $driver = $found[0];
+    }
+    if ($driver === null && !empty($ride['vehicle_number'])) {
         $found = $db->findData('drivers', ['vehicle_number' => $ride['vehicle_number']]);
         if (!empty($found)) $driver = $found[0];
     }
