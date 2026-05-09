@@ -226,16 +226,19 @@ try {
     }
 
     // ── Step 5: Update the corporate ride row in `rides` so driver app sees it ─
-    $pickupAddr = isset($input['pickup']) && trim((string)$input['pickup']) !== ''
-        ? trim((string)$input['pickup']) : ($corp['pickup_addr'] ?? ($corp['pickup'] ?? ''));
-    $destAddr = isset($input['destination']) && trim((string)$input['destination']) !== ''
-        ? trim((string)$input['destination']) : ($corp['dest_addr'] ?? ($corp['destination'] ?? ''));
+    $pickupAddr = isset($input['pickup_addr']) && trim((string)$input['pickup_addr']) !== ''
+        ? trim((string)$input['pickup_addr']) : (string)($corp['pickup_addr'] ?? '');
+    $destAddr = isset($input['dest_addr']) && trim((string)$input['dest_addr']) !== ''
+        ? trim((string)$input['dest_addr']) : (string)($corp['dest_addr'] ?? '');
     $rideType = isset($input['service_type']) && trim((string)$input['service_type']) !== ''
-        ? trim((string)$input['service_type']) : ($corp['ride_type'] ?? ($corp['carType'] ?? 'Economy'));
-    $paymentMethod = $corp['payment_method'] ?? ($corp['payment_source'] ?? 'cash');
-    $fareEur = isset($input['fare_eur']) ? floatval($input['fare_eur']) : (isset($corp['fare_eur']) ? floatval($corp['fare_eur']) : (isset($corp['fare']) ? floatval($corp['fare']) : 0));
-    $distanceKm = isset($input['distance_km']) ? floatval($input['distance_km']) : (isset($corp['distance_km']) ? floatval($corp['distance_km']) : (isset($corp['distance']) ? floatval($corp['distance']) : 0));
-    $durationMin = isset($input['duration_min']) ? intval($input['duration_min']) : (isset($corp['duration_min']) ? intval($corp['duration_min']) : (isset($corp['eta']) ? intval($corp['eta']) : 0));
+        ? trim((string)$input['service_type']) : (string)($corp['ride_type'] ?? 'Economy');
+    $paymentMethod = strtolower(trim((string)($corp['payment_method'] ?? 'cash')));
+    $fareEur = isset($input['fare_eur']) ? floatval($input['fare_eur'])
+        : floatval($corp['fare_eur'] ?? 0);
+    $distanceKm = isset($input['distance_km']) ? floatval($input['distance_km'])
+        : floatval($corp['distance_km'] ?? 0);
+    $durationMin = isset($input['duration_min']) ? intval($input['duration_min'])
+        : intval($corp['duration_min'] ?? 0);
 
     $rideUpdatePayload = [
         'user_id' => $passengerId,
@@ -254,14 +257,6 @@ try {
         'status' => 'assigned',
         'source' => $corpSource,
         'vehicle_number' => $vehicleNumber,
-        // Keep legacy/display fields in sync for dispatcher and corporate UIs.
-        'pickup' => $pickupAddr,
-        'destination' => $destAddr,
-        'payment_source' => $corp['payment_source'] ?? $paymentMethod,
-        'carType' => $rideType,
-        'fare' => number_format($fareEur, 2, '.', ''),
-        'distance' => $distanceKm,
-        'eta' => $durationMin,
         'meta' => [
             'corp_id' => (string)($corp['id'] ?? $input['corp_id']),
             'cid' => $corp['cid'] ?? null,
@@ -271,7 +266,7 @@ try {
         ],
     ];
     if (isset($input['pickup_time']) && trim((string)$input['pickup_time']) !== '') {
-        $rideUpdatePayload['pickupTime'] = trim((string)$input['pickup_time']);
+        $rideUpdatePayload['enroute_at'] = trim((string)$input['pickup_time']);
     }
 
     $updatedCorp = $db->updateData('rides', $input['corp_id'], $rideUpdatePayload);

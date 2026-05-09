@@ -49,14 +49,6 @@ try {
         ], JSON_PRETTY_PRINT);
         exit;
     }
-    $ride['pickup'] = $ride['pickup'] ?? ($ride['pickup_addr'] ?? '');
-    $ride['destination'] = $ride['destination'] ?? ($ride['dest_addr'] ?? '');
-    $ride['payment_source'] = $ride['payment_source'] ?? ($ride['payment_method'] ?? '');
-    $ride['fare'] = $ride['fare'] ?? ($ride['fare_eur'] ?? null);
-    $ride['eta'] = $ride['eta'] ?? ($ride['duration_min'] ?? null);
-    $ride['distance'] = $ride['distance'] ?? ($ride['distance_km'] ?? null);
-    $ride['carType'] = $ride['carType'] ?? ($ride['ride_type'] ?? null);
-    $ride['pickupTime'] = $ride['pickupTime'] ?? ($ride['created_at'] ?? null);
     $status = trim((string)($ride['status'] ?? ''));
     $ride['status'] = $status === '' ? 'Pending' : ucwords(str_replace('_', ' ', strtolower($status)));
 
