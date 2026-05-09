@@ -19,87 +19,49 @@ require('modules/head.php');
   <div class="rounded-3 border mt-4 overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);">
     <div class="p-4">
 
-      <div class="d-flex flex-wrap align-items-center gap-1 mb-4" style="border-bottom:1px solid #EBEBEB; padding-bottom:0;">
-
-        <button class="btn btn-sm fw-semibold d-flex align-items-center gap-1 tab-btn active-tab" id="tab-unassigned"
-          style="font-size:0.8125rem; color:#f37a20; background:transparent; border:none; border-bottom:2px solid transparent; border-radius:0; padding:8px 14px 10px;">
-          <span class="d-flex align-items-center justify-content-center" style="width:18px; height:18px; background:#FFF3E8; border-radius:4px; font-size:10px;">
-            <i class="bi bi-hourglass-split"></i>
-          </span>
-          Unassigned <span class="ms-1 px-2 rounded-pill fw-bold" style="background:#FFF3E8; color:#f37a20; font-size:0.7rem;" id="count-unassigned">0</span>
+      <nav class="po-tabs mb-4" role="tablist" aria-label="Live orders sections">
+        <button type="button" class="po-tab is-active tab-btn active-tab" id="tab-unassigned" role="tab" aria-selected="true">
+          <i class="bi bi-hourglass-split po-tab__icon"></i>
+          <span class="po-tab__label">Unassigned</span>
+          <span class="po-tab__count" id="count-unassigned">0</span>
         </button>
 
-        <button class="btn btn-sm fw-semibold d-flex align-items-center gap-1 tab-btn" id="tab-assigned"
-          style="font-size:0.8125rem; color:#71717A; background:transparent; border:none; border-bottom:2px solid transparent; border-radius:0; padding:8px 14px 10px;"
-          onmouseover="if(!this.classList.contains('active-tab')){this.style.color='#18181B';}"
-          onmouseout="if(!this.classList.contains('active-tab')){this.style.color='#71717A';}">
-          <span class="d-flex align-items-center justify-content-center" style="width:18px; height:18px; background:#F4F4F5; border-radius:4px; font-size:10px;">
-            <i class="bi bi-person-check"></i>
-          </span>
-          Assigned <span class="ms-1 px-2 rounded-pill fw-bold" style="background:#F4F4F5; color:#71717A; font-size:0.7rem;" id="count-assigned">0</span>
+        <button type="button" class="po-tab tab-btn" id="tab-assigned" role="tab" aria-selected="false">
+          <i class="bi bi-person-check po-tab__icon"></i>
+          <span class="po-tab__label">Assigned</span>
+          <span class="po-tab__count" id="count-assigned">0</span>
         </button>
 
-        <button class="btn btn-sm fw-semibold d-flex align-items-center gap-1 tab-btn" id="tab-on-trip"
-          style="font-size:0.8125rem; color:#71717A; background:transparent; border:none; border-bottom:2px solid transparent; border-radius:0; padding:8px 14px 10px;"
-          onmouseover="if(!this.classList.contains('active-tab')){this.style.color='#18181B';}"
-          onmouseout="if(!this.classList.contains('active-tab')){this.style.color='#71717A';}">
-          <span class="d-flex align-items-center justify-content-center" style="width:18px; height:18px; background:#F4F4F5; border-radius:4px; font-size:10px;">
-            <i class="bi bi-car-front"></i>
-          </span>
-          On Trip <span class="ms-1 px-2 rounded-pill fw-bold" style="background:#F4F4F5; color:#71717A; font-size:0.7rem;" id="count-on-trip">0</span>
+        <button type="button" class="po-tab tab-btn" id="tab-on-trip" role="tab" aria-selected="false">
+          <i class="bi bi-car-front po-tab__icon"></i>
+          <span class="po-tab__label">On Trip</span>
+          <span class="po-tab__count" id="count-on-trip">0</span>
         </button>
 
-        <button class="btn btn-sm fw-semibold d-flex align-items-center gap-1 tab-btn" id="tab-scheduled"
-          style="font-size:0.8125rem; color:#71717A; background:transparent; border:none; border-bottom:2px solid transparent; border-radius:0; padding:8px 14px 10px;"
-          onmouseover="if(!this.classList.contains('active-tab')){this.style.color='#18181B';}"
-          onmouseout="if(!this.classList.contains('active-tab')){this.style.color='#71717A';}">
-          <span class="d-flex align-items-center justify-content-center" style="width:18px; height:18px; background:#F4F4F5; border-radius:4px; font-size:10px;">
-            <i class="bi bi-calendar-check"></i>
-          </span>
-          Pre-Order <span class="ms-1 px-2 rounded-pill fw-bold" style="background:#F4F4F5; color:#71717A; font-size:0.7rem;" id="count-scheduled">0</span>
+        <button type="button" class="po-tab tab-btn" id="tab-scheduled" role="tab" aria-selected="false">
+          <i class="bi bi-calendar-check po-tab__icon"></i>
+          <span class="po-tab__label">Pre-Order</span>
+          <span class="po-tab__count" id="count-scheduled">0</span>
         </button>
 
-        <button class="btn btn-sm fw-semibold d-flex align-items-center gap-1 tab-btn" id="tab-cancelled"
-          style="font-size:0.8125rem; color:#71717A; background:transparent; border:none; border-bottom:2px solid transparent; border-radius:0; padding:8px 14px 10px;"
-          onmouseover="if(!this.classList.contains('active-tab')){this.style.color='#18181B';}"
-          onmouseout="if(!this.classList.contains('active-tab')){this.style.color='#71717A';}">
-          <span class="d-flex align-items-center justify-content-center" style="width:18px; height:18px; background:#F4F4F5; border-radius:4px; font-size:10px;">
-            <i class="bi bi-x-circle"></i>
-          </span>
-          Cancelled <span class="ms-1 px-2 rounded-pill fw-bold" style="background:#F4F4F5; color:#71717A; font-size:0.7rem;" id="count-cancelled">0</span>
+        <button type="button" class="po-tab tab-btn" id="tab-cancelled" role="tab" aria-selected="false">
+          <i class="bi bi-x-circle po-tab__icon"></i>
+          <span class="po-tab__label">Cancelled</span>
+          <span class="po-tab__count" id="count-cancelled">0</span>
         </button>
 
-        <button class="btn btn-sm fw-semibold d-flex align-items-center gap-1 tab-btn" id="tab-finished"
-          style="font-size:0.8125rem; color:#71717A; background:transparent; border:none; border-bottom:2px solid transparent; border-radius:0; padding:8px 14px 10px;"
-          onmouseover="if(!this.classList.contains('active-tab')){this.style.color='#18181B';}"
-          onmouseout="if(!this.classList.contains('active-tab')){this.style.color='#71717A';}">
-          <span class="d-flex align-items-center justify-content-center" style="width:18px; height:18px; background:#F4F4F5; border-radius:4px; font-size:10px;">
-            <i class="bi bi-check-circle"></i>
-          </span>
-          Completed <span class="ms-1 px-2 rounded-pill fw-bold" style="background:#F4F4F5; color:#71717A; font-size:0.7rem;" id="count-finished">0</span>
+        <button type="button" class="po-tab tab-btn" id="tab-finished" role="tab" aria-selected="false">
+          <i class="bi bi-check-circle po-tab__icon"></i>
+          <span class="po-tab__label">Completed</span>
+          <span class="po-tab__count" id="count-finished">0</span>
         </button>
 
-        <button class="btn btn-sm fw-semibold d-flex align-items-center gap-1 tab-btn" id="tab-unpaid"
-          style="font-size:0.8125rem; color:#71717A; background:transparent; border:none; border-bottom:2px solid transparent; border-radius:0; padding:8px 14px 10px;"
-          onmouseover="if(!this.classList.contains('active-tab')){this.style.color='#18181B';}"
-          onmouseout="if(!this.classList.contains('active-tab')){this.style.color='#71717A';}">
-          <span class="d-flex align-items-center justify-content-center" style="width:18px; height:18px; background:#F4F4F5; border-radius:4px; font-size:10px;">
-            <i class="bi bi-credit-card"></i>
-          </span>
-          Unpaid <span class="ms-1 px-2 rounded-pill fw-bold" style="background:#F4F4F5; color:#71717A; font-size:0.7rem;" id="count-unpaid">0</span>
+        <button type="button" class="po-tab tab-btn" id="tab-meet-greet" role="tab" aria-selected="false">
+          <i class="bi bi-airplane po-tab__icon"></i>
+          <span class="po-tab__label">Meet &amp; Greet</span>
+          <span class="po-tab__count" id="count-meet-greet">0</span>
         </button>
-
-        <button class="btn btn-sm fw-semibold d-flex align-items-center gap-1 tab-btn" id="tab-all-mine"
-          style="font-size:0.8125rem; color:#71717A; background:transparent; border:none; border-bottom:2px solid transparent; border-radius:0; padding:8px 14px 10px;"
-          onmouseover="if(!this.classList.contains('active-tab')){this.style.color='#18181B';}"
-          onmouseout="if(!this.classList.contains('active-tab')){this.style.color='#71717A';}">
-          <span class="d-flex align-items-center justify-content-center" style="width:18px; height:18px; background:#F4F4F5; border-radius:4px; font-size:10px;">
-            <i class="bi bi-collection"></i>
-          </span>
-          All Mine <span class="ms-1 px-2 rounded-pill fw-bold" style="background:#F4F4F5; color:#71717A; font-size:0.7rem;" id="count-all-mine">0</span>
-        </button>
-
-      </div>
+      </nav>
 
       <!-- Unassigned -->
       <div id="pane-unassigned" class="tab-pane-table">
@@ -205,37 +167,22 @@ require('modules/head.php');
         </div>
       </div>
 
-      <!-- Unpaid -->
-      <div id="pane-unpaid" class="tab-pane-table" style="display:none;">
+      <!-- Meet & Greet -->
+      <div id="pane-meetgreet" class="tab-pane-table" style="display:none;">
         <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
           <table class="table mb-0" style="border-collapse:collapse;">
             <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Company</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Employee</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
-            </tr></thead>
-            <tbody id="unpaidRidesBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- All Mine -->
-      <div id="pane-allmine" class="tab-pane-table" style="display:none;">
-        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
-          <table class="table mb-0" style="border-collapse:collapse;">
-            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Action</th>
+              <th class="fw-semibold text-nowrap px-4 py-2 text-end" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Action</th>
             </tr></thead>
-            <tbody id="allMineRidesBody"></tbody>
+            <tbody id="meetGreetRidesBody"></tbody>
           </table>
         </div>
       </div>
@@ -248,18 +195,99 @@ require('modules/head.php');
 </main>
 
 <style>
-  .tab-btn.active-tab {
-    color: #f37a20 !important;
-    border-bottom: 2px solid #f37a20 !important;
+  /* ── Live Orders tab strip — outlined pill on active ────────────────── */
+  .po-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin: 0 0 1.5rem;
+    padding: 0;
   }
-  .tab-btn.active-tab span:first-child {
-    background: #FFF3E8 !important;
-    color: #f37a20 !important;
+  .po-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 14px;
+    background: transparent;
+    border: 1.5px solid transparent;
+    border-radius: 8px;
+    color: #71717A;
+    font-family: inherit;
+    font-size: 0.815rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.005em;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
   }
-  .tab-btn.active-tab .rounded-pill {
-    background: #FFF3E8 !important;
-    color: #f37a20 !important;
+  .po-tab:hover {
+    color: #18181B;
+    border-color: #D4D4D8;
   }
+  .po-tab:focus-visible {
+    outline: none;
+    color: #18181B;
+    border-color: #52525B;
+  }
+  .po-tab__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    font-size: 14px;
+    color: #A1A1AA;
+    line-height: 1;
+    transition: color 0.15s ease;
+  }
+  .po-tab__label { white-space: nowrap; }
+  .po-tab__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 18px;
+    padding: 0 6px;
+    margin-left: 2px;
+    background: transparent;
+    color: #A1A1AA;
+    font-size: 0.685rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    border-radius: 9px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .po-tab.is-active,
+  .po-tab.active-tab {
+    color: #18181B;
+    font-weight: 600;
+    background: transparent;
+    border-color: #f37a20;
+    box-shadow: 0 0 0 3px rgba(243,122,32,0.12), 0 1px 2px rgba(243,122,32,0.08);
+  }
+  .po-tab.is-active .po-tab__icon,
+  .po-tab.active-tab .po-tab__icon {
+    color: #f37a20;
+  }
+  .po-tab.is-active .po-tab__count,
+  .po-tab.active-tab .po-tab__count {
+    color: #f37a20;
+  }
+  @media (max-width: 767.98px) {
+    .po-tabs {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .po-tabs::-webkit-scrollbar { display: none; }
+    .po-tab { height: 34px; padding: 0 12px; font-size: 0.78rem; }
+  }
+  /* legacy hook (still referenced elsewhere) */
+  .tab-btn.active-tab { color: #18181B; }
   #unassignedRidesBody tr, #assignedRidesBody tr,
   #scheduledRidesBody tr, #cancelledRidesBody tr, #completedRidesBody tr {
     border-bottom: 1px solid #F4F4F5;
@@ -294,8 +322,7 @@ require('modules/head.php');
         scheduled: [],
         cancelled: [],
         completed: [],
-        unpaid: [],
-        allmine: []
+        meetgreet: []
       }; // Cache current rides data to detect changes
       
       // Pagination
@@ -338,8 +365,7 @@ require('modules/head.php');
         loadScheduledRides(true);
         loadCancelledRides(true);
         loadCompletedRides(true);
-        loadUnpaidRides(true);
-        loadAllMineRides(true);
+        loadMeetGreetRides(true);
 
         // Start polling
         startPolling();
@@ -811,10 +837,8 @@ require('modules/head.php');
             populateCancelledTable(paginatedRides);
           } else if (currentTab === 'completed') {
             populateCompletedTable(paginatedRides);
-          } else if (currentTab === 'unpaid') {
-            populateUnpaidTable(paginatedRides);
-          } else if (currentTab === 'allmine') {
-            populateAllMineTable(paginatedRides);
+          } else if (currentTab === 'meetgreet') {
+            populateMeetGreetTable(paginatedRides);
           }
         } catch (error) {
           console.error('Error in updateTableForCurrentTab:', error);
@@ -831,10 +855,8 @@ require('modules/head.php');
             populateCancelledTable(rides);
           } else if (currentTab === 'completed') {
             populateCompletedTable(rides);
-          } else if (currentTab === 'unpaid') {
-            populateUnpaidTable(rides);
-          } else if (currentTab === 'allmine') {
-            populateAllMineTable(rides);
+          } else if (currentTab === 'meetgreet') {
+            populateMeetGreetTable(rides);
           }
         }
       }
@@ -932,8 +954,7 @@ require('modules/head.php');
         { btnId: 'tab-scheduled',  paneId: 'pane-scheduled',  key: 'scheduled',  action: false },
         { btnId: 'tab-cancelled',  paneId: 'pane-cancelled',  key: 'cancelled',  action: false },
         { btnId: 'tab-finished',   paneId: 'pane-completed',  key: 'completed',  action: false },
-        { btnId: 'tab-unpaid',     paneId: 'pane-unpaid',     key: 'unpaid',     action: false },
-        { btnId: 'tab-all-mine',   paneId: 'pane-allmine',    key: 'allmine',    action: true },
+        { btnId: 'tab-meet-greet', paneId: 'pane-meetgreet',  key: 'meetgreet',  action: true },
       ];
 
       function setupTabSwitching() {
@@ -941,7 +962,10 @@ require('modules/head.php');
           TAB_CONFIG.forEach(({ btnId, paneId }) => {
             const btn = document.getElementById(btnId);
             const pane = document.getElementById(paneId);
-            if (btn) { btn.classList.remove('active-tab'); btn.style.color = '#71717A'; }
+            if (btn) {
+              btn.classList.remove('active-tab', 'is-active');
+              btn.setAttribute('aria-selected', 'false');
+            }
             if (pane) pane.style.display = 'none';
           });
         }
@@ -953,7 +977,8 @@ require('modules/head.php');
           btn.addEventListener('click', () => {
             currentTab = key;
             clearAllTabs();
-            btn.classList.add('active-tab');
+            btn.classList.add('active-tab', 'is-active');
+            btn.setAttribute('aria-selected', 'true');
             if (pane) pane.style.display = '';
             const rides = currentRidesData[key] || [];
             if (preorderPagination) {
@@ -1197,10 +1222,8 @@ require('modules/head.php');
           tbodyId = 'cancelledRidesBody';
         } else if (currentTab === 'completed') {
           tbodyId = 'completedRidesBody';
-        } else if (currentTab === 'unpaid') {
-          tbodyId = 'unpaidRidesBody';
-        } else if (currentTab === 'allmine') {
-          tbodyId = 'allMineRidesBody';
+        } else if (currentTab === 'meetgreet') {
+          tbodyId = 'meetGreetRidesBody';
         }
 
         if (!tbodyId) return;
@@ -1307,26 +1330,92 @@ require('modules/head.php');
         if (badge) badge.textContent = count;
       }
 
-      function loadUnpaidRides() {
-        currentRidesData.unpaid = [];
-        const badge = document.getElementById('count-unpaid');
-        if (badge) badge.textContent = 0;
+      // ──────────────── Meet & Greet ────────────────
+      async function loadMeetGreetRides(showLoading = false) {
+        const tbody = document.getElementById('meetGreetRidesBody');
+        if (showLoading && tbody) {
+          tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">Loading rides...</td></tr>';
+        }
+        try {
+          const response = await fetch('api/get_meet_and_greet_rides.php?page=1&limit=1000');
+          if (response.status === 401) { window.location.href = '/'; return; }
+          if (!response.ok) throw new Error('Failed to fetch meet & greet rides');
+          const result = await response.json();
+          if (!result.success) throw new Error(result.error || 'Failed to fetch meet & greet rides');
+          const rides = result && result.data ? result.data : [];
+
+          currentRidesData.meetgreet = rides;
+          updateMeetGreetTabCount(rides.length);
+
+          if (currentTab === 'meetgreet') {
+            updatePaginationInfo(rides.length);
+            const currentPage = preorderPagination ? preorderPagination.getCurrentPage() : 1;
+            updateTableForCurrentTab(currentPage, ITEMS_PER_PAGE);
+          }
+        } catch (error) {
+          console.error('Error loading meet & greet rides:', error);
+          updateMeetGreetTabCount(0);
+          if (tbody && currentTab === 'meetgreet') {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-danger">Error loading rides. Please refresh.</td></tr>';
+          }
+        }
       }
 
-      function populateUnpaidTable() {
-        const tbody = document.getElementById('unpaidRidesBody');
-        if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Coming soon</td></tr>';
+      function populateMeetGreetTable(rides) {
+        const tbody = document.getElementById('meetGreetRidesBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        if (!rides || rides.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">No meet &amp; greet rides to show</td></tr>';
+          return;
+        }
+
+        const esc = (v) => String(v ?? '')
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+
+        rides.forEach((ride) => {
+          const company     = esc(ride.company || '—');
+          const employee    = esc(ride.employee || ride.passenger_name || '—');
+          const orderTime   = formatOrderTime(ride.created_at);
+          const pickup      = esc(ride.pickup_addr || '—');
+          const destination = esc(ride.dest_addr || '—');
+          const payment     = esc(ride.payment_method || '—');
+          const fare        = formatFare(ride.fare_eur, ride.estimate_fare);
+          const status      = ride.status || 'N/A';
+          const rideId      = encodeURIComponent(ride.id || '');
+          const statusKey   = String(status).trim().toLowerCase().replace(/\s+/g, '_');
+
+          let actionCell = '';
+          if (statusKey === 'pending' || statusKey === 'searching') {
+            actionCell = `<a href="orderassigned.php?corp_id=${rideId}" class="view-details-btn">
+                <span>Assign</span><i class="bi bi-chevron-right"></i></a>`;
+          } else if (statusKey === 'assigned' || statusKey === 'on_trip' || statusKey === 'completed' || statusKey === 'cancelled') {
+            actionCell = `<a href="orderassigned.php?corp_id=${rideId}&view=1" class="view-details-btn">
+                <span>View Details</span><i class="bi bi-chevron-right"></i></a>`;
+          }
+
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td class="ps-3">${company}</td>
+            <td>${employee}</td>
+            <td>${orderTime}</td>
+            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${pickup}">${pickup}</td>
+            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${destination}">${destination}</td>
+            <td>${payment}</td>
+            <td class="text-end pe-2">${fare}</td>
+            <td>${renderStatusBadge(status)}</td>
+            <td class="text-end pe-4">${actionCell}</td>
+          `;
+          tbody.appendChild(row);
+        });
+
+        applyPreorderSearchFilterForCurrentTab();
       }
 
-      function loadAllMineRides() {
-        currentRidesData.allmine = [];
-        const badge = document.getElementById('count-all-mine');
-        if (badge) badge.textContent = 0;
-      }
-
-      function populateAllMineTable() {
-        const tbody = document.getElementById('allMineRidesBody');
-        if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Coming soon</td></tr>';
+      function updateMeetGreetTabCount(count) {
+        const badge = document.getElementById('count-meet-greet');
+        if (badge) badge.textContent = count;
       }
 
     </script>
