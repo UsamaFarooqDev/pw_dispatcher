@@ -25,7 +25,7 @@ if (!$input || !isset($input['corp_id']) || !isset($input['status'])) {
     exit;
 }
 
-// corporate_rides uses title-case status values (Pending, Assigned, Completed, Cancelled)
+// UI sends title-case statuses; rides table stores lowercase status values.
 $allowed = ['Pending', 'Assigned', 'Completed', 'Cancelled'];
 $normalized = ucfirst(strtolower(trim((string)$input['status'])));
 if (!in_array($normalized, $allowed, true)) {
@@ -40,9 +40,33 @@ if (!in_array($normalized, $allowed, true)) {
 
 try {
     $db = new SupabaseDB(null, true);
-    $updated = $db->updateData('corporate_rides', $input['corp_id'], [
-        'status' => $normalized,
+    $rows = $db->findData('rides', ['id' => $input['corp_id']]);
+    if (empty($rows)) {
+        http_response_code(404);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Corporate ride not found',
+            'data' => null
+        ], JSON_PRETTY_PRINT);
+        exit;
+    }
+    $source = strtolower(trim((string)($rows[0]['source'] ?? '')));
+    if ($source !== 'corporate' && $source !== 'corporate meet_and_greet') {
+        http_response_code(404);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Corporate ride not found',
+            'data' => null
+        ], JSON_PRETTY_PRINT);
+        exit;
+    }
+    $updated = $db->updateData('rides', $input['corp_id'], [
+        'status' => strtolower($normalized),
     ]);
+    if (is_array($updated)) {
+        $status = trim((string)($updated['status'] ?? ''));
+        $updated['status'] = $status === '' ? 'Pending' : ucwords(str_replace('_', ' ', strtolower($status)));
+    }
 
     echo json_encode([
         'success' => true,

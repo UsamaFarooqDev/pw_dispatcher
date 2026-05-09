@@ -128,8 +128,7 @@ try {
     // ── Step 1: Validate every piece of input up front ───────────────────
     // The driver app reads from `rides`, which has strict NOT NULL columns
     // (lat/lng, ride_type, payment_method, etc). We fail early here so the
-    // corporate_rides row is never flipped to "Assigned" without a working
-    // rides row existing to back it up.
+    // corporate ride row is never marked as assigned without a valid payload.
     $pickupLat = isset($input['pickup_lat']) && is_numeric($input['pickup_lat']) ? floatval($input['pickup_lat']) : null;
     $pickupLng = isset($input['pickup_lng']) && is_numeric($input['pickup_lng']) ? floatval($input['pickup_lng']) : null;
     $destLat   = isset($input['dest_lat'])   && is_numeric($input['dest_lat'])   ? floatval($input['dest_lat'])   : null;
@@ -158,13 +157,19 @@ try {
     }
 
     // ── Step 3: Load the corporate ride (source of truth for the booking) ─
-    $corpRows = $db->findData('corporate_rides', ['id' => $input['corp_id']]);
+    $corpRows = $db->findData('rides', ['id' => $input['corp_id']]);
     if (empty($corpRows)) {
         http_response_code(404);
         echo json_encode(['success' => false, 'error' => 'Corporate ride not found', 'data' => null], JSON_PRETTY_PRINT);
         exit;
     }
     $corp = $corpRows[0];
+    $corpSource = strtolower(trim((string)($corp['source'] ?? '')));
+    if ($corpSource !== 'corporate' && $corpSource !== 'corporate meet_and_greet') {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Corporate ride not found', 'data' => null], JSON_PRETTY_PRINT);
+        exit;
+    }
 
     // ── Step 4: Resolve the passenger for the employee ───────────────────
     //   - rides.user_id is NOT NULL and is a FK to auth.users.id
@@ -220,21 +225,22 @@ try {
         throw new Exception('Could not resolve a passenger record for the corporate employee');
     }
 
-    // ── Step 5: Write the ride into `rides` (the table the driver app reads) ─
-    //   This is the committed write. Only after it succeeds do we flip
-    //   corporate_rides.status to "Assigned".
-    $pickupAddr = isset($input['pickup']) && trim((string)$input['pickup']) !== ''
-        ? trim((string)$input['pickup']) : ($corp['pickup'] ?? '');
-    $destAddr = isset($input['destination']) && trim((string)$input['destination']) !== ''
-        ? trim((string)$input['destination']) : ($corp['destination'] ?? '');
+    // ── Step 5: Update the corporate ride row in `rides` so driver app sees it ─
+    $pickupAddr = isset($input['pickup_addr']) && trim((string)$input['pickup_addr']) !== ''
+        ? trim((string)$input['pickup_addr']) : (string)($corp['pickup_addr'] ?? '');
+    $destAddr = isset($input['dest_addr']) && trim((string)$input['dest_addr']) !== ''
+        ? trim((string)$input['dest_addr']) : (string)($corp['dest_addr'] ?? '');
     $rideType = isset($input['service_type']) && trim((string)$input['service_type']) !== ''
-        ? trim((string)$input['service_type']) : ($corp['carType'] ?? 'Economy');
-    $paymentMethod = $corp['payment_source'] ?? 'cash';
-    $fareEur = isset($input['fare_eur']) ? floatval($input['fare_eur']) : (isset($corp['fare']) ? floatval($corp['fare']) : 0);
-    $distanceKm = isset($input['distance_km']) ? floatval($input['distance_km']) : (isset($corp['distance']) ? floatval($corp['distance']) : 0);
-    $durationMin = isset($input['duration_min']) ? intval($input['duration_min']) : (isset($corp['eta']) ? intval($corp['eta']) : 0);
+        ? trim((string)$input['service_type']) : (string)($corp['ride_type'] ?? 'Economy');
+    $paymentMethod = strtolower(trim((string)($corp['payment_method'] ?? 'cash')));
+    $fareEur = isset($input['fare_eur']) ? floatval($input['fare_eur'])
+        : floatval($corp['fare_eur'] ?? 0);
+    $distanceKm = isset($input['distance_km']) ? floatval($input['distance_km'])
+        : floatval($corp['distance_km'] ?? 0);
+    $durationMin = isset($input['duration_min']) ? intval($input['duration_min'])
+        : intval($corp['duration_min'] ?? 0);
 
-    $ridePayload = [
+    $rideUpdatePayload = [
         'user_id' => $passengerId,
         'driver_id' => $input['driver_id'],
         'pickup_addr' => $pickupAddr,
@@ -249,45 +255,28 @@ try {
         'distance_km' => $distanceKm,
         'duration_min' => $durationMin,
         'status' => 'assigned',
-        'source' => 'corporate',
+        'source' => $corpSource,
+        'vehicle_number' => $vehicleNumber,
         'meta' => [
-            'corp_id' => (string)$input['corp_id'],
+            'corp_id' => (string)($corp['id'] ?? $input['corp_id']),
             'cid' => $corp['cid'] ?? null,
             'company' => $corp['company'] ?? null,
             'employee_id' => $employeeId,
             'employee_name' => $employeeName,
         ],
     ];
-
-    $existingRideId = find_mirror_ride_id((string)$input['corp_id']);
-    if ($existingRideId) {
-        $mirroredRide = $db->updateData('rides', $existingRideId, $ridePayload);
-    } else {
-        $mirroredRide = $db->insertData('rides', $ridePayload);
-    }
-
-    // ── Step 6: Now that the driver app has the ride, flip corp status ───
-    $corpUpdate = [
-        'status' => 'Assigned',
-        'vehicle_number' => $vehicleNumber,
-        'carType' => $rideType,
-        'pickup' => $pickupAddr,
-        'destination' => $destAddr,
-        'fare' => number_format($fareEur, 2, '.', ''),
-        'distance' => $distanceKm,
-        'eta' => $durationMin,
-    ];
     if (isset($input['pickup_time']) && trim((string)$input['pickup_time']) !== '') {
-        $corpUpdate['pickupTime'] = trim((string)$input['pickup_time']);
+        $rideUpdatePayload['enroute_at'] = trim((string)$input['pickup_time']);
     }
-    $updatedCorp = $db->updateData('corporate_rides', $input['corp_id'], $corpUpdate);
+
+    $updatedCorp = $db->updateData('rides', $input['corp_id'], $rideUpdatePayload);
 
     echo json_encode([
         'success' => true,
         'message' => 'Driver assigned successfully',
         'data' => [
             'corporate_ride' => $updatedCorp,
-            'ride' => $mirroredRide,
+            'ride' => $updatedCorp,
         ],
     ], JSON_PRETTY_PRINT);
 } catch (Exception $e) {

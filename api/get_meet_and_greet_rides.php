@@ -14,8 +14,7 @@ if (empty($_SESSION['user']) || empty($_SESSION['access_token'])) {
 }
 
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-$limit = isset($_GET['limit']) ? max(1, min(100, intval($_GET['limit']))) : 15;
-$search = trim($_GET['search'] ?? '');
+$limit = isset($_GET['limit']) ? max(1, min(1000, intval($_GET['limit']))) : 100;
 $offset = ($page - 1) * $limit;
 
 $supabaseUrl = SUPABASE_URL;
@@ -23,7 +22,7 @@ $supabaseKey = (defined('SUPABASE_SERVICE_ROLE_KEY') && SUPABASE_SERVICE_ROLE_KE
     ? SUPABASE_SERVICE_ROLE_KEY
     : SUPABASE_ANON_KEY;
 
-function execSupabaseRequest($url, $apiKey, $rangeStart, $rangeEnd) {
+function execMGRequest($url, $apiKey, $rangeStart, $rangeEnd) {
     $ch = curl_init();
     curl_setopt_array($ch, [
         CURLOPT_URL => $url,
@@ -74,40 +73,39 @@ function execSupabaseRequest($url, $apiKey, $rangeStart, $rangeEnd) {
 }
 
 try {
+    // Source stored as "corporate meet_and_greet" — match either spacing variant.
     $query = [
         'select' => '*',
-        'source' => 'ilike.corporate*',
+        'or' => '(source.eq.corporate meet_and_greet,source.eq.corporate_meet_and_greet,source.ilike.*meet_and_greet*)',
         'order' => 'created_at.desc'
     ];
 
-    if ($search !== '') {
-        $safe = str_replace(['%', ','], ['\\%', '\\,'], $search);
-        $query['or'] = '(company.ilike.*' . $safe . '*,employee.ilike.*' . $safe . '*,employee_id.ilike.*' . $safe . '*,pickup_addr.ilike.*' . $safe . '*,dest_addr.ilike.*' . $safe . '*,payment_method.ilike.*' . $safe . '*,status.ilike.*' . $safe . '*,cid.ilike.*' . $safe . '*,source.ilike.*' . $safe . '*)';
-    }
-
     $url = $supabaseUrl . '/rest/v1/rides?' . http_build_query($query);
-    $result = execSupabaseRequest($url, $supabaseKey, $offset, $offset + $limit - 1);
+    $result = execMGRequest($url, $supabaseKey, $offset, $offset + $limit - 1);
+
     $records = array_map(function ($r) {
         $status = trim((string)($r['status'] ?? ''));
         $normalized = $status === '' ? 'Pending' : ucwords(str_replace('_', ' ', strtolower($status)));
         return [
-            'id' => (string)($r['id'] ?? ''),
-            'company' => $r['company'] ?? '',
-            'employee' => $r['employee'] ?? '',
-            'employee_id' => $r['employee_id'] ?? '',
-            'pickup_addr' => $r['pickup_addr'] ?? '',
-            'dest_addr' => $r['dest_addr'] ?? '',
+            'id'             => (string)($r['id'] ?? ''),
+            'company'        => $r['company'] ?? '',
+            'employee'       => $r['employee'] ?? '',
+            'employee_id'    => $r['employee_id'] ?? '',
+            'pickup_addr'    => $r['pickup_addr'] ?? '',
+            'dest_addr'      => $r['dest_addr'] ?? '',
             'payment_method' => $r['payment_method'] ?? '',
-            'fare_eur' => $r['fare_eur'] ?? null,
-            'ride_type' => $r['ride_type'] ?? null,
-            'distance_km' => $r['distance_km'] ?? null,
-            'duration_min' => $r['duration_min'] ?? null,
-            'enroute_at' => $r['enroute_at'] ?? null,
-            'created_at' => $r['created_at'] ?? null,
-            'status' => $normalized,
+            'fare_eur'       => $r['fare_eur'] ?? null,
+            'estimate_fare'  => $r['estimate_fare'] ?? null,
+            'ride_type'      => $r['ride_type'] ?? null,
+            'distance_km'    => $r['distance_km'] ?? null,
+            'duration_min'   => $r['duration_min'] ?? null,
+            'enroute_at'     => $r['enroute_at'] ?? null,
+            'created_at'     => $r['created_at'] ?? null,
+            'updated_at'     => $r['updated_at'] ?? null,
+            'status'         => $normalized,
             'vehicle_number' => $r['vehicle_number'] ?? null,
-            'cid' => $r['cid'] ?? null,
-            'source' => $r['source'] ?? null,
+            'cid'            => $r['cid'] ?? null,
+            'source'         => $r['source'] ?? null,
         ];
     }, $result['records']);
 

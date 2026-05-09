@@ -833,10 +833,9 @@ async function loadCorporateRide(corpId) {
       phoneInput.value = matchedEmp ? stripIrelandCountryCode(matchedEmp.phone) : '';
     }
 
-    // Service type (carType)
     const serviceType = document.getElementById('serviceType');
-    if (serviceType && ride.carType) {
-      const val = String(ride.carType).trim();
+    if (serviceType && ride.ride_type) {
+      const val = String(ride.ride_type).trim();
       const has = Array.from(serviceType.options).some((o) => o.value === val);
       if (!has) {
         const opt = document.createElement('option');
@@ -847,9 +846,9 @@ async function loadCorporateRide(corpId) {
       serviceType.value = val;
     }
 
-    // Date + time from pickupTime
-    if (ride.pickupTime) {
-      const d = new Date(ride.pickupTime);
+    const scheduledAt = ride.enroute_at ?? ride.created_at ?? null;
+    if (scheduledAt) {
+      const d = new Date(scheduledAt);
       if (!isNaN(d.getTime())) {
         const dateInput = document.getElementById('rideDate');
         const timeInput = document.getElementById('rideTime');
@@ -870,8 +869,8 @@ async function loadCorporateRide(corpId) {
     // Pickup / drop-off
     const pickupLocation = document.getElementById('pickupLocation');
     const dropoffLocation = document.getElementById('dropoffLocation');
-    if (pickupLocation) pickupLocation.value = ride.pickup || '';
-    if (dropoffLocation) dropoffLocation.value = ride.destination || '';
+    if (pickupLocation) pickupLocation.value = ride.pickup_addr || '';
+    if (dropoffLocation) dropoffLocation.value = ride.dest_addr || '';
 
     // Recalculate route on the map
     if (pickupLocation && dropoffLocation && pickupLocation.value && dropoffLocation.value) {
@@ -882,8 +881,8 @@ async function loadCorporateRide(corpId) {
 
     // Fare / distance / eta
     const estimatedFare = document.getElementById('estimatedFare');
-    if (estimatedFare && ride.fare != null && ride.fare !== '') {
-      const numericFare = parseFloat(ride.fare);
+    if (estimatedFare && ride.fare_eur != null && ride.fare_eur !== '') {
+      const numericFare = parseFloat(ride.fare_eur);
       if (!isNaN(numericFare)) {
         estimatedFare.value = `€${numericFare.toFixed(2)}`;
         currentFare = numericFare;
@@ -891,16 +890,16 @@ async function loadCorporateRide(corpId) {
       }
     }
     const distance = document.getElementById('distance');
-    if (distance && ride.distance != null && ride.distance !== '') {
-      const distKm = parseFloat(ride.distance);
+    if (distance && ride.distance_km != null && ride.distance_km !== '') {
+      const distKm = parseFloat(ride.distance_km);
       if (!isNaN(distKm)) {
         distance.value = `${distKm} km`;
         currentDistance = distKm;
       }
     }
     const estimatedTime = document.getElementById('estimatedTime');
-    if (estimatedTime && ride.eta != null && ride.eta !== '') {
-      const mins = parseInt(ride.eta, 10);
+    if (estimatedTime && ride.duration_min != null && ride.duration_min !== '') {
+      const mins = parseInt(ride.duration_min, 10);
       if (!isNaN(mins)) {
         const hours = Math.floor(mins / 60);
         const rem = mins % 60;
@@ -1195,8 +1194,8 @@ async function assignDriver() {
         duration_min: currentDuration,
         fare_eur: currentFare,
         service_type: serviceType,
-        pickup: pickupLocationVal,
-        destination: dropoffLocationVal,
+        pickup_addr: pickupLocationVal,
+        dest_addr: dropoffLocationVal,
         pickup_time: pickupTimeIso,
         pickup_lat: currentPickupLat,
         pickup_lng: currentPickupLng,

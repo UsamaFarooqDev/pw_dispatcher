@@ -555,7 +555,7 @@ require('modules/head.php');
             .replace(/\s+/g, '_');
           const s = statusConfig[normalizedStatusKey] ?? { bg:'#F4F4F5', color:'#71717A', label: ride.status ?? '—' };
 
-          const dateSource = ride.pickupTime ?? ride.date ?? ride.created_at ?? null;
+          const dateSource = ride.enroute_at ?? ride.created_at ?? null;
           let dateCell = '<span style="color:#A1A1AA;">—</span>';
           if (dateSource) {
             const d = new Date(dateSource);
@@ -571,10 +571,10 @@ require('modules/head.php');
 
           const company = ride.company_name ?? ride.company ?? '—';
           const employee = ride.employee_name ?? ride.employee ?? ride.passenger_name ?? '—';
-          const pickup = ride.pickup ?? ride.pickup_location ?? '—';
-          const destination = ride.destination ?? ride.dropoff ?? ride.destination_location ?? '—';
-          const payment = ride.payment_method ?? ride.payment_source ?? ride.payment ?? '—';
-          const fare = ride.fare ?? ride.price ?? null;
+          const pickup = ride.pickup_addr ?? '—';
+          const destination = ride.dest_addr ?? '—';
+          const payment = ride.payment_method ?? '—';
+          const fare = ride.fare_eur ?? null;
           const rideId = ride.id ?? '';
 
           let actionCell = '';

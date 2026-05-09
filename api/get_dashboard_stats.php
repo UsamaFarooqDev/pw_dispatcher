@@ -22,7 +22,9 @@ try {
     $drivers = $db->getCount('drivers');
     $passengers = $db->getCount('passengers');
     $rides = $db->getCount('rides');
-    $corporate = $db->getCount('corporate_rides');
+    $corporate = $db->getCount('rides', [
+        'filter' => ['source' => 'ilike.corporate*'],
+    ]);
 
     // Ride statuses used by the dashboard cards.
     // Case-insensitive status counts to match the live-orders client-side logic
