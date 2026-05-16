@@ -462,6 +462,9 @@ require('modules/head.php');
             });
           }
 
+          // Auto-transition scheduled rides based on time proximity
+          await processScheduledRideTransitions(scheduledRides);
+
           // Check for beeping rides (always check, regardless of UI updates)
           checkForBeepingRides(unassignedRides, rides);
 
@@ -524,6 +527,49 @@ require('modules/head.php');
         } catch (error) {
           console.error('Error checking ride status:', error);
           // Don't show error in UI during silent polling - only log it
+        }
+      }
+
+      // Auto-transition scheduled rides:
+      //   scheduled → searching  when pickup is within 40 min (or time has already passed)
+      //   Rides are NEVER auto-cancelled; only a driver, passenger, or dispatcher may cancel.
+      const _transitioningRideIds = new Set();
+      async function processScheduledRideTransitions(scheduledRides) {
+        const now = Date.now();
+        for (const ride of scheduledRides) {
+          if (!ride.id) continue;
+          if (_transitioningRideIds.has(ride.id)) continue;
+
+          // Resolve scheduled time from scheduled_at or meta.scheduled_datetime
+          let scheduledAt = ride.scheduled_at || null;
+          if (!scheduledAt && ride.meta) {
+            try {
+              const meta = typeof ride.meta === 'string' ? JSON.parse(ride.meta) : ride.meta;
+              scheduledAt = meta.scheduled_datetime || null;
+            } catch (_) {}
+          }
+          if (!scheduledAt) continue;
+
+          const scheduledMs = new Date(scheduledAt).getTime();
+          if (isNaN(scheduledMs)) continue;
+
+          const diffMin = (scheduledMs - now) / 60000;
+
+          // Activate once the window reaches 40 min or less (including past scheduled time)
+          if (diffMin <= 40) {
+            _transitioningRideIds.add(ride.id);
+            try {
+              await fetch('api/update_ride_status.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ride_id: ride.id, status: 'searching' })
+              });
+            } catch (e) {
+              console.error('Scheduled transition error:', e);
+            } finally {
+              _transitioningRideIds.delete(ride.id);
+            }
+          }
         }
       }
 

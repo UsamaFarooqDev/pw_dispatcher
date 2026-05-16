@@ -137,18 +137,47 @@ foreach ($rideTypes as $t) {
             <button type="button" class="pill-btn pill-seat" data-value="8">8</button>
           </div>
         </div>
-        <div class="col-md-4">
-          <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Date</label>
-          <div class="dt-input-wrap">
-            <i class="bi bi-calendar3 dt-icon"></i>
-            <input type="date" class="form-control dt-input" id="rideDate" />
+
+        <!-- Schedule mode toggle -->
+        <div class="col-12 mt-2">
+          <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Ride Timing</label>
+          <div class="d-flex gap-2">
+            <button type="button" id="modeNowBtn"
+              class="btn fw-semibold px-4"
+              style="height:36px; border-radius:8px; font-size:0.845rem; background:#f37a20; color:#fff; border:1.5px solid #f37a20; transition:all 0.15s;"
+              onclick="setRideMode('now')">
+              <i class="bi bi-lightning-fill me-1"></i> Book Now
+            </button>
+            <button type="button" id="modeScheduleBtn"
+              class="btn fw-semibold px-4"
+              style="height:36px; border-radius:8px; font-size:0.845rem; background:#fff; color:#52525B; border:1.5px solid #EBEBEB; transition:all 0.15s;"
+              onclick="setRideMode('schedule')">
+              <i class="bi bi-calendar-event me-1"></i> Schedule for Later
+            </button>
           </div>
+          <input type="hidden" id="rideScheduleMode" value="now" />
         </div>
-        <div class="col-md-4">
-          <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Time</label>
-          <div class="dt-input-wrap">
-            <i class="bi bi-clock dt-icon"></i>
-            <input type="time" class="form-control dt-input" id="rideTime" />
+
+        <div id="scheduleDateTimeRow" class="col-12" style="display:none;">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Date</label>
+              <div class="dt-input-wrap">
+                <i class="bi bi-calendar3 dt-icon"></i>
+                <input type="date" class="form-control dt-input" id="rideDate" />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Time</label>
+              <div class="dt-input-wrap">
+                <i class="bi bi-clock dt-icon"></i>
+                <input type="time" class="form-control dt-input" id="rideTime" />
+              </div>
+            </div>
+          </div>
+          <div class="mt-2 px-1" style="font-size:0.775rem; color:#71717A;">
+            <i class="bi bi-info-circle me-1"></i>
+            Rides scheduled <strong>40+ minutes</strong> in the future will be saved as <em>Scheduled</em> and auto-activated when the time approaches.
           </div>
         </div>
       </div>
@@ -1335,6 +1364,48 @@ foreach ($rideTypes as $t) {
         if (timeEl && currentDuration != null) timeEl.value = Math.round(Number(currentDuration)).toString();
       }
 
+      /* ---------------------- Schedule Mode ---------------------- */
+      function setRideMode(mode) {
+        document.getElementById('rideScheduleMode').value = mode;
+        const row = document.getElementById('scheduleDateTimeRow');
+        const nowBtn = document.getElementById('modeNowBtn');
+        const schBtn = document.getElementById('modeScheduleBtn');
+
+        if (mode === 'now') {
+          row.style.display = 'none';
+          nowBtn.style.background = '#f37a20';
+          nowBtn.style.color = '#fff';
+          nowBtn.style.borderColor = '#f37a20';
+          schBtn.style.background = '#fff';
+          schBtn.style.color = '#52525B';
+          schBtn.style.borderColor = '#EBEBEB';
+          // Clear date/time so buildPickupDateTime falls back to current time
+          const d = document.getElementById('rideDate');
+          const t = document.getElementById('rideTime');
+          if (d) d.value = '';
+          if (t) t.value = '';
+        } else {
+          row.style.display = '';
+          schBtn.style.background = '#f37a20';
+          schBtn.style.color = '#fff';
+          schBtn.style.borderColor = '#f37a20';
+          nowBtn.style.background = '#fff';
+          nowBtn.style.color = '#52525B';
+          nowBtn.style.borderColor = '#EBEBEB';
+          // Pre-fill with tomorrow's date and a round hour as a sensible default
+          const d = document.getElementById('rideDate');
+          const t = document.getElementById('rideTime');
+          if (d && !d.value) {
+            const tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
+            d.value = tmr.toISOString().slice(0, 10);
+          }
+          if (t && !t.value) {
+            const hr = new Date(); hr.setHours(hr.getHours() + 2, 0, 0, 0);
+            t.value = hr.toTimeString().slice(0, 5);
+          }
+        }
+      }
+
       /* ---------------------- Confirm Order ---------------------- */
       function setupConfirmOrder() {
         const btn = document.getElementById('confirmOrderBtn');
@@ -1379,6 +1450,8 @@ async function createOrder() {
   const seats = document.getElementById('seatCount')?.value || '';
   const pickup = document.getElementById('pickupInput')?.value?.trim() || '';
   const dropoff = document.getElementById('dropoffInput')?.value?.trim() || '';
+  const scheduleMode = document.getElementById('rideScheduleMode')?.value || 'now';
+  const isScheduled = scheduleMode === 'schedule';
   const rideDateVal = document.getElementById('rideDate')?.value || '';
   const rideTimeVal = document.getElementById('rideTime')?.value || '';
   const pickupTimeStr = buildPickupDateTime();
@@ -1399,8 +1472,8 @@ async function createOrder() {
     return;
   }
 
-  if (!rideDateVal || !rideTimeVal) {
-    showToast('Please select date and time');
+  if (isScheduled && (!rideDateVal || !rideTimeVal)) {
+    showToast('Please select a date and time for the scheduled ride');
     return;
   }
 
@@ -1441,6 +1514,7 @@ async function createOrder() {
           payment_method: 'cash',
           service_type_display: serviceType,
           scheduled_at: pickupTimeStr,
+          is_scheduled: isScheduled,
           driver_id: selectedDriverId || null,
           vehicle_number: selectedVehicleNumber || null,
         };

@@ -16,7 +16,7 @@ require('modules/head.php');
   <main class="main-content p-4" style="background:#F4F4F5; min-height:92vh;">
 
   <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 py-1">
-  <div class="d-flex align-items-center gap-2">
+  <div class="d-flex align-items-center gap-2 flex-wrap">
       <button class="btn d-flex align-items-center gap-2 fw-semibold px-4"
   style="height:38px; background:#f37a20; color:#fff; border:none; border-radius:8px; font-size:0.85rem; box-shadow:0 4px 14px rgba(243,122,32,0.35);"
   onmouseover="this.style.background='#d96010';"
@@ -25,6 +25,25 @@ require('modules/head.php');
   <i class="bi bi-building-add" style="font-size:15px;"></i>
   Create New Corporate
 </button>
+
+      <!-- Category filter tabs -->
+      <!-- <div class="d-flex align-items-center gap-1" style="border:1.5px solid #EBEBEB; border-radius:8px; padding:3px; background:#FAFAFA;">
+        <button type="button" id="filterAll" onclick="setCorporateCategory('')"
+          class="btn fw-semibold"
+          style="height:30px; border-radius:6px; font-size:0.8rem; padding:0 14px; background:#18181B; color:#fff; border:none;">
+          All Rides
+        </button>
+        <button type="button" id="filterCorporate" onclick="setCorporateCategory('corporate')"
+          class="btn fw-semibold"
+          style="height:30px; border-radius:6px; font-size:0.8rem; padding:0 14px; background:transparent; color:#71717A; border:none;">
+          <i class="bi bi-building me-1"></i>Corporate
+        </button>
+        <button type="button" id="filterMeetGreet" onclick="setCorporateCategory('meet_greet')"
+          class="btn fw-semibold"
+          style="height:30px; border-radius:6px; font-size:0.8rem; padding:0 14px; background:transparent; color:#71717A; border:none;">
+          <i class="bi bi-airplane me-1"></i>Meet &amp; Greet
+        </button>
+      </div> -->
   </div>
 
   <div class="position-relative" style="width:100%; max-width:280px;">
@@ -54,12 +73,13 @@ require('modules/head.php');
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Category</th>
               <th class="fw-semibold text-nowrap px-4 py-2 text-end" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Action</th>
             </tr>
           </thead>
           <tbody id="corporateRidesBody">
             <tr>
-              <td colspan="9" class="text-center py-5" style="border:none;">
+              <td colspan="10" class="text-center py-5" style="border:none;">
                 <div style="font-size:1.5rem; color:#EBEBEB; margin-bottom:8px;"><i class="bi bi-building"></i></div>
                 <div style="font-size:0.845rem; color:#A1A1AA;">Loading corporate rides…</div>
               </td>
@@ -182,7 +202,7 @@ require('modules/head.php');
                 onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';">
                 <option value="" disabled selected>Select cycle</option>
                 <option value="weekly">Weekly</option>
-                <option value="biweekly">Bi-Weekly</option>
+                <option value="biweekly">Fort Night</option>
                 <option value="monthly">Monthly</option>
                 <option value="quarterly">Quarterly</option>
               </select>
@@ -247,6 +267,25 @@ require('modules/head.php');
             </div>
           </div>
 
+        </div>
+
+        <!-- T&C acceptance -->
+        <div class="px-4 pt-3 pb-2" style="border-top:1px solid #EBEBEB; flex-shrink:0;">
+          <div class="d-flex align-items-start gap-2">
+            <input type="checkbox" id="corp_terms_accepted"
+              style="width:16px; height:16px; margin-top:2px; accent-color:#f37a20; cursor:pointer; flex-shrink:0;" />
+            <label for="corp_terms_accepted" style="font-size:0.8125rem; color:#52525B; cursor:pointer; line-height:1.5;">
+              I accept the
+              <a href="https://powercabs.ie/terms-conditions" target="_blank"
+                style="color:#f37a20; font-weight:600; text-decoration:none;"
+                onmouseover="this.style.textDecoration='underline';"
+                onmouseout="this.style.textDecoration='none';">Terms &amp; Conditions</a>
+              <span style="color:#E11D48;">*</span>
+            </label>
+          </div>
+          <div id="corp_terms_error" style="display:none; font-size:0.72rem; color:#E11D48; margin-top:4px; padding-left:24px;">
+            You must accept the Terms &amp; Conditions to proceed.
+          </div>
         </div>
 
         <div class="px-4 py-3 d-flex justify-content-between align-items-center" style="border-top:1px solid #EBEBEB; flex-shrink:0;">
@@ -333,6 +372,8 @@ require('modules/head.php');
         el.style.boxShadow    = 'none';
         el.style.background   = '#FAFAFA';
       });
+      const termsErr = document.getElementById('corp_terms_error');
+      if (termsErr) termsErr.style.display = 'none';
     }
 
     function validateForm() {
@@ -371,6 +412,13 @@ require('modules/head.php');
       // Password length
       if (getVal('corp_password') && getVal('corp_password').length < 8) {
         setFieldError('corp_password', 'Password must be at least 8 characters');
+        valid = false;
+      }
+
+      // Terms & Conditions
+      if (!document.getElementById('corp_terms_accepted')?.checked) {
+        const termsErr = document.getElementById('corp_terms_error');
+        if (termsErr) termsErr.style.display = 'block';
         valid = false;
       }
 
@@ -419,6 +467,8 @@ require('modules/head.php');
           clearFieldErrors();
           document.querySelectorAll('#newCorporateModal input, #newCorporateModal select, #newCorporateModal textarea')
             .forEach(el => el.value = '');
+          const tcBox = document.getElementById('corp_terms_accepted');
+          if (tcBox) tcBox.checked = false;
           loadCorporateRides(1); // refresh table
         } else {
           showToast(json.error ?? 'Something went wrong', '#E11D48');
@@ -484,6 +534,22 @@ require('modules/head.php');
     const CORP_PAGE_SIZE = 10;
     let currentPage = 1;
     let currentSearch = '';
+    let currentCategoryFilter = ''; // '' | 'corporate' | 'meet_greet'
+
+    function setCorporateCategory(category) {
+      currentCategoryFilter = category;
+      const base = 'height:30px; border-radius:6px; font-size:0.8rem; padding:0 14px; border:none;';
+      const active   = base + 'background:#18181B; color:#fff;';
+      const inactive = base + 'background:transparent; color:#71717A;';
+      const allBtn  = document.getElementById('filterAll');
+      const corpBtn = document.getElementById('filterCorporate');
+      const mgBtn   = document.getElementById('filterMeetGreet');
+      if (allBtn)  allBtn.style.cssText  = category === ''           ? active : inactive;
+      if (corpBtn) corpBtn.style.cssText = category === 'corporate'  ? active : inactive;
+      if (mgBtn)   mgBtn.style.cssText   = category === 'meet_greet' ? active : inactive;
+      if (corporatePagination) corporatePagination.update(0, 1);
+      loadCorporateRides(1);
+    }
     const corporatePagination = (typeof PaginationManager !== 'undefined')
       ? new PaginationManager({
           containerId: 'corporateRidesPagination',
@@ -507,14 +573,15 @@ require('modules/head.php');
     async function loadCorporateRides(page = 1) {
       currentPage = page;
       const tbody = document.getElementById('corporateRidesBody');
-      tbody.innerHTML = `<tr><td colspan="9" class="text-center py-5" style="border:none; color:#A1A1AA; font-size:0.845rem;">
+      tbody.innerHTML = `<tr><td colspan="10" class="text-center py-5" style="border:none; color:#A1A1AA; font-size:0.845rem;">
         <i class="bi bi-arrow-repeat d-block mb-2" style="font-size:1.4rem; color:#EBEBEB;"></i>Loading…</td></tr>`;
       
       try {
         const params = new URLSearchParams({
           page: String(page),
           limit: String(CORP_PAGE_SIZE),
-          search: currentSearch
+          search: currentSearch,
+          ...(currentCategoryFilter ? { category: currentCategoryFilter } : {})
         });
         const res = await fetch(`api/get_corporate_rides.php?${params.toString()}`);
         const data = await res.json();
@@ -527,7 +594,7 @@ require('modules/head.php');
         const total = Number(data.pagination?.total ?? 0);
 
         if (rows.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="9" class="text-center py-5" style="border:none;">
+          tbody.innerHTML = `<tr><td colspan="10" class="text-center py-5" style="border:none;">
             <i class="bi bi-building d-block mb-2" style="font-size:1.5rem; color:#EBEBEB;"></i>
             <span style="font-size:0.845rem; color:#A1A1AA;">No corporate rides found${currentSearch ? ' for this search' : ''}</span>
           </td></tr>`;
@@ -543,6 +610,7 @@ require('modules/head.php');
           completed: { bg:'#F0FDF4', color:'#16A34A', label:'Completed' },
           assigned:  { bg:'#EFF6FF', color:'#2563EB', label:'Assigned'  },
           searching: { bg:'#FFF3E8', color:'#f37a20', label:'Searching' },
+          scheduled: { bg:'#F5F3FF', color:'#7C3AED', label:'Scheduled' },
           upcoming:  { bg:'#F5F3FF', color:'#7C3AED', label:'Upcoming'  },
           cancelled: { bg:'#FFF1F2', color:'#E11D48', label:'Cancelled' },
           on_trip:   { bg:'#FFF7ED', color:'#EA580C', label:'On Trip'   },
@@ -576,6 +644,12 @@ require('modules/head.php');
           const payment = ride.payment_method ?? '—';
           const fare = ride.fare_eur ?? null;
           const rideId = ride.id ?? '';
+          const src = String(ride.source ?? '').toLowerCase();
+          const isMG = src.includes('meet_and_greet') || src.includes('meet and greet');
+          const categoryLabel = isMG ? 'M&amp;G' : 'Corporate';
+          const categoryStyle = isMG
+            ? 'background:#EFF6FF; color:#2563EB;'
+            : 'background:#F0FDF4; color:#16A34A;';
 
           let actionCell = '';
           if (normalizedStatusKey === 'pending') {
@@ -604,6 +678,12 @@ require('modules/head.php');
                 ${escapeHtml(s.label)}
               </span>
             </td>
+            <td>
+              <span class="rounded-pill px-2 py-1 fw-semibold"
+                style="font-size:0.72rem; ${categoryStyle} white-space:nowrap;">
+                ${categoryLabel}
+              </span>
+            </td>
             <td class="text-end">${actionCell}</td>
           </tr>`;
         }).join('');
@@ -616,7 +696,7 @@ require('modules/head.php');
 
       } catch (err) {
         console.error('Corporate rides error:', err);
-        tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4" style="border:none; color:#E11D48; font-size:0.845rem;">
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center py-4" style="border:none; color:#E11D48; font-size:0.845rem;">
           Failed to load — please refresh.</td></tr>`;
       }
     }

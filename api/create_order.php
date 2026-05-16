@@ -423,7 +423,7 @@ try {
     }
 
 
-    // Determine status based on whether driver is provided
+    // Determine status based on whether driver is provided and whether the ride is scheduled
     $driverIdInput = isset($input['driver_id']) ? trim((string)$input['driver_id']) : null;
     $hasDriver = !empty($driverIdInput);
     $driverId = $hasDriver ? $driverIdInput : null;
@@ -433,7 +433,16 @@ try {
     if ($userIdInput === '') {
         $input['user_id'] = null;
     }
-    $status = $hasDriver ? 'assigned' : 'searching';
+
+    $isScheduled = !empty($input['is_scheduled']) && $input['is_scheduled'] !== 'false';
+    $scheduledTs = strtotime($scheduledDateTime);
+    $minutesUntil = ($scheduledTs !== false) ? (($scheduledTs - time()) / 60) : 0;
+    // Mark as scheduled only when explicitly flagged AND the pickup is >40 min in the future
+    if ($isScheduled && $minutesUntil > 40) {
+        $status = 'scheduled';
+    } else {
+        $status = $hasDriver ? 'assigned' : 'searching';
+    }
 
     $rideData = [
         'user_id' => $userId,
@@ -449,6 +458,7 @@ try {
         'duration_min' => $durationMin,
         'fare_eur' => number_format($fareEur, 2, '.', ''),
         'status' => $status,
+        'scheduled_at' => $scheduledDateTime . '+00',
         'driver_id' => $driverId,
         'meta' => json_encode($metaData),
         'source' => 'dispatcher',

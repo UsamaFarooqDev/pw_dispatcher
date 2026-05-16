@@ -69,6 +69,19 @@ require('modules/head.php');
           Authorised dispatcher access only &nbsp;·&nbsp; &copy; <?php echo date('Y'); ?> PowerCabs
         </p>
 
+        <div class="mt-4 pt-3" style="border-top:1px solid #EBEBEB;">
+          <p style="font-size:0.775rem; color:#A1A1AA; line-height:1.6; text-align:left;">
+            By signing in you confirm that you are an authorised PowerCabs dispatcher and agree to the
+            <a href="https://powercabs.ie/terms-conditions" target="_blank" rel="noopener"
+              style="color:#f37a20; text-decoration:none; font-weight:600;"
+              onmouseover="this.style.textDecoration='underline';"
+              onmouseout="this.style.textDecoration='none';">
+              Terms &amp; Conditions
+            </a>.
+            This system is for authorised personnel only. 
+          </p>
+        </div>
+
       </div>
     </div>
 
