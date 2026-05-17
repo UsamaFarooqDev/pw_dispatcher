@@ -1452,8 +1452,17 @@ async function createOrder() {
   const dropoff = document.getElementById('dropoffInput')?.value?.trim() || '';
   const scheduleMode = document.getElementById('rideScheduleMode')?.value || 'now';
   const isScheduled = scheduleMode === 'schedule';
-  const rideDateVal = document.getElementById('rideDate')?.value || '';
-  const rideTimeVal = document.getElementById('rideTime')?.value || '';
+
+  // For Book Now always use the current moment; for Schedule use the picker values.
+  let rideDateVal, rideTimeVal;
+  if (isScheduled) {
+    rideDateVal = document.getElementById('rideDate')?.value || '';
+    rideTimeVal = document.getElementById('rideTime')?.value || '';
+  } else {
+    const now = new Date();
+    rideDateVal = now.toISOString().slice(0, 10);          // 'YYYY-MM-DD'
+    rideTimeVal = now.toTimeString().slice(0, 5);          // 'HH:MM'
+  }
   const pickupTimeStr = buildPickupDateTime();
 
   const phone = phoneRaw

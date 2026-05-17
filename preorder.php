@@ -126,7 +126,9 @@ require('modules/head.php');
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Category</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Action</th>
             </tr></thead>
             <tbody id="scheduledRidesBody"></tbody>
           </table>
@@ -530,9 +532,21 @@ require('modules/head.php');
         }
       }
 
-      // Auto-transition scheduled rides:
-      //   scheduled → searching  when pickup is within 40 min (or time has already passed)
-      //   Rides are NEVER auto-cancelled; only a driver, passenger, or dispatcher may cancel.
+      // Auto-transition scheduled rides when pickup time is ≤ 40 min away.
+      //
+      // Two paths:
+      //   1. Pre-assigned driver present
+      //        → call assign_driver.php with force_assign=true
+      //          This writes driver_id + status='assigned' + updated_at in one shot —
+      //          exactly the same field set written by an immediate dispatch.
+      //          Supabase Real-time fires the same UPDATE event shape the driver app
+      //          already subscribes to, so the trip request popup appears as normal.
+      //
+      //   2. No driver assigned yet
+      //        → call update_ride_status.php to set status='searching'
+      //          Ride is broadcast to all available drivers the usual way.
+      //
+      // Rides are NEVER auto-cancelled here; only a human action may cancel.
       const _transitioningRideIds = new Set();
       async function processScheduledRideTransitions(scheduledRides) {
         const now = Date.now();
@@ -540,7 +554,7 @@ require('modules/head.php');
           if (!ride.id) continue;
           if (_transitioningRideIds.has(ride.id)) continue;
 
-          // Resolve scheduled time from scheduled_at or meta.scheduled_datetime
+          // Resolve scheduled time: prefer the dedicated column, fall back to meta JSON.
           let scheduledAt = ride.scheduled_at || null;
           if (!scheduledAt && ride.meta) {
             try {
@@ -554,21 +568,35 @@ require('modules/head.php');
           if (isNaN(scheduledMs)) continue;
 
           const diffMin = (scheduledMs - now) / 60000;
+          if (diffMin > 40) continue; // not yet in the activation window
 
-          // Activate once the window reaches 40 min or less (including past scheduled time)
-          if (diffMin <= 40) {
-            _transitioningRideIds.add(ride.id);
-            try {
+          _transitioningRideIds.add(ride.id);
+          try {
+            if (ride.driver_id) {
+              // Path 1 — pre-assigned driver: use the same assign_driver endpoint
+              // so the driver app receives the identical Real-time event as an
+              // instant assigned ride.
+              await fetch('api/assign_driver.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  ride_id:      ride.id,
+                  driver_id:    ride.driver_id,
+                  force_assign: true   // bypass scheduled-status preservation
+                })
+              });
+            } else {
+              // Path 2 — no driver: open for broadcast searching.
               await fetch('api/update_ride_status.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ride_id: ride.id, status: 'searching' })
               });
-            } catch (e) {
-              console.error('Scheduled transition error:', e);
-            } finally {
-              _transitioningRideIds.delete(ride.id);
             }
+          } catch (e) {
+            console.error('Scheduled transition error for ride', ride.id, e);
+          } finally {
+            _transitioningRideIds.delete(ride.id);
           }
         }
       }
@@ -1073,6 +1101,20 @@ require('modules/head.php');
         }
       }
 
+      function scheduledCategoryBadge(source) {
+        const src = (source || '').toLowerCase();
+        if (src.includes('meet_and_greet') || src.includes('meet and greet')) {
+          return '<span class="rounded-pill px-2 py-1 fw-semibold" style="font-size:0.72rem; background:#EFF6FF; color:#2563EB; white-space:nowrap;">M&amp;G</span>';
+        }
+        if (src.startsWith('corporate') || src.includes('corporate')) {
+          return '<span class="rounded-pill px-2 py-1 fw-semibold" style="font-size:0.72rem; background:#F0FDF4; color:#16A34A; white-space:nowrap;">Corporate</span>';
+        }
+        if (src === 'dispatcher') {
+          return '<span class="rounded-pill px-2 py-1 fw-semibold" style="font-size:0.72rem; background:#F5F3FF; color:#7C3AED; white-space:nowrap;">Dispatcher</span>';
+        }
+        return '<span class="rounded-pill px-2 py-1 fw-semibold" style="font-size:0.72rem; background:#FFF7ED; color:#EA580C; white-space:nowrap;">App</span>';
+      }
+
       function populateScheduledTable(rides) {
         const tbody = document.getElementById('scheduledRidesBody');
         if (!tbody) return;
@@ -1081,19 +1123,29 @@ require('modules/head.php');
 
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="6" class="text-center py-4 text-muted">No pre-orders to show</td></tr>';
+            '<tr><td colspan="8" class="text-center py-4 text-muted">No pre-orders to show</td></tr>';
           return;
         }
 
         rides.forEach((ride) => {
           const name = ride.passenger_name || 'N/A';
           const orderTime = formatOrderTime(ride.created_at);
-          const pickup =
-            ride.pickup_addr || ride.actual_start_addr || 'N/A';
-          const destination =
-            ride.dest_addr || ride.actual_end_addr || 'N/A';
+          const pickup      = ride.pickup_addr || ride.actual_start_addr || 'N/A';
+          const destination = ride.dest_addr   || ride.actual_end_addr   || 'N/A';
           const status = ride.status || 'N/A';
-          const fare = formatFare(ride.fare_eur, ride.estimate_fare);
+          const fare   = formatFare(ride.fare_eur, ride.estimate_fare);
+          const rideId = ride.id || '';
+          const categoryBadge = scheduledCategoryBadge(ride.source);
+
+          const hasDriver = !!(ride.driver_id);
+          const actionCell = hasDriver
+            ? `<a href="orderassigned.php?id=${encodeURIComponent(rideId)}&view=1" class="view-details-btn">
+                 <span>View Details</span><i class="bi bi-chevron-right"></i>
+               </a>`
+            : `<a href="orderassigned.php?id=${encodeURIComponent(rideId)}" class="view-details-btn"
+                 style="background:#f37a20 !important; color:#fff !important; border-color:#f37a20 !important;">
+                 <span>Assign</span><i class="bi bi-chevron-right"></i>
+               </a>`;
 
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -1102,7 +1154,9 @@ require('modules/head.php');
             <td>${pickup}</td>
             <td>${destination}</td>
             <td>${renderStatusBadge(status)}</td>
+            <td>${categoryBadge}</td>
             <td class="text-end pe-4">${fare}</td>
+            <td class="text-end pe-4">${actionCell}</td>
           `;
           tbody.appendChild(row);
         });

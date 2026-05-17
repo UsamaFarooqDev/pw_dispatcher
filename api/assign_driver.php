@@ -29,11 +29,25 @@ if (!$input || !isset($input['ride_id']) || !isset($input['driver_id'])) {
 
 try {
     $db = new SupabaseDB(null, true);
-    
+
+    // Fetch current ride status.
+    // Dispatcher manually pre-assigning a driver to a scheduled ride → keep 'scheduled'
+    // so the ride stays in the Scheduled tab until the 40-min window fires.
+    // The 40-min auto-transition passes force_assign=true to override this and move
+    // the ride to 'assigned', triggering the same Real-time event the driver app expects.
+    $currentRide = $db->findData('rides', ['id' => $input['ride_id']]);
+    $currentStatus = !empty($currentRide) ? strtolower(trim($currentRide[0]['status'] ?? '')) : '';
+    $forceAssign = !empty($input['force_assign']);
+    if ($forceAssign) {
+        $newStatus = 'assigned';
+    } else {
+        $newStatus = ($currentStatus === 'scheduled') ? 'scheduled' : 'assigned';
+    }
+
     // Prepare update data
     $updateData = [
         'driver_id' => $input['driver_id'],
-        'status' => 'assigned',
+        'status' => $newStatus,
         'updated_at' => date('Y-m-d H:i:s') . '+00'
     ];
     
