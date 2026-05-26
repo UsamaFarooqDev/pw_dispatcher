@@ -94,13 +94,27 @@ try {
         $destAddr = $updatedRide['dest_addr'] ?? '';
         $rideType = $updatedRide['ride_type'] ?? '';
         $fareEur = $updatedRide['fare_eur'] ?? '';
+        $orderDate = '';
+        $pickupTime = '';
+        if (!empty($updatedRide['created_at'])) {
+            $ts = strtotime($updatedRide['created_at']);
+            if ($ts !== false) $orderDate = date('l, d M Y', $ts);
+        }
+        if (!empty($updatedRide['scheduled_at'])) {
+            $ts = strtotime($updatedRide['scheduled_at']);
+            if ($ts !== false) $pickupTime = date('g:i A', $ts);
+        } else {
+            $pickupTime = 'As Soon As Possible';
+        }
         $emailResult = sendRideAssignedEmail(
             $passengerEmail,
             $passengerName,
             $pickupAddr,
             $destAddr,
             $rideType,
-            $fareEur
+            $fareEur,
+            $orderDate,
+            $pickupTime
         );
         if ($emailResult !== true) {
             error_log('Ride-assigned email failed: ' . (is_string($emailResult) ? $emailResult : 'unknown'));

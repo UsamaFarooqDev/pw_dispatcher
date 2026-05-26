@@ -259,10 +259,15 @@ function populateDriverTable(drivers) {
 
   drivers.forEach((driver) => {
     const driverName = driver.full_name || driver.name || 'N/A';
-    const vehicleInfo =
-      driver.vehicle_make && driver.vehicle_model
-        ? `${driver.vehicle_make} ${driver.vehicle_model}`
-        : driver.vehicle_make || driver.vehicle_model || 'N/A';
+    const vehicleInfo = (() => {
+      const mk = (driver.vehicle_make  || '').trim();
+      const md = (driver.vehicle_model || '').trim();
+      if (mk && md) {
+        // Avoid "Toyota Toyota Corolla" when model already starts with (or equals) make
+        return md.toLowerCase().startsWith(mk.toLowerCase()) ? md : `${mk} ${md}`;
+      }
+      return mk || md || 'N/A';
+    })();
     const row = document.createElement('tr');
     row.className = 'align-middle';
     row.innerHTML = `

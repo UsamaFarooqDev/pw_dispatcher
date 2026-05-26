@@ -1004,7 +1004,7 @@ require('modules/head.php');
             <td>${renderStatusBadge(status)}</td>
             <td class="text-end pe-4">${fare}</td>
             <td class="text-end pe-4">
-              <a href="preorder/${ride.id}" class="view-details-btn">
+              <a href="orderassigned.php?id=${encodeURIComponent(ride.id)}&view=1" class="view-details-btn">
                 <span>View Details</span>
                 <i class="bi bi-chevron-right"></i>
               </a>

@@ -28,7 +28,7 @@ require_once $mailerBase . '/SMTP.php';
  * @param string|null $templateDir Optional directory containing email_ride_assigned.html
  * @return true|string
  */
-function sendRideAssignedEmail($passengerEmail, $passengerName, $pickupAddr, $destAddr, $rideType, $fareEur, $templateDir = null) {
+function sendRideAssignedEmail($passengerEmail, $passengerName, $pickupAddr, $destAddr, $rideType, $fareEur, $orderDate = null, $pickupTime = null, $templateDir = null) {
     if (empty($passengerEmail) || !filter_var($passengerEmail, FILTER_VALIDATE_EMAIL)) {
         return 'Invalid or missing passenger email';
     }
@@ -60,9 +60,9 @@ function sendRideAssignedEmail($passengerEmail, $passengerName, $pickupAddr, $de
         $mail->Encoding = PHPMailer::ENCODING_BASE64;
         $mail->Subject  = 'Your ride has been assigned - PowerCabs';
 
-        $body = buildRideAssignedBody($passengerName, $pickupAddr, $destAddr, $rideType, $fareEur, $templateDir);
+        $body = buildRideAssignedBody($passengerName, $pickupAddr, $destAddr, $rideType, $fareEur, $orderDate, $pickupTime, $templateDir);
         $mail->Body    = $body;
-        $mail->AltBody = buildRideAssignedAltBody($passengerName, $pickupAddr, $destAddr, $rideType, $fareEur);
+        $mail->AltBody = buildRideAssignedAltBody($passengerName, $pickupAddr, $destAddr, $rideType, $fareEur, $orderDate, $pickupTime);
 
         $mail->send();
         return true;
@@ -76,24 +76,28 @@ function sendRideAssignedEmail($passengerEmail, $passengerName, $pickupAddr, $de
  * Plain-text alternative body. Required for good deliverability — mailers
  * without AltBody get higher spam scores and are frequently dropped.
  */
-function buildRideAssignedAltBody($passengerName, $pickupAddr, $destAddr, $rideType, $fareEur) {
+function buildRideAssignedAltBody($passengerName, $pickupAddr, $destAddr, $rideType, $fareEur, $orderDate = null, $pickupTime = null) {
     $name   = $passengerName ?: 'Passenger';
     $pickup = $pickupAddr    ?: '-';
     $dest   = $destAddr      ?: '-';
     $type   = $rideType      ?: '-';
     $fare   = ($fareEur !== '' && $fareEur !== null) ? ('EUR ' . $fareEur) : '-';
+    $date   = $orderDate  ?: '-';
+    $time   = $pickupTime ?: '-';
 
     return "Hi {$name},\n\n"
         . "Your PowerCabs ride has been confirmed.\n\n"
         . "TRIP DETAILS\n"
         . "------------\n"
-        . "Pick-up:  {$pickup}\n"
-        . "Drop-off: {$dest}\n"
-        . "Service:  {$type}\n"
-        . "Fare:     {$fare}\n\n"
+        . "Pick-up:     {$pickup}\n"
+        . "Drop-off:    {$dest}\n"
+        . "Service:     {$type}\n"
+        . "Fare:        {$fare}\n"
+        . "Order Date:  {$date}\n"
+        . "Pickup Time: {$time}\n\n"
         . "Please be ready at your pickup location 5 minutes before the scheduled time.\n"
         . "The fare shown is an estimate; tolls, waiting time and route changes may affect the final amount.\n\n"
-        . "Questions? Call +353 1 500 0000 or email support@powercabs.ie.\n\n"
+        . "Questions? Call +353 1 203 0727 or email info@powercabs.ie.\n\n"
         . "Thank you for choosing PowerCabs.\n"
         . "-- PowerCabs Ireland";
 }
@@ -101,36 +105,18 @@ function buildRideAssignedAltBody($passengerName, $pickupAddr, $destAddr, $rideT
 /**
  * Build HTML body for ride-assigned email.
  */
-function buildRideAssignedBody($passengerName, $pickupAddr, $destAddr, $rideType, $fareEur, $templateDir = null) {
+function buildRideAssignedBody($passengerName, $pickupAddr, $destAddr, $rideType, $fareEur, $orderDate = null, $pickupTime = null, $templateDir = null) {
     $dir = $templateDir !== null ? $templateDir : (dirname(__DIR__) . '/templates');
     $path = rtrim($dir, '/\\') . '/email_ride_assigned.html';
     if (is_file($path)) {
         $html = file_get_contents($path);
-        $html = str_replace(
-            '[PASSENGER_NAME]',
-            htmlspecialchars($passengerName ?: 'Passenger'),
-            $html
-        );
-        $html = str_replace(
-            '[PICKUP_ADDRESS]',
-            htmlspecialchars($pickupAddr ?: '—'),
-            $html
-        );
-        $html = str_replace(
-            '[DEST_ADDRESS]',
-            htmlspecialchars($destAddr ?: '—'),
-            $html
-        );
-        $html = str_replace(
-            '[RIDE_TYPE]',
-            htmlspecialchars($rideType ?: '—'),
-            $html
-        );
-        $html = str_replace(
-            '[FARE_EUR]',
-            htmlspecialchars($fareEur !== '' && $fareEur !== null ? '€' . $fareEur : '—'),
-            $html
-        );
+        $html = str_replace('[PASSENGER_NAME]', htmlspecialchars($passengerName ?: 'Passenger'), $html);
+        $html = str_replace('[PICKUP_ADDRESS]', htmlspecialchars($pickupAddr ?: '—'), $html);
+        $html = str_replace('[DEST_ADDRESS]',   htmlspecialchars($destAddr   ?: '—'), $html);
+        $html = str_replace('[RIDE_TYPE]',      htmlspecialchars($rideType   ?: '—'), $html);
+        $html = str_replace('[FARE_EUR]',       htmlspecialchars($fareEur !== '' && $fareEur !== null ? '€' . $fareEur : '—'), $html);
+        $html = str_replace('[ORDER_DATE]',     htmlspecialchars($orderDate  ?: '—'), $html);
+        $html = str_replace('[PICKUP_TIME]',    htmlspecialchars($pickupTime ?: '—'), $html);
         return $html;
     }
     // Fallback inline HTML

@@ -289,6 +289,77 @@ let currentPickupLng = null;
 let currentDropLat = null;
 let currentDropLng = null;
 
+// Live driver tracking
+let assignedDriverId = null;
+let driverLiveMarker = null;
+let driverTrackingInterval = null;
+let mapReadyForTracking = false;
+
+async function fetchAndUpdateDriverMarker(driverId) {
+  if (!map || !driverId) return;
+  try {
+    const resp = await fetch(`api/get_live_drivers.php?driver_id=${encodeURIComponent(driverId)}`);
+    if (!resp.ok) return;
+    const result = await resp.json();
+    if (!result.success || !result.data || result.data.length === 0) return;
+
+    const loc = result.data[0];
+    const lat = parseFloat(loc.current_lat ?? loc.lat);
+    const lng = parseFloat(loc.current_lng ?? loc.lng);
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    const pos = { lat, lng };
+    if (driverLiveMarker) {
+      driverLiveMarker.setPosition(pos);
+    } else {
+      const driverName = loc.full_name || loc.name || 'Driver';
+      const vehicle = loc.vehicle_number || loc.vehicle_make || '';
+      driverLiveMarker = new google.maps.Marker({
+        position: pos,
+        map: map,
+        icon: {
+          url: 'assets/car.svg',
+          scaledSize: new google.maps.Size(44, 44),
+          anchor: new google.maps.Point(22, 22),
+        },
+        title: driverName,
+        zIndex: 20,
+      });
+      const infoWin = new google.maps.InfoWindow({
+        content: `<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif; padding:4px 2px; min-width:160px;">
+          <div style="font-weight:700; color:#18181B; font-size:13px;">${driverName}</div>
+          ${vehicle ? `<div style="font-size:11px; color:#71717A; margin-top:2px;">${vehicle}</div>` : ''}
+          <div style="margin-top:4px; display:inline-flex; align-items:center; gap:5px;">
+            <span style="width:7px; height:7px; border-radius:50%; background:#22C55E; display:inline-block;"></span>
+            <span style="font-size:11px; color:#22C55E; font-weight:600;">Live</span>
+          </div>
+        </div>`,
+      });
+      driverLiveMarker.addListener('click', () => infoWin.open(map, driverLiveMarker));
+    }
+  } catch (e) {
+    console.warn('Driver live tracking error:', e);
+  }
+}
+
+function startDriverTracking() {
+  if (!assignedDriverId || !mapReadyForTracking) return;
+  if (driverTrackingInterval) return;  // already running
+  fetchAndUpdateDriverMarker(assignedDriverId);
+  driverTrackingInterval = setInterval(() => fetchAndUpdateDriverMarker(assignedDriverId), 10000);
+}
+
+function stopDriverTracking() {
+  if (driverTrackingInterval) {
+    clearInterval(driverTrackingInterval);
+    driverTrackingInterval = null;
+  }
+  if (driverLiveMarker) {
+    driverLiveMarker.setMap(null);
+    driverLiveMarker = null;
+  }
+}
+
 // Wait for Google Maps API to load (called by script callback when API is ready)
 function initGoogleMaps() {
   if (typeof google === 'undefined' || !google.maps) {
@@ -310,6 +381,10 @@ function initGoogleMaps() {
   directionsService = new google.maps.DirectionsService();
   directionsRenderer = new google.maps.DirectionsRenderer();
   directionsRenderer.setMap(map);
+
+  // Signal that the map is ready and start driver tracking if a driver is already set
+  mapReadyForTracking = true;
+  startDriverTracking();
 
   // Attach Places Autocomplete when API is ready (fixes suggestions not appearing)
   const pickupInput = document.getElementById('pickupLocation');
@@ -394,6 +469,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const corpId = urlParams.get('corp_id');
   isCorporateMode = !!corpId;
   isCorporateViewMode = isCorporateMode && urlParams.get('view') === '1';
+  const isNormalViewMode = !!rideId && !isCorporateMode && urlParams.get('view') === '1';
 
   if (isCorporateMode) {
     // Relabel the "Passenger" dropdown for corporate context
@@ -491,6 +567,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Store ride ID for assignment
         currentRideId = rideId;
 
+        // Start live driver tracking if the ride already has an assigned driver
+        if (ride.driver_id) {
+          assignedDriverId = ride.driver_id;
+          startDriverTracking();
+        }
+
         // Calculate route if both locations are available
         if (pickupLocation && dropoffLocation && pickupLocation.value && dropoffLocation.value) {
           // Wait a bit for map to initialize, then calculate route
@@ -530,6 +612,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           } else {
             estimatedTime.value = `${mins}m`;
           }
+        }
+
+        if (isNormalViewMode) {
+          applyCorporateViewMode();
         }
       }
     } catch (error) {
@@ -916,6 +1002,9 @@ async function loadCorporateRide(corpId) {
       const name = driver.full_name || driver.name || 'Driver';
       if (driverInput) driverInput.value = `${name} — ${driver.vehicle_make || ''}`;
       if (driverHidden) driverHidden.value = driver.id;
+      // Start live tracking for the already-assigned driver
+      assignedDriverId = driver.id;
+      startDriverTracking();
     }
 
     if (isCorporateViewMode) {
@@ -1225,6 +1314,11 @@ async function assignDriver() {
     const result = await response.json();
 
     if (result.success) {
+      // Start / refresh live tracking for the newly assigned driver
+      assignedDriverId = selectedDriverId;
+      stopDriverTracking();
+      startDriverTracking();
+
       const modal = new bootstrap.Modal(
         document.getElementById('driverAssignedModal')
       );
@@ -1311,6 +1405,8 @@ async function confirmCancelRide() {
     if (confirmSpinner) confirmSpinner.style.display = 'none';
   }
 }
+
+window.addEventListener('beforeunload', () => stopDriverTracking());
 
 // Initialize event listener when document is ready
 document.addEventListener('DOMContentLoaded', function() {

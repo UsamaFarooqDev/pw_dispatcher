@@ -478,13 +478,21 @@ try {
             if ($passengerEmail) {
                 require_once __DIR__ . '/../lib/mail_helper.php';
                 $passengerName = $passengers[0]['name'] ?? $passengers[0]['full_name'] ?? $input['customer_name'] ?? 'Passenger';
+                $orderDate = date('l, d M Y');
+                $pickupTime = 'As Soon As Possible';
+                if ($isScheduled && !empty($scheduledDateTime)) {
+                    $ts = strtotime($scheduledDateTime);
+                    if ($ts !== false) $pickupTime = date('g:i A', $ts);
+                }
                 $emailResult = sendRideAssignedEmail(
                     $passengerEmail,
                     $passengerName,
                     $input['pickup_addr'] ?? '',
                     $input['dest_addr'] ?? '',
                     $input['service_type'] ?? '',
-                    isset($newRide['fare_eur']) ? $newRide['fare_eur'] : $fareEur
+                    isset($newRide['fare_eur']) ? $newRide['fare_eur'] : $fareEur,
+                    $orderDate,
+                    $pickupTime
                 );
                 if ($emailResult !== true) {
                     error_log('Ride-assigned email (create_order) failed: ' . (is_string($emailResult) ? $emailResult : 'unknown'));

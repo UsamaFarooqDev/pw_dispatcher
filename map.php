@@ -166,23 +166,25 @@ require('modules/head.php');
         return false;
       }
 
-      // Fetch driver locations from API
+      // Fetch driver live locations from online_driver_with_location (source of truth)
       async function loadDriverLocations() {
         try {
-          const response = await fetch('api/get_drivers.php?limit=200');
+          const response = await fetch('api/get_live_drivers.php');
+          if (response.status === 401) { window.location.href = '/'; return; }
           const data = await response.json();
 
           if (data.success && data.data) {
-            // Only keep drivers who are online in their app and have a live location
+            // All records from get_live_drivers are online drivers with valid GPS;
+            // no secondary filtering needed — use the full set directly.
             allDrivers = data.data.filter(
-              (d) => isDriverOnline(d) && d.current_lat != null && d.current_lng != null
+              (d) => d.current_lat != null && d.current_lng != null
             );
             applySearchFilter();
           } else {
-            console.error('Error loading drivers:', data.error || 'Unknown error');
+            console.error('Error loading live drivers:', data.error || 'Unknown error');
           }
         } catch (error) {
-          console.error('Error fetching driver locations:', error);
+          console.error('Error fetching live driver locations:', error);
         }
       }
 
