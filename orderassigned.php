@@ -10,17 +10,35 @@ require('modules/head.php');
 <style>
   .btn-loading { opacity:0.7; cursor:not-allowed; pointer-events:none; }
   .btn-loading #btnText { opacity:0.9; }
+
+  /* ── View mode: assigned ride tracking ──────────────────────────────── */
+  main.view-mode-active { padding: 20px !important; background: #F4F4F5 !important; min-height: 0 !important; overflow: hidden !important; }
+  main.view-mode-active .row.g-4 { margin: 0 !important; }
+  main.view-mode-active #leftFormPanel { display: none !important; }
+  main.view-mode-active #rightMapPanel {
+    flex: 0 0 100% !important; width: 100% !important;
+    max-width: 100% !important; padding: 0 !important;
+  }
+  main.view-mode-active #assignDriverCard { display: none !important; }
+  main.view-mode-active #mapContainer {
+    border-radius: 12px !important;
+    border: 1.5px solid #EBEBEB !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
+    background: #fff !important;
+    overflow: hidden !important;
+  }
 </style>
 
     <?php require_once 'modules/navbar.php'; ?>
 
     <?php @require('modules/sidebar.php'); ?>
 
-<main class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
+<?php $_vmActive = !empty($_GET['id']) && isset($_GET['view']) && $_GET['view']==='1' && !isset($_GET['corp_id']); ?>
+<main class="main-content p-4<?php echo $_vmActive ? ' view-mode-active' : ''; ?>" style="background:#F4F4F5; min-height:100vh;">
 
   <div class="row g-4">
 
-    <div class="col-md-6 d-flex flex-column gap-4">
+    <div id="leftFormPanel" class="col-md-6 d-flex flex-column gap-4">
       <div class="rounded-3 border overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
         <div class="p-4">
 
@@ -184,9 +202,9 @@ require('modules/head.php');
 
     </div>
 
-    <div class="col-md-6 d-flex flex-column gap-4">
+    <div id="rightMapPanel" class="col-md-6 d-flex flex-column gap-4">
 
-      <div class="rounded-3 border" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:visible;">
+      <div id="assignDriverCard" class="rounded-3 border" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06); overflow:visible;">
         <div class="p-4">
 
           <div class="mb-3 pb-2" style="border-bottom:1px solid #EBEBEB;">
@@ -209,8 +227,34 @@ require('modules/head.php');
         </div>
       </div>
 
-      <div class="rounded-3 overflow-hidden flex-grow-1" style="border:1.5px solid #EBEBEB; min-height:420px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <div id="mapContainer" class="rounded-3 overflow-hidden flex-grow-1" style="position:relative; border:1.5px solid #EBEBEB; min-height:420px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
         <div id="map" style="width:100%; height:100%; min-height:420px; border:0;"></div>
+
+        <!-- Dispatcher info overlay — shown only in Assigned → View Details mode -->
+        <div id="dispatcherOverlay" style="display:none; position:absolute; top:14px; left:14px; z-index:10; background:rgba(255,255,255,0.96); border:1px solid #E4E4E7; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,0.13); padding:14px 16px; min-width:240px; max-width:300px; pointer-events:none; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+          <div style="display:flex; align-items:center; gap:7px; margin-bottom:10px;">
+            <span id="liveTrackingDot" style="width:8px; height:8px; border-radius:50%; background:#22C55E; display:inline-block; flex-shrink:0;"></span>
+            <span style="font-size:0.7rem; font-weight:700; color:#22C55E; text-transform:uppercase; letter-spacing:0.07em;">Live Tracking</span>
+          </div>
+          <div id="overlayDriverName" style="font-size:0.88rem; font-weight:700; color:#18181B; margin-bottom:2px;">—</div>
+          <div id="overlayVehicle" style="font-size:0.75rem; color:#71717A; margin-bottom:10px;">—</div>
+          <div style="border-top:1px solid #F4F4F5; padding-top:10px; display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; align-items:flex-start; gap:8px;">
+              <span style="flex-shrink:0; width:9px; height:9px; border-radius:50%; background:#22C55E; margin-top:3px; display:inline-block;"></span>
+              <div>
+                <div style="font-size:0.67rem; text-transform:uppercase; color:#A1A1AA; letter-spacing:0.05em; font-weight:600; margin-bottom:1px;">Pickup</div>
+                <div id="overlayPickup" style="font-size:0.78rem; color:#18181B; line-height:1.3;">—</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:flex-start; gap:8px;">
+              <span style="flex-shrink:0; width:9px; height:9px; border-radius:50%; background:#E11D48; margin-top:3px; display:inline-block;"></span>
+              <div>
+                <div style="font-size:0.67rem; text-transform:uppercase; color:#A1A1AA; letter-spacing:0.05em; font-weight:600; margin-bottom:1px;">Dropoff</div>
+                <div id="overlayDropoff" style="font-size:0.78rem; color:#18181B; line-height:1.3;">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -295,10 +339,25 @@ let driverLiveMarker = null;
 let driverTrackingInterval = null;
 let mapReadyForTracking = false;
 
+// View mode (Assigned → View Details)
+let isViewMode = false;
+let viewModePickupMarker = null;
+let viewModeDropoffMarker = null;
+
+// Pending route — set before map loads, consumed by initGoogleMaps
+let pendingPickupAddr = null;
+let pendingDropoffAddr = null;
+
+// Driver → Pickup road route
+let driverRouteRenderer = null;
+let lastDriverRouteLat = null;
+let lastDriverRouteLng = null;
+const DRIVER_ROUTE_THRESHOLD_M = 40; // recalculate only when driver moves ≥ 40 m
+
 async function fetchAndUpdateDriverMarker(driverId) {
   if (!map || !driverId) return;
   try {
-    const resp = await fetch(`api/get_live_drivers.php?driver_id=${encodeURIComponent(driverId)}`);
+    const resp = await fetch(`api/get_live_drivers.php?driver_id=${encodeURIComponent(driverId)}`, { cache: 'no-store' });
     if (!resp.ok) return;
     const result = await resp.json();
     if (!result.success || !result.data || result.data.length === 0) return;
@@ -337,6 +396,13 @@ async function fetchAndUpdateDriverMarker(driverId) {
       });
       driverLiveMarker.addListener('click', () => infoWin.open(map, driverLiveMarker));
     }
+
+    // Update Driver → Pickup road route in view mode when driver moves significantly
+    if (isViewMode && currentPickupLat && currentPickupLng) {
+      const needsUpdate = lastDriverRouteLat === null ||
+        geoDistanceMeters(lat, lng, lastDriverRouteLat, lastDriverRouteLng) >= DRIVER_ROUTE_THRESHOLD_M;
+      if (needsUpdate) updateDriverToPickupRoute(lat, lng);
+    }
   } catch (e) {
     console.warn('Driver live tracking error:', e);
   }
@@ -345,8 +411,9 @@ async function fetchAndUpdateDriverMarker(driverId) {
 function startDriverTracking() {
   if (!assignedDriverId || !mapReadyForTracking) return;
   if (driverTrackingInterval) return;  // already running
+  if (driverRouteRenderer && map) driverRouteRenderer.setMap(map);
   fetchAndUpdateDriverMarker(assignedDriverId);
-  driverTrackingInterval = setInterval(() => fetchAndUpdateDriverMarker(assignedDriverId), 10000);
+  driverTrackingInterval = setInterval(() => fetchAndUpdateDriverMarker(assignedDriverId), 5000);
 }
 
 function stopDriverTracking() {
@@ -358,6 +425,9 @@ function stopDriverTracking() {
     driverLiveMarker.setMap(null);
     driverLiveMarker = null;
   }
+  lastDriverRouteLat = null;
+  lastDriverRouteLng = null;
+  if (driverRouteRenderer) driverRouteRenderer.setMap(null);
 }
 
 // Wait for Google Maps API to load (called by script callback when API is ready)
@@ -379,12 +449,34 @@ function initGoogleMaps() {
   });
 
   directionsService = new google.maps.DirectionsService();
-  directionsRenderer = new google.maps.DirectionsRenderer();
+  // suppressMarkers: true so our custom green/red pins don't clash with Google's A/B pins
+  directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
   directionsRenderer.setMap(map);
+
+  // Driver → Pickup: solid orange road route
+  driverRouteRenderer = new google.maps.DirectionsRenderer({
+    suppressMarkers: true,
+    polylineOptions: {
+      strokeColor: '#f37a20',
+      strokeOpacity: 0.9,
+      strokeWeight: 5,
+    },
+  });
+  driverRouteRenderer.setMap(map);
 
   // Signal that the map is ready and start driver tracking if a driver is already set
   mapReadyForTracking = true;
   startDriverTracking();
+
+  // View mode: trigger resize after layout has been applied
+  if (isViewMode) google.maps.event.trigger(map, 'resize');
+
+  // Calculate route if ride data loaded before map was ready
+  if (pendingPickupAddr && pendingDropoffAddr) {
+    calculateRouteAndFare(pendingPickupAddr, pendingDropoffAddr);
+    pendingPickupAddr = null;
+    pendingDropoffAddr = null;
+  }
 
   // Attach Places Autocomplete when API is ready (fixes suggestions not appearing)
   const pickupInput = document.getElementById('pickupLocation');
@@ -469,7 +561,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const corpId = urlParams.get('corp_id');
   isCorporateMode = !!corpId;
   isCorporateViewMode = isCorporateMode && urlParams.get('view') === '1';
-  const isNormalViewMode = !!rideId && !isCorporateMode && urlParams.get('view') === '1';
+  isViewMode = !!rideId && !isCorporateMode && urlParams.get('view') === '1';
+  const isNormalViewMode = isViewMode;
 
   if (isCorporateMode) {
     // Relabel the "Passenger" dropdown for corporate context
@@ -575,10 +668,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Calculate route if both locations are available
         if (pickupLocation && dropoffLocation && pickupLocation.value && dropoffLocation.value) {
-          // Wait a bit for map to initialize, then calculate route
-          setTimeout(() => {
+          if (directionsService && directionsRenderer) {
             calculateRouteAndFare(pickupLocation.value, dropoffLocation.value);
-          }, 1000);
+          } else {
+            // Map not loaded yet — store addresses for initGoogleMaps to consume
+            pendingPickupAddr = pickupLocation.value;
+            pendingDropoffAddr = dropoffLocation.value;
+          }
         }
 
         // Prefill Fare Details (use stored fare from DB for app-booked rides)
@@ -616,6 +712,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (isNormalViewMode) {
           applyCorporateViewMode();
+          applyViewModeLayout();
         }
       }
     } catch (error) {
@@ -729,6 +826,8 @@ function calculateRouteAndFare(pickup, dropoff) {
         currentDropLat = leg.end_location.lat();
         currentDropLng = leg.end_location.lng();
       }
+      // Place custom pickup/dropoff markers in view mode once coordinates are known
+      if (isViewMode && map) placeViewModeMarkers();
       
       // Update fields
       const distanceElem = document.getElementById('distance');
@@ -960,9 +1059,12 @@ async function loadCorporateRide(corpId) {
 
     // Recalculate route on the map
     if (pickupLocation && dropoffLocation && pickupLocation.value && dropoffLocation.value) {
-      setTimeout(() => {
+      if (directionsService && directionsRenderer) {
         calculateRouteAndFare(pickupLocation.value, dropoffLocation.value);
-      }, 1000);
+      } else {
+        pendingPickupAddr = pickupLocation.value;
+        pendingDropoffAddr = dropoffLocation.value;
+      }
     }
 
     // Fare / distance / eta
@@ -1405,6 +1507,108 @@ async function confirmCancelRide() {
     if (confirmSpinner) confirmSpinner.style.display = 'none';
   }
 }
+
+// ── View mode helpers ─────────────────────────────────────────────────────
+
+function applyViewModeLayout() {
+  const mainEl = document.querySelector('main.main-content');
+  if (mainEl) mainEl.classList.add('view-mode-active');
+
+  // Prevent page-level scrolling in tracking view
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+
+  const setMapHeight = () => {
+    const mEl = document.querySelector('main.main-content');
+    const mainTop = mEl ? Math.round(mEl.getBoundingClientRect().top) : 0;
+    // 20px top padding + 20px bottom padding + 4px safety margin
+    const availH = window.innerHeight - mainTop - 44;
+    const container = document.getElementById('mapContainer');
+    const mapEl = document.getElementById('map');
+    if (container) { container.style.height = availH + 'px'; container.style.minHeight = availH + 'px'; }
+    if (mapEl)      { mapEl.style.height = availH + 'px'; mapEl.style.minHeight = availH + 'px'; }
+    if (map && typeof google !== 'undefined') google.maps.event.trigger(map, 'resize');
+  };
+  setMapHeight();
+  window.addEventListener('resize', setMapHeight);
+}
+
+
+function createPinIcon(color) {
+  const svg = encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">' +
+    '<path d="M14 0C6.27 0 0 6.27 0 14c0 9.63 14 22 14 22S28 23.63 28 14C28 6.27 21.73 0 14 0z" fill="' + color + '"/>' +
+    '<circle cx="14" cy="14" r="6" fill="white"/>' +
+    '</svg>'
+  );
+  return {
+    url: 'data:image/svg+xml;charset=UTF-8,' + svg,
+    scaledSize: new google.maps.Size(28, 36),
+    anchor: new google.maps.Point(14, 36),
+  };
+}
+
+function geoDistanceMeters(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function updateDriverToPickupRoute(driverLat, driverLng) {
+  if (!directionsService || !driverRouteRenderer) return;
+  if (!currentPickupLat || !currentPickupLng) return;
+  directionsService.route({
+    origin: { lat: driverLat, lng: driverLng },
+    destination: { lat: currentPickupLat, lng: currentPickupLng },
+    travelMode: google.maps.TravelMode.DRIVING,
+  }, (result, status) => {
+    if (status === google.maps.DirectionsStatus.OK) {
+      driverRouteRenderer.setDirections(result);
+      lastDriverRouteLat = driverLat;
+      lastDriverRouteLng = driverLng;
+    }
+  });
+}
+
+function placeViewModeMarkers() {
+  if (!map || !currentPickupLat || !currentPickupLng || !currentDropLat || !currentDropLng) return;
+
+  if (!viewModePickupMarker) {
+    viewModePickupMarker = new google.maps.Marker({
+      position: { lat: currentPickupLat, lng: currentPickupLng },
+      map,
+      icon: createPinIcon('#22C55E'),
+      title: 'Pickup',
+      zIndex: 10,
+    });
+    const iw = new google.maps.InfoWindow({
+      content: '<div style="font-size:13px;font-weight:700;color:#18181B;">Pickup</div>' +
+               '<div style="font-size:12px;color:#52525B;margin-top:2px;">' +
+               (document.getElementById('pickupLocation')?.value || '') + '</div>',
+    });
+    viewModePickupMarker.addListener('click', () => iw.open(map, viewModePickupMarker));
+  }
+
+  if (!viewModeDropoffMarker) {
+    viewModeDropoffMarker = new google.maps.Marker({
+      position: { lat: currentDropLat, lng: currentDropLng },
+      map,
+      icon: createPinIcon('#E11D48'),
+      title: 'Dropoff',
+      zIndex: 10,
+    });
+    const iw = new google.maps.InfoWindow({
+      content: '<div style="font-size:13px;font-weight:700;color:#18181B;">Dropoff</div>' +
+               '<div style="font-size:12px;color:#52525B;margin-top:2px;">' +
+               (document.getElementById('dropoffLocation')?.value || '') + '</div>',
+    });
+    viewModeDropoffMarker.addListener('click', () => iw.open(map, viewModeDropoffMarker));
+  }
+}
+
 
 window.addEventListener('beforeunload', () => stopDriverTracking());
 

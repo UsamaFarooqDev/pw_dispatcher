@@ -182,7 +182,7 @@ require('modules/head.php');
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
-              <th class="fw-semibold text-nowrap px-4 py-2 text-end" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Action</th>
+              <th class="fw-semibold text-nowrap px-3 py-2 text-end" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:130px;">Action</th>
             </tr></thead>
             <tbody id="meetGreetRidesBody"></tbody>
           </table>
@@ -291,21 +291,25 @@ require('modules/head.php');
   /* legacy hook (still referenced elsewhere) */
   .tab-btn.active-tab { color: #18181B; }
   #unassignedRidesBody tr, #assignedRidesBody tr,
-  #scheduledRidesBody tr, #cancelledRidesBody tr, #completedRidesBody tr {
+  #scheduledRidesBody tr, #cancelledRidesBody tr, #completedRidesBody tr,
+  #meetGreetRidesBody tr {
     border-bottom: 1px solid #F4F4F5;
     transition: background 0.12s;
   }
   #unassignedRidesBody tr:hover, #assignedRidesBody tr:hover,
   #scheduledRidesBody tr:hover, #cancelledRidesBody tr:hover,
-  #completedRidesBody tr:hover { background: #FAFAFA; }
+  #completedRidesBody tr:hover, #meetGreetRidesBody tr:hover { background: #FAFAFA; }
   #unassignedRidesBody td, #assignedRidesBody td,
-  #scheduledRidesBody td, #cancelledRidesBody td, #completedRidesBody td {
-    padding: 14px 24px;
+  #scheduledRidesBody td, #cancelledRidesBody td, #completedRidesBody td,
+  #meetGreetRidesBody td {
+    padding: 14px 16px;
     font-size: 0.845rem;
     color: #18181B;
     vertical-align: middle;
     border: none;
   }
+  /* Keep the M&G action cell from being squeezed into invisibility */
+  #meetGreetRidesBody td:last-child { white-space: nowrap; min-width: 130px; }
 </style>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/pagination.js"></script>
@@ -1442,7 +1446,11 @@ require('modules/head.php');
           if (!response.ok) throw new Error('Failed to fetch meet & greet rides');
           const result = await response.json();
           if (!result.success) throw new Error(result.error || 'Failed to fetch meet & greet rides');
-          const rides = result && result.data ? result.data : [];
+          // Exclude cancelled rides — they belong only in the Cancelled tab
+          const rides = (result && result.data ? result.data : []).filter(r => {
+            const s = (r.status || '').toLowerCase();
+            return s !== 'cancelled' && s !== 'canceled';
+          });
 
           currentRidesData.meetgreet = rides;
           updateMeetGreetTabCount(rides.length);

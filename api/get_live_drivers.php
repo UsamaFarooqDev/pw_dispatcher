@@ -4,6 +4,8 @@ ini_set('display_errors', '0');
 error_reporting(0);
 
 header('Content-Type: application/json');
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
 session_start();
 require_once '../auth/config.php';
 
