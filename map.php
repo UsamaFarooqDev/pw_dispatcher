@@ -85,13 +85,15 @@ require('modules/head.php');
       // Global variables
       let map;
       let driverMarkers = {};
-      let allDrivers = []; // Store all driver data
-      let carIcon;
-      const UPDATE_INTERVAL = 15000; // Update every 15 seconds
+      let driverAnimTimers = {};    // per-driver smooth animation timers
+      let driverLastPositions = {}; // previous lat/lng for bearing computation
+      let driverBearings = {};      // current bearing (heading) per driver
+      let allDrivers = [];
+      const UPDATE_INTERVAL = 5000; // 5-second polling for live feel
       let updateIntervalId = null;
       let currentSearchQuery = '';
       let activeInfoWindow = null;
-      let hasUserInteractedWithMap = false; // Flag: don't auto-fit after user pans/zooms
+      let hasUserInteractedWithMap = false;
 
       // Initialize Google Maps
       function initMap() {
@@ -135,16 +137,36 @@ require('modules/head.php');
         // Mark init complete on next tick so the initial zoom doesn't count
         google.maps.event.addListenerOnce(map, 'idle', () => { map.__initialized = true; });
 
-        // Create car icon from SVG
-        carIcon = {
-          url: 'assets/car.svg',
-          scaledSize: new google.maps.Size(40, 40),
-          anchor: new google.maps.Point(20, 20),
-        };
-
         // Load drivers and start polling
         loadDriverLocations();
         startPolling();
+      }
+
+      // Compute compass bearing (0 = north, clockwise) between two GPS points
+      function computeBearing(fromLat, fromLng, toLat, toLng) {
+        if (fromLat === toLat && fromLng === toLng) return null;
+        const φ1 = fromLat * Math.PI / 180;
+        const φ2 = toLat  * Math.PI / 180;
+        const Δλ = (toLng - fromLng) * Math.PI / 180;
+        const y  = Math.sin(Δλ) * Math.cos(φ2);
+        const x  = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+        return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+      }
+
+      // Build a rotated top-down car SVG icon. Color varies by ride status.
+      function buildDriverIcon(bearingDeg, rideStatus) {
+        const s   = (rideStatus || '').toLowerCase();
+        const col = ['on_trip','started','in_progress','trip_started'].includes(s)         ? '#3B82F6'
+                  : ['arrived_at_pickup','driver_arrived','arrived'].includes(s)            ? '#22C55E'
+                  : ['assigned','accepted','driver_accepted'].includes(s)                   ? '#f37a20'
+                  : '#f37a20';
+        const b = Math.round((bearingDeg || 0) % 360);
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44"><g transform="translate(22,22) rotate(${b})"><ellipse cx="0" cy="1" rx="13" ry="11" fill="rgba(0,0,0,0.18)"/><rect x="-9" y="-12" width="18" height="24" rx="5" fill="${col}" stroke="white" stroke-width="1.5"/><rect x="-7" y="-10" width="14" height="8" rx="3" fill="rgba(255,255,255,0.45)"/><rect x="-6" y="6" width="12" height="5" rx="2" fill="rgba(255,255,255,0.25)"/><rect x="-14" y="-11" width="5" height="9" rx="2.5" fill="#1E293B"/><rect x="9" y="-11" width="5" height="9" rx="2.5" fill="#1E293B"/><rect x="-14" y="2" width="5" height="9" rx="2.5" fill="#1E293B"/><rect x="9" y="2" width="5" height="9" rx="2.5" fill="#1E293B"/><polygon points="0,-19 -5,-12 5,-12" fill="white" opacity="0.9"/></g></svg>`;
+        return {
+          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+          scaledSize: new google.maps.Size(44, 44),
+          anchor: new google.maps.Point(22, 22),
+        };
       }
 
       // Helper: is a driver currently online/available from their app?
@@ -166,19 +188,15 @@ require('modules/head.php');
         return false;
       }
 
-      // Fetch driver live locations from online_driver_with_location (source of truth)
+      // Fetch all active drivers: on-trip (from rides table) + idle online (from drivers table)
       async function loadDriverLocations() {
         try {
-          const response = await fetch('api/get_live_drivers.php');
+          const response = await fetch('api/get_all_active_drivers.php', { cache: 'no-store' });
           if (response.status === 401) { window.location.href = '/'; return; }
           const data = await response.json();
 
           if (data.success && data.data) {
-            // All records from get_live_drivers are online drivers with valid GPS;
-            // no secondary filtering needed — use the full set directly.
-            allDrivers = data.data.filter(
-              (d) => d.current_lat != null && d.current_lng != null
-            );
+            allDrivers = data.data.filter((d) => d.lat != null && d.lng != null);
             applySearchFilter();
           } else {
             console.error('Error loading live drivers:', data.error || 'Unknown error');
@@ -225,7 +243,9 @@ require('modules/head.php');
         const service = driver.service_type || driver.ride_type || '';
         const rating = driver.rating ? parseFloat(driver.rating).toFixed(1) : null;
         const completed = driver.total_completed_rides ?? null;
-        const status = (driver.status || driver.availability || 'Online').toString();
+        const rawStatus = (driver.status || driver.ride_status || 'Online').toString();
+        const status = rawStatus.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const isOnTrip = ['on_trip','started','in_progress','trip_started','arrived_at_pickup','driver_arrived','arrived','assigned','accepted'].includes(rawStatus.toLowerCase());
         const initials = name.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase() || 'D';
 
         const row = (icon, label, value) => value
@@ -254,6 +274,7 @@ require('modules/head.php');
               ${row('bi-tag-fill', 'Service', service)}
               ${rating !== null ? row('bi-star-fill', 'Rating', `${rating} / 5`) : ''}
               ${completed !== null ? row('bi-check2-circle', 'Completed', `${completed} rides`) : ''}
+              ${isOnTrip && driver.dest_addr ? row('bi-geo-alt-fill', 'Heading to', driver.dest_addr) : ''}
             </div>
           </div>
         `;
@@ -284,16 +305,16 @@ require('modules/head.php');
           const phone = driver.phone || '';
           const vehicle = driver.vehicle_number || driver.vehicle_make || '';
           const service = driver.service_type || driver.ride_type || '';
-          const statusRaw = (driver.status || driver.availability || 'Online').toString().toLowerCase();
-          const isBusy = ['busy', 'on_trip', 'on trip', 'engaged'].includes(statusRaw);
+          const statusRaw = (driver.status || driver.ride_status || driver.availability || 'Online').toString().toLowerCase();
+          const isBusy = ['busy', 'on_trip', 'started', 'in_progress', 'trip_started', 'arrived_at_pickup', 'driver_arrived', 'arrived', 'assigned', 'accepted', 'driver_accepted', 'on trip', 'engaged'].includes(statusRaw);
           const dotColor = isBusy ? '#F59E0B' : '#22C55E';
           const dotBg = isBusy ? '#FEF3C7' : '#F0FDF4';
           const dotLabel = isBusy ? 'Busy' : 'Online';
           const initials = name.trim().split(/\s+/).map((p) => p[0]).slice(0, 2).join('').toUpperCase() || 'D';
 
-          const locLine = (driver.current_address || '')
-            || (driver.current_lat != null && driver.current_lng != null
-                ? `${parseFloat(driver.current_lat).toFixed(4)}, ${parseFloat(driver.current_lng).toFixed(4)}`
+          const locLine = driver.dest_addr || driver.current_address
+            || (driver.lat != null && driver.lng != null
+                ? `${parseFloat(driver.lat).toFixed(4)}, ${parseFloat(driver.lng).toFixed(4)}`
                 : '');
 
           const card = document.createElement('button');
@@ -359,74 +380,107 @@ require('modules/head.php');
         }
       }
 
-      // Update markers on the map
+      // Update markers on the map with bearing-based rotation and smooth animation
       function updateDriverMarkers(drivers) {
         const validDrivers = drivers.filter(
-          (driver) =>
-            driver.current_lat != null &&
-            driver.current_lng != null &&
-            !isNaN(parseFloat(driver.current_lat)) &&
-            !isNaN(parseFloat(driver.current_lng))
+          (d) => d.lat != null && d.lng != null &&
+                 !isNaN(parseFloat(d.lat)) && !isNaN(parseFloat(d.lng))
         );
 
-        const visibleDriverIds = new Set(validDrivers.map((d) => d.id));
+        const visibleIds = new Set(validDrivers.map((d) => d.id));
 
-        // Remove / hide markers that should not be visible any more
+        // Remove markers that are no longer in the active set
         Object.keys(driverMarkers).forEach((driverId) => {
-          if (!visibleDriverIds.has(driverId)) {
+          if (!visibleIds.has(driverId)) {
             driverMarkers[driverId].setMap(null);
+            if (driverAnimTimers[driverId]) {
+              clearInterval(driverAnimTimers[driverId]);
+              delete driverAnimTimers[driverId];
+            }
+            delete driverLastPositions[driverId];
+            delete driverBearings[driverId];
           }
         });
 
-        // Update or create markers for each driver
         validDrivers.forEach((driver) => {
-          const lat = parseFloat(driver.current_lat);
-          const lng = parseFloat(driver.current_lng);
-          const position = { lat, lng };
-
+          const lat       = parseFloat(driver.lat);
+          const lng       = parseFloat(driver.lng);
+          const driverId  = driver.id;
           const driverName = driver.full_name || driver.name || 'Driver';
-          const driverId = driver.id;
+
+          // Determine heading: prefer API heading, fall back to computed bearing
+          let bearing = driverBearings[driverId] || 0;
+          const apiHeading = parseFloat(driver.heading);
+          if (!isNaN(apiHeading) && apiHeading !== 0) {
+            bearing = apiHeading;
+          } else if (driverLastPositions[driverId]) {
+            const last = driverLastPositions[driverId];
+            const comp = computeBearing(last.lat, last.lng, lat, lng);
+            if (comp !== null) bearing = comp;
+          }
+          driverBearings[driverId] = bearing;
+
+          const icon = buildDriverIcon(bearing, driver.status);
 
           if (driverMarkers[driverId]) {
-            // Update existing marker position silently (no re-drop animation)
-            driverMarkers[driverId].setPosition(position);
-            if (!driverMarkers[driverId].getMap()) {
-              driverMarkers[driverId].setMap(map);
+            const marker  = driverMarkers[driverId];
+            const fromPos = marker.getPosition();
+            const fromLat = fromPos.lat();
+            const fromLng = fromPos.lng();
+
+            // Only animate if position actually changed
+            if (fromLat !== lat || fromLng !== lng) {
+              marker.setIcon(icon);
+
+              if (driverAnimTimers[driverId]) {
+                clearInterval(driverAnimTimers[driverId]);
+                driverAnimTimers[driverId] = null;
+              }
+              let step = 0;
+              const STEPS = 20; // 20 × 50 ms = 1 s
+              // Capture timer ID locally so the callback always clears its own
+              // timer even if a new poll replaces driverAnimTimers[driverId].
+              const animTimer = setInterval(() => {
+                step++;
+                const f = step / STEPS;
+                marker.setPosition({
+                  lat: fromLat + (lat - fromLat) * f,
+                  lng: fromLng + (lng - fromLng) * f,
+                });
+                if (step >= STEPS) {
+                  clearInterval(animTimer);
+                  if (driverAnimTimers[driverId] === animTimer) driverAnimTimers[driverId] = null;
+                }
+              }, 50);
+              driverAnimTimers[driverId] = animTimer;
             }
-            // Refresh info window content so data stays in sync
-            if (driverMarkers[driverId].infoWindow) {
-              driverMarkers[driverId].infoWindow.setContent(buildDriverInfoContent(driver));
-            }
+
+            if (!marker.getMap()) marker.setMap(map);
+            if (marker.infoWindow) marker.infoWindow.setContent(buildDriverInfoContent(driver));
           } else {
             const marker = new google.maps.Marker({
-              position: position,
-              map: map,
-              icon: carIcon,
+              position: { lat, lng },
+              map,
+              icon,
               title: driverName,
             });
-
             const infoWindow = new google.maps.InfoWindow({
               content: buildDriverInfoContent(driver),
               disableAutoPan: false,
             });
-
             marker.addListener('click', () => {
               if (activeInfoWindow) activeInfoWindow.close();
               infoWindow.open(map, marker);
               activeInfoWindow = infoWindow;
             });
-
             marker.infoWindow = infoWindow;
             driverMarkers[driverId] = marker;
           }
+
+          driverLastPositions[driverId] = { lat, lng };
         });
 
-        // Refresh sidebar cards with the live list
         renderDriverCards(validDrivers);
-
-        // Map always boots centered on Dublin. We intentionally do NOT
-        // auto-fit to driver bounds — the user pans/zooms freely from there,
-        // and clicking a sidebar card still focuses that specific driver.
       }
 
       // Start polling for driver location updates
@@ -437,12 +491,16 @@ require('modules/head.php');
         updateIntervalId = setInterval(loadDriverLocations, UPDATE_INTERVAL);
       }
 
-      // Stop polling
+      // Stop polling and clean up all animation timers
       function stopPolling() {
         if (updateIntervalId) {
           clearInterval(updateIntervalId);
           updateIntervalId = null;
         }
+        Object.keys(driverAnimTimers).forEach((id) => {
+          if (driverAnimTimers[id]) clearInterval(driverAnimTimers[id]);
+        });
+        driverAnimTimers = {};
       }
 
       // Setup search functionality

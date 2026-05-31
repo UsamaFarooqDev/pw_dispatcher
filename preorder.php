@@ -446,7 +446,12 @@ require('modules/head.php');
 
           const scheduledRides = rides.filter((ride) => {
             const status = (ride.status || '').toLowerCase();
-            return status === 'upcoming' || status === 'scheduled';
+            return status === 'upcoming' || status === 'scheduled' || status === 'pending' || status === 'awaiting_assignment';
+          });
+
+          const onTripRides = rides.filter((ride) => {
+            const status = (ride.status || '').toLowerCase();
+            return ['on_trip','ongoing','in_progress','ontrip','started','arrived_at_pickup','driver_arrived','arrived'].includes(status);
           });
 
           const cancelledRides = rides.filter((ride) => {
@@ -526,6 +531,17 @@ require('modules/head.php');
             updateCompletedTabCount(completedRides.length);
             if (currentTab === 'completed') {
               updatePaginationInfo(completedRides.length);
+              const currentPage = preorderPagination ? preorderPagination.getCurrentPage() : 1;
+              updateTableForCurrentTab(currentPage, ITEMS_PER_PAGE);
+            }
+          }
+
+          const onTripChanged = hasRidesChanged(currentRidesData.ontrip, onTripRides);
+          if (onTripChanged) {
+            currentRidesData.ontrip = onTripRides;
+            updateOnTripTabCount(onTripRides.length);
+            if (currentTab === 'ontrip') {
+              updatePaginationInfo(onTripRides.length);
               const currentPage = preorderPagination ? preorderPagination.getCurrentPage() : 1;
               updateTableForCurrentTab(currentPage, ITEMS_PER_PAGE);
             }
@@ -1087,7 +1103,7 @@ require('modules/head.php');
 
           const scheduledRides = rides.filter((ride) => {
             const status = (ride.status || '').toLowerCase();
-            return status === 'upcoming' || status === 'scheduled';
+            return status === 'upcoming' || status === 'scheduled' || status === 'pending' || status === 'awaiting_assignment';
           });
 
           // Update cache
@@ -1383,7 +1399,7 @@ require('modules/head.php');
           const rides = result && result.data ? result.data : [];
           const onTripRides = rides.filter((ride) => {
             const status = (ride.status || '').toLowerCase();
-            return status === 'on_trip' || status === 'ongoing' || status === 'in_progress' || status === 'ontrip';
+            return ['on_trip','ongoing','in_progress','ontrip','started','arrived_at_pickup','driver_arrived','arrived'].includes(status);
           });
           currentRidesData.ontrip = onTripRides;
           updateOnTripTabCount(onTripRides.length);

@@ -11,6 +11,11 @@ require('modules/head.php');
   .btn-loading { opacity:0.7; cursor:not-allowed; pointer-events:none; }
   .btn-loading #btnText { opacity:0.9; }
 
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(16px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
   /* ── View mode: assigned ride tracking ──────────────────────────────── */
   main.view-mode-active { padding: 20px !important; background: #F4F4F5 !important; min-height: 0 !important; overflow: hidden !important; }
   main.view-mode-active .row.g-4 { margin: 0 !important; }
@@ -234,7 +239,7 @@ require('modules/head.php');
         <div id="dispatcherOverlay" style="display:none; position:absolute; top:14px; left:14px; z-index:10; background:rgba(255,255,255,0.96); border:1px solid #E4E4E7; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,0.13); padding:14px 16px; min-width:240px; max-width:300px; pointer-events:none; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
           <div style="display:flex; align-items:center; gap:7px; margin-bottom:10px;">
             <span id="liveTrackingDot" style="width:8px; height:8px; border-radius:50%; background:#22C55E; display:inline-block; flex-shrink:0;"></span>
-            <span style="font-size:0.7rem; font-weight:700; color:#22C55E; text-transform:uppercase; letter-spacing:0.07em;">Live Tracking</span>
+            <span id="liveTrackingLabel" style="font-size:0.7rem; font-weight:700; color:#22C55E; text-transform:uppercase; letter-spacing:0.07em;">Live Tracking</span>
           </div>
           <div id="overlayDriverName" style="font-size:0.88rem; font-weight:700; color:#18181B; margin-bottom:2px;">—</div>
           <div id="overlayVehicle" style="font-size:0.75rem; color:#71717A; margin-bottom:10px;">—</div>
@@ -354,58 +359,128 @@ let lastDriverRouteLat = null;
 let lastDriverRouteLng = null;
 const DRIVER_ROUTE_THRESHOLD_M = 40; // recalculate only when driver moves ≥ 40 m
 
+// Smooth marker animation (mirrors Flutter app: 30 steps × 30 ms = 900 ms)
+let driverAnimTimer = null;
+
+// Route progress visualization (switches on when ride status → on_trip)
+let currentRoutePath = [];
+let completedPolyline = null;
+let remainingPolyline = null;
+let routeProgressActive = false;
+
+// Ride status state machine
+let currentRideStatus = null;
+
+// Driver heading for marker rotation
+let currentDriverBearing = 0;
+
 async function fetchAndUpdateDriverMarker(driverId) {
   if (!map || !driverId) return;
   try {
-    const resp = await fetch(`api/get_live_drivers.php?driver_id=${encodeURIComponent(driverId)}`, { cache: 'no-store' });
-    if (!resp.ok) return;
-    const result = await resp.json();
-    if (!result.success || !result.data || result.data.length === 0) return;
+    let lat, lng, driverName = 'Driver', vehicle = '';
 
-    const loc = result.data[0];
-    const lat = parseFloat(loc.current_lat ?? loc.lat);
-    const lng = parseFloat(loc.current_lng ?? loc.lng);
+    if (isViewMode && currentRideId) {
+      // Active ride: GPS written to rides.driver_lat/lng by the driver app
+      const resp = await fetch(`api/get_ride_location.php?ride_id=${encodeURIComponent(currentRideId)}`, { cache: 'no-store' });
+      if (!resp.ok) return;
+      const result = await resp.json();
+      if (!result.success || !result.data || result.data.lat === null) return;
+      lat = parseFloat(result.data.lat);
+      lng = parseFloat(result.data.lng);
+
+      // Drive status state machine
+      const newStatus = (result.data.status || '').toLowerCase();
+      if (newStatus && newStatus !== currentRideStatus) {
+        handleRideStatusChange(currentRideStatus, newStatus);
+        currentRideStatus = newStatus;
+        if (driverLiveMarker) driverLiveMarker.setIcon(buildDriverIcon(currentDriverBearing, newStatus));
+      }
+    } else {
+      // Idle/fleet: GPS in drivers.current_lat/lng
+      const resp = await fetch(`api/get_live_drivers.php?driver_id=${encodeURIComponent(driverId)}`, { cache: 'no-store' });
+      if (!resp.ok) return;
+      const result = await resp.json();
+      if (!result.success || !result.data || result.data.length === 0) return;
+      const loc = result.data[0];
+      lat = parseFloat(loc.current_lat ?? loc.lat);
+      lng = parseFloat(loc.current_lng ?? loc.lng);
+      driverName = loc.full_name || loc.name || 'Driver';
+      vehicle    = loc.vehicle_number || loc.vehicle_make || '';
+      const apiHeading = parseFloat(loc.heading ?? loc.driver_heading ?? NaN);
+      if (!isNaN(apiHeading)) currentDriverBearing = apiHeading;
+    }
+
     if (isNaN(lat) || isNaN(lng)) return;
 
-    const pos = { lat, lng };
     if (driverLiveMarker) {
-      driverLiveMarker.setPosition(pos);
+      animateDriverMarker(lat, lng);
     } else {
-      const driverName = loc.full_name || loc.name || 'Driver';
-      const vehicle = loc.vehicle_number || loc.vehicle_make || '';
       driverLiveMarker = new google.maps.Marker({
-        position: pos,
-        map: map,
-        icon: {
-          url: 'assets/car.svg',
-          scaledSize: new google.maps.Size(44, 44),
-          anchor: new google.maps.Point(22, 22),
-        },
+        position: { lat, lng },
+        map,
+        icon: buildDriverIcon(currentDriverBearing, currentRideStatus),
         title: driverName,
         zIndex: 20,
       });
       const infoWin = new google.maps.InfoWindow({
-        content: `<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif; padding:4px 2px; min-width:160px;">
-          <div style="font-weight:700; color:#18181B; font-size:13px;">${driverName}</div>
-          ${vehicle ? `<div style="font-size:11px; color:#71717A; margin-top:2px;">${vehicle}</div>` : ''}
-          <div style="margin-top:4px; display:inline-flex; align-items:center; gap:5px;">
-            <span style="width:7px; height:7px; border-radius:50%; background:#22C55E; display:inline-block;"></span>
-            <span style="font-size:11px; color:#22C55E; font-weight:600;">Live</span>
+        content: `<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;padding:4px 2px;min-width:160px;">
+          <div style="font-weight:700;color:#18181B;font-size:13px;">${driverName}</div>
+          ${vehicle ? `<div style="font-size:11px;color:#71717A;margin-top:2px;">${vehicle}</div>` : ''}
+          <div style="margin-top:4px;display:inline-flex;align-items:center;gap:5px;">
+            <span style="width:7px;height:7px;border-radius:50%;background:#22C55E;display:inline-block;"></span>
+            <span style="font-size:11px;color:#22C55E;font-weight:600;">Live</span>
           </div>
         </div>`,
       });
       driverLiveMarker.addListener('click', () => infoWin.open(map, driverLiveMarker));
     }
 
-    // Update Driver → Pickup road route in view mode when driver moves significantly
-    if (isViewMode && currentPickupLat && currentPickupLng) {
+    // Driver→Pickup route: only when not yet on trip
+    if (isViewMode && currentPickupLat && currentPickupLng && !routeProgressActive) {
       const needsUpdate = lastDriverRouteLat === null ||
         geoDistanceMeters(lat, lng, lastDriverRouteLat, lastDriverRouteLng) >= DRIVER_ROUTE_THRESHOLD_M;
       if (needsUpdate) updateDriverToPickupRoute(lat, lng);
     }
+
+    // Route progress: active once trip starts
+    if (routeProgressActive && currentRoutePath.length) {
+      updateRouteProgress(lat, lng);
+    }
   } catch (e) {
     console.warn('Driver live tracking error:', e);
   }
+}
+
+// Smooth interpolation — 30 steps × 30 ms = 900 ms. Rotates icon to face direction of travel.
+function animateDriverMarker(toLat, toLng) {
+  if (!driverLiveMarker) return;
+  if (driverAnimTimer) { clearInterval(driverAnimTimer); driverAnimTimer = null; }
+
+  const fromPos = driverLiveMarker.getPosition();
+  if (!fromPos) { driverLiveMarker.setPosition({ lat: toLat, lng: toLng }); return; }
+
+  const fromLat = fromPos.lat();
+  const fromLng = fromPos.lng();
+  if (fromLat === toLat && fromLng === toLng) return;
+
+  // Compute bearing once at start and update icon direction
+  const bearing = computeBearing(fromLat, fromLng, toLat, toLng);
+  if (bearing !== null) {
+    currentDriverBearing = bearing;
+    driverLiveMarker.setIcon(buildDriverIcon(currentDriverBearing, currentRideStatus));
+  }
+
+  let step = 0;
+  const STEPS = 30;
+  driverAnimTimer = setInterval(() => {
+    step++;
+    const f = step / STEPS;
+    driverLiveMarker.setPosition({
+      lat: fromLat + (toLat - fromLat) * f,
+      lng: fromLng + (toLng - fromLng) * f,
+    });
+    if (step >= STEPS) { clearInterval(driverAnimTimer); driverAnimTimer = null; }
+  }, 30);
 }
 
 function startDriverTracking() {
@@ -421,6 +496,10 @@ function stopDriverTracking() {
     clearInterval(driverTrackingInterval);
     driverTrackingInterval = null;
   }
+  if (driverAnimTimer) {
+    clearInterval(driverAnimTimer);
+    driverAnimTimer = null;
+  }
   if (driverLiveMarker) {
     driverLiveMarker.setMap(null);
     driverLiveMarker = null;
@@ -428,6 +507,7 @@ function stopDriverTracking() {
   lastDriverRouteLat = null;
   lastDriverRouteLng = null;
   if (driverRouteRenderer) driverRouteRenderer.setMap(null);
+  clearRouteProgress();
 }
 
 // Wait for Google Maps API to load (called by script callback when API is ready)
@@ -813,6 +893,8 @@ function calculateRouteAndFare(pickup, dropoff) {
   directionsService.route(request, function (result, status) {
     if (status === google.maps.DirectionsStatus.OK) {
       directionsRenderer.setDirections(result);
+      storeRoutePolyline(result);
+      if (routeProgressActive) directionsRenderer.setOptions({ suppressPolylines: true });
       const leg = result.routes[0].legs[0];
       const distanceInKm = leg.distance.value / 1000;
       const durationInMin = Math.round(leg.duration.value / 60);
@@ -1609,6 +1691,176 @@ function placeViewModeMarkers() {
   }
 }
 
+
+// ── Bearing & icon helpers ─────────────────────────────────────────────────
+
+function computeBearing(fromLat, fromLng, toLat, toLng) {
+  if (fromLat === toLat && fromLng === toLng) return null;
+  const φ1 = fromLat * Math.PI / 180;
+  const φ2 = toLat   * Math.PI / 180;
+  const Δλ = (toLng - fromLng) * Math.PI / 180;
+  const y  = Math.sin(Δλ) * Math.cos(φ2);
+  const x  = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+
+function buildDriverIcon(bearingDeg, rideStatus) {
+  const s   = (rideStatus || '').toLowerCase();
+  const col = ['on_trip','started','in_progress','trip_started'].includes(s)          ? '#3B82F6'
+            : ['arrived_at_pickup','driver_arrived','arrived'].includes(s)             ? '#22C55E'
+            : '#f37a20';
+  const b   = Math.round((bearingDeg || 0) % 360);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44"><g transform="translate(22,22) rotate(${b})"><ellipse cx="0" cy="1" rx="13" ry="11" fill="rgba(0,0,0,0.18)"/><rect x="-9" y="-12" width="18" height="24" rx="5" fill="${col}" stroke="white" stroke-width="1.5"/><rect x="-7" y="-10" width="14" height="8" rx="3" fill="rgba(255,255,255,0.45)"/><rect x="-6" y="6" width="12" height="5" rx="2" fill="rgba(255,255,255,0.25)"/><rect x="-14" y="-11" width="5" height="9" rx="2.5" fill="#1E293B"/><rect x="9" y="-11" width="5" height="9" rx="2.5" fill="#1E293B"/><rect x="-14" y="2" width="5" height="9" rx="2.5" fill="#1E293B"/><rect x="9" y="2" width="5" height="9" rx="2.5" fill="#1E293B"/><polygon points="0,-19 -5,-12 5,-12" fill="white" opacity="0.9"/></g></svg>`;
+  return {
+    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+    scaledSize: new google.maps.Size(44, 44),
+    anchor: new google.maps.Point(22, 22),
+  };
+}
+
+// ── Route progress ─────────────────────────────────────────────────────────
+
+function storeRoutePolyline(directionsResult) {
+  try {
+    const route = directionsResult && directionsResult.routes && directionsResult.routes[0];
+    if (!route) return;
+    currentRoutePath = [];
+    for (const leg of route.legs) {
+      for (const step of leg.steps) {
+        if (Array.isArray(step.path)) {
+          step.path.forEach(p => currentRoutePath.push({ lat: p.lat(), lng: p.lng() }));
+        } else if (step.polyline && step.polyline.points && typeof google !== 'undefined' && google.maps.geometry) {
+          google.maps.geometry.encoding.decodePath(step.polyline.points)
+            .forEach(p => currentRoutePath.push({ lat: p.lat(), lng: p.lng() }));
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('storeRoutePolyline:', e);
+  }
+}
+
+function findNearestRouteIndex(driverLat, driverLng) {
+  let nearestIdx = 0, minDist = Infinity;
+  for (let i = 0; i < currentRoutePath.length; i++) {
+    const d = geoDistanceMeters(driverLat, driverLng, currentRoutePath[i].lat, currentRoutePath[i].lng);
+    if (d < minDist) { minDist = d; nearestIdx = i; }
+  }
+  return nearestIdx;
+}
+
+function updateRouteProgress(driverLat, driverLng) {
+  if (!currentRoutePath.length || !map) return;
+  const idx = findNearestRouteIndex(driverLat, driverLng);
+  const completedPath = currentRoutePath.slice(0, Math.max(1, idx + 1));
+  const remainingPath = currentRoutePath.slice(idx);
+
+  if (completedPolyline) { completedPolyline.setMap(null); completedPolyline = null; }
+  if (remainingPolyline) { remainingPolyline.setMap(null); remainingPolyline = null; }
+
+  if (completedPath.length >= 2) {
+    completedPolyline = new google.maps.Polyline({
+      path: completedPath, strokeColor: '#A1A1AA',
+      strokeOpacity: 0.45, strokeWeight: 5, zIndex: 1, map,
+    });
+  }
+  if (remainingPath.length >= 2) {
+    remainingPolyline = new google.maps.Polyline({
+      path: remainingPath, strokeColor: '#3B82F6',
+      strokeOpacity: 0.9, strokeWeight: 5, zIndex: 2, map,
+    });
+  }
+}
+
+function clearRouteProgress() {
+  if (completedPolyline) { completedPolyline.setMap(null); completedPolyline = null; }
+  if (remainingPolyline) { remainingPolyline.setMap(null); remainingPolyline = null; }
+  routeProgressActive = false;
+}
+
+// ── Ride status state machine ──────────────────────────────────────────────
+
+function handleRideStatusChange(oldStatus, newStatus) {
+  if (!newStatus) return;
+  const s = newStatus.toLowerCase();
+  const isArrived   = ['arrived_at_pickup','driver_arrived','arrived'].includes(s);
+  const isOnTrip    = ['on_trip','started','in_progress','trip_started'].includes(s);
+  const isCompleted = ['completed','finished','done'].includes(s);
+  const isCancelled = ['cancelled','canceled'].includes(s);
+
+  if (isArrived) {
+    if (driverRouteRenderer) driverRouteRenderer.setMap(null);
+    showRideStatusNotification('Driver arrived at pickup', 'arrived');
+    updateDispatcherOverlayStatus('Arrived at Pickup', '#22C55E');
+  }
+
+  if (isOnTrip && !routeProgressActive) {
+    if (driverRouteRenderer) driverRouteRenderer.setMap(null);
+    routeProgressActive = true;
+    if (directionsRenderer) directionsRenderer.setOptions({ suppressPolylines: true });
+    showRideStatusNotification('Trip in progress', 'on_trip');
+    updateDispatcherOverlayStatus('On Trip', '#3B82F6');
+  }
+
+  if (isCompleted) {
+    showRideStatusNotification('Trip completed', 'completed');
+    stopDriverTracking();
+    if (directionsRenderer) directionsRenderer.setMap(null);
+    showCompletionOverlay();
+    return;
+  }
+
+  if (isCancelled) {
+    showRideStatusNotification('Ride cancelled', 'cancelled');
+    stopDriverTracking();
+  }
+}
+
+function showRideStatusNotification(message, type) {
+  const cfg = {
+    arrived:   { bg: '#F0FDF4', text: '#16A34A', border: '#DCFCE7', icon: 'bi-geo-alt-fill' },
+    on_trip:   { bg: '#EFF6FF', text: '#2563EB', border: '#DBEAFE', icon: 'bi-car-front-fill' },
+    completed: { bg: '#F0FDF4', text: '#16A34A', border: '#DCFCE7', icon: 'bi-check-circle-fill' },
+    cancelled: { bg: '#FFF1F2', text: '#E11D48', border: '#FFE4E6', icon: 'bi-x-circle-fill' },
+  };
+  const c = cfg[type] || { bg: '#FAFAFA', text: '#18181B', border: '#EBEBEB', icon: 'bi-info-circle' };
+
+  document.getElementById('rideStatusBanner')?.remove();
+  const banner = document.createElement('div');
+  banner.id = 'rideStatusBanner';
+  banner.style.cssText = `position:absolute;top:14px;right:14px;z-index:15;background:${c.bg};border:1px solid ${c.border};border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.12);padding:10px 14px;display:flex;align-items:center;gap:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;pointer-events:none;animation:slideInRight 0.3s ease-out;`;
+  banner.innerHTML = `<i class="bi ${c.icon}" style="color:${c.text};font-size:15px;"></i><span style="font-size:0.8125rem;font-weight:600;color:${c.text};">${message}</span>`;
+  const container = document.getElementById('mapContainer');
+  if (container) container.appendChild(banner);
+  if (type !== 'completed' && type !== 'cancelled') setTimeout(() => banner?.remove(), 5000);
+}
+
+function updateDispatcherOverlayStatus(label, color) {
+  const dot = document.getElementById('liveTrackingDot');
+  const lbl = document.getElementById('liveTrackingLabel');
+  if (dot) dot.style.background = color;
+  if (lbl) { lbl.textContent = label; lbl.style.color = color; }
+}
+
+function showCompletionOverlay() {
+  const container = document.getElementById('mapContainer');
+  if (!container) return;
+  document.getElementById('tripCompletionOverlay')?.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'tripCompletionOverlay';
+  overlay.style.cssText = 'position:absolute;inset:0;z-index:20;background:rgba(255,255,255,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(4px);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;';
+  overlay.innerHTML = `
+    <div style="width:72px;height:72px;background:#F0FDF4;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+      <i class="bi bi-check-circle-fill" style="color:#22C55E;font-size:36px;"></i>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:1.25rem;font-weight:700;color:#18181B;letter-spacing:-0.02em;">Trip Completed</div>
+      <div style="font-size:0.8125rem;color:#71717A;margin-top:4px;">The driver has reached the destination.</div>
+    </div>
+    <a href="preorder.php" style="height:40px;background:#22C55E;color:#fff;border:none;border-radius:8px;font-size:0.875rem;font-weight:600;padding:0 24px;display:inline-flex;align-items:center;text-decoration:none;">Back to Live Orders</a>
+  `;
+  container.appendChild(overlay);
+}
 
 window.addEventListener('beforeunload', () => stopDriverTracking());
 
