@@ -90,6 +90,7 @@ require('modules/head.php');
       let driverBearings = {};      // current bearing (heading) per driver
       let allDrivers = [];
       const UPDATE_INTERVAL = 5000; // 5-second polling for live feel
+      const MARKER_ANIM_MS = UPDATE_INTERVAL; // glide across the whole interval so the car moves continuously
       let updateIntervalId = null;
       let currentSearchQuery = '';
       let activeInfoWindow = null;
@@ -394,7 +395,7 @@ require('modules/head.php');
           if (!visibleIds.has(driverId)) {
             driverMarkers[driverId].setMap(null);
             if (driverAnimTimers[driverId]) {
-              clearInterval(driverAnimTimers[driverId]);
+              cancelAnimationFrame(driverAnimTimers[driverId]);
               delete driverAnimTimers[driverId];
             }
             delete driverLastPositions[driverId];
@@ -433,26 +434,27 @@ require('modules/head.php');
               marker.setIcon(icon);
 
               if (driverAnimTimers[driverId]) {
-                clearInterval(driverAnimTimers[driverId]);
+                cancelAnimationFrame(driverAnimTimers[driverId]);
                 driverAnimTimers[driverId] = null;
               }
-              let step = 0;
-              const STEPS = 20; // 20 × 50 ms = 1 s
-              // Capture timer ID locally so the callback always clears its own
-              // timer even if a new poll replaces driverAnimTimers[driverId].
-              const animTimer = setInterval(() => {
-                step++;
-                const f = step / STEPS;
+              // Glide across the full poll interval with requestAnimationFrame so
+              // the car moves continuously (≈60 fps) instead of darting to the new
+              // point and freezing until the next poll. A fresh poll cancels this
+              // and re-interpolates from the marker's current position.
+              const startTs = performance.now();
+              const animate = (nowTs) => {
+                const f = Math.min((nowTs - startTs) / MARKER_ANIM_MS, 1);
                 marker.setPosition({
                   lat: fromLat + (lat - fromLat) * f,
                   lng: fromLng + (lng - fromLng) * f,
                 });
-                if (step >= STEPS) {
-                  clearInterval(animTimer);
-                  if (driverAnimTimers[driverId] === animTimer) driverAnimTimers[driverId] = null;
+                if (f < 1) {
+                  driverAnimTimers[driverId] = requestAnimationFrame(animate);
+                } else if (driverAnimTimers[driverId]) {
+                  driverAnimTimers[driverId] = null;
                 }
-              }, 50);
-              driverAnimTimers[driverId] = animTimer;
+              };
+              driverAnimTimers[driverId] = requestAnimationFrame(animate);
             }
 
             if (!marker.getMap()) marker.setMap(map);
@@ -498,7 +500,7 @@ require('modules/head.php');
           updateIntervalId = null;
         }
         Object.keys(driverAnimTimers).forEach((id) => {
-          if (driverAnimTimers[id]) clearInterval(driverAnimTimers[id]);
+          if (driverAnimTimers[id]) cancelAnimationFrame(driverAnimTimers[id]);
         });
         driverAnimTimers = {};
       }

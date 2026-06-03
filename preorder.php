@@ -109,7 +109,9 @@ require('modules/head.php');
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Driver</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
+              <th class="fw-semibold text-nowrap px-3 py-2 text-end" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:130px;">Action</th>
             </tr></thead>
             <tbody id="onTripRidesBody"></tbody>
           </table>
@@ -451,7 +453,7 @@ require('modules/head.php');
 
           const onTripRides = rides.filter((ride) => {
             const status = (ride.status || '').toLowerCase();
-            return ['on_trip','ongoing','in_progress','ontrip','started','arrived_at_pickup','driver_arrived','arrived'].includes(status);
+            return ['on_trip','ongoing','in_progress','ontrip','started','arrived_at_pickup','driver_arrived','arrived','enroute','en_route','en-route'].includes(status);
           });
 
           const cancelledRides = rides.filter((ride) => {
@@ -1399,7 +1401,7 @@ require('modules/head.php');
           const rides = result && result.data ? result.data : [];
           const onTripRides = rides.filter((ride) => {
             const status = (ride.status || '').toLowerCase();
-            return ['on_trip','ongoing','in_progress','ontrip','started','arrived_at_pickup','driver_arrived','arrived'].includes(status);
+            return ['on_trip','ongoing','in_progress','ontrip','started','arrived_at_pickup','driver_arrived','arrived','enroute','en_route','en-route'].includes(status);
           });
           currentRidesData.ontrip = onTripRides;
           updateOnTripTabCount(onTripRides.length);
@@ -1419,7 +1421,7 @@ require('modules/head.php');
         if (!tbody) return;
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No on-trip rides to show</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">No on-trip rides to show</td></tr>';
           return;
         }
         rides.forEach((ride) => {
@@ -1428,7 +1430,9 @@ require('modules/head.php');
           const pickup = ride.pickup_addr || ride.actual_start_addr || 'N/A';
           const destination = ride.dest_addr || ride.actual_end_addr || 'N/A';
           const status = ride.status || 'N/A';
+          const driverName = ride.driver_name || 'Unassigned';
           const fare = formatFare(ride.fare_eur, ride.estimate_fare);
+          const rideId = encodeURIComponent(ride.id || '');
           const row = document.createElement('tr');
           row.innerHTML = `
             <td class="ps-3">${name}</td>
@@ -1436,7 +1440,14 @@ require('modules/head.php');
             <td>${pickup}</td>
             <td>${destination}</td>
             <td>${renderStatusBadge(status)}</td>
-            <td class="text-end pe-4">${fare}</td>
+            <td>${driverName}</td>
+            <td>${fare}</td>
+            <td class="text-end pe-4">
+              <a href="orderassigned.php?id=${rideId}&view=1" class="view-details-btn">
+                <span>View Live</span>
+                <i class="bi bi-geo-alt-fill"></i>
+              </a>
+            </td>
           `;
           tbody.appendChild(row);
         });
@@ -1514,7 +1525,7 @@ require('modules/head.php');
           if (statusKey === 'pending' || statusKey === 'searching') {
             actionCell = `<a href="orderassigned.php?corp_id=${rideId}" class="view-details-btn">
                 <span>Assign</span><i class="bi bi-chevron-right"></i></a>`;
-          } else if (statusKey === 'assigned' || statusKey === 'on_trip' || statusKey === 'completed' || statusKey === 'cancelled') {
+          } else if (['assigned','on_trip','ongoing','in_progress','ontrip','started','arrived_at_pickup','driver_arrived','arrived','enroute','en_route','en-route','completed','cancelled'].includes(statusKey)) {
             actionCell = `<a href="orderassigned.php?corp_id=${rideId}&view=1" class="view-details-btn">
                 <span>View Details</span><i class="bi bi-chevron-right"></i></a>`;
           }

@@ -359,8 +359,10 @@ let lastDriverRouteLat = null;
 let lastDriverRouteLng = null;
 const DRIVER_ROUTE_THRESHOLD_M = 40; // recalculate only when driver moves ≥ 40 m
 
-// Smooth marker animation (mirrors Flutter app: 30 steps × 30 ms = 900 ms)
+// Smooth marker animation — glide across the full poll interval (continuous motion)
 let driverAnimTimer = null;
+const DRIVER_POLL_MS = 5000;            // driver-location poll cadence
+const MARKER_ANIM_MS = DRIVER_POLL_MS;  // animate across the whole interval so the car never freezes
 
 // Route progress visualization (switches on when ride status → on_trip)
 let currentRoutePath = [];
@@ -451,10 +453,12 @@ async function fetchAndUpdateDriverMarker(driverId) {
   }
 }
 
-// Smooth interpolation — 30 steps × 30 ms = 900 ms. Rotates icon to face direction of travel.
+// Smooth interpolation across the full poll interval, driven by requestAnimationFrame
+// (≈60 fps) so the marker glides continuously instead of jumping to the new point and
+// freezing until the next poll. Rotates icon to face direction of travel.
 function animateDriverMarker(toLat, toLng) {
   if (!driverLiveMarker) return;
-  if (driverAnimTimer) { clearInterval(driverAnimTimer); driverAnimTimer = null; }
+  if (driverAnimTimer) { cancelAnimationFrame(driverAnimTimer); driverAnimTimer = null; }
 
   const fromPos = driverLiveMarker.getPosition();
   if (!fromPos) { driverLiveMarker.setPosition({ lat: toLat, lng: toLng }); return; }
@@ -470,17 +474,20 @@ function animateDriverMarker(toLat, toLng) {
     driverLiveMarker.setIcon(buildDriverIcon(currentDriverBearing, currentRideStatus));
   }
 
-  let step = 0;
-  const STEPS = 30;
-  driverAnimTimer = setInterval(() => {
-    step++;
-    const f = step / STEPS;
+  const startTs = performance.now();
+  const animate = (nowTs) => {
+    const f = Math.min((nowTs - startTs) / MARKER_ANIM_MS, 1);
     driverLiveMarker.setPosition({
       lat: fromLat + (toLat - fromLat) * f,
       lng: fromLng + (toLng - fromLng) * f,
     });
-    if (step >= STEPS) { clearInterval(driverAnimTimer); driverAnimTimer = null; }
-  }, 30);
+    if (f < 1) {
+      driverAnimTimer = requestAnimationFrame(animate);
+    } else {
+      driverAnimTimer = null;
+    }
+  };
+  driverAnimTimer = requestAnimationFrame(animate);
 }
 
 function startDriverTracking() {
@@ -488,7 +495,7 @@ function startDriverTracking() {
   if (driverTrackingInterval) return;  // already running
   if (driverRouteRenderer && map) driverRouteRenderer.setMap(map);
   fetchAndUpdateDriverMarker(assignedDriverId);
-  driverTrackingInterval = setInterval(() => fetchAndUpdateDriverMarker(assignedDriverId), 5000);
+  driverTrackingInterval = setInterval(() => fetchAndUpdateDriverMarker(assignedDriverId), DRIVER_POLL_MS);
 }
 
 function stopDriverTracking() {
@@ -497,7 +504,7 @@ function stopDriverTracking() {
     driverTrackingInterval = null;
   }
   if (driverAnimTimer) {
-    clearInterval(driverAnimTimer);
+    cancelAnimationFrame(driverAnimTimer);
     driverAnimTimer = null;
   }
   if (driverLiveMarker) {

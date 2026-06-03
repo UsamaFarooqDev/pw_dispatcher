@@ -54,11 +54,36 @@ try {
                 $ride['company'] = 'N/A';
             }
         }
-        unset($ride); 
+        unset($ride);
     } catch (Exception $e) {
         error_log("Warning: Could not fetch passengers data: " . $e->getMessage());
     }
-    
+
+    // Attach driver name (for tabs that show the assigned driver, e.g. On-Trip)
+    try {
+        $drivers = $db->fetchData('drivers');
+        $driverMap = [];
+        foreach ($drivers as $driver) {
+            if (isset($driver['id'])) {
+                $driverMap[$driver['id']] = $driver;
+            }
+        }
+
+        foreach ($rides as &$ride) {
+            if (!empty($ride['driver_id']) && isset($driverMap[$ride['driver_id']])) {
+                $driver = $driverMap[$ride['driver_id']];
+                $ride['driver_name'] = $driver['full_name'] ?? $driver['name'] ?? 'N/A';
+                $ride['driver_phone'] = $driver['phone'] ?? null;
+                $ride['driver_vehicle_number'] = $driver['vehicle_number'] ?? null;
+            } else {
+                $ride['driver_name'] = null;
+            }
+        }
+        unset($ride);
+    } catch (Exception $e) {
+        error_log("Warning: Could not fetch drivers data: " . $e->getMessage());
+    }
+
     echo json_encode([
         'success' => true,
         'data' => $rides,
