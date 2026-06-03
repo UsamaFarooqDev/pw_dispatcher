@@ -1026,16 +1026,111 @@ require('modules/head.php');
             <td>${renderStatusBadge(status)}</td>
             <td class="text-end pe-4">${fare}</td>
             <td class="text-end pe-4">
-              <a href="orderassigned.php?id=${encodeURIComponent(ride.id)}&view=1" class="view-details-btn">
-                <span>View Details</span>
-                <i class="bi bi-chevron-right"></i>
-              </a>
+              <div class="d-inline-flex align-items-center gap-2">
+                <button type="button" class="unassign-btn" onclick="unassignRide('${encodeURIComponent(ride.id)}')">
+                  <i class="bi bi-person-dash"></i>
+                  <span>Unassign</span>
+                </button>
+                <a href="orderassigned.php?id=${encodeURIComponent(ride.id)}&view=1" class="view-details-btn">
+                  <span>View Details</span>
+                  <i class="bi bi-chevron-right"></i>
+                </a>
+              </div>
             </td>
           `;
           tbody.appendChild(row);
         });
 
         applyPreorderSearchFilterForCurrentTab();
+      }
+
+      // Confirm + unassign an assigned ride: reopens it for searching and clears
+      // the driver and their live GPS in the DB.
+      async function unassignRide(encodedRideId) {
+        const rideId = decodeURIComponent(encodedRideId);
+        const ok = await showConfirmDialog({
+          title: 'Unassign ride?',
+          message: 'This will remove the assigned driver and move the ride back to <strong>Unassigned</strong> for re-broadcast. Continue?',
+          confirmText: 'Yes, unassign',
+          cancelText: 'Cancel'
+        });
+        if (!ok) return;
+
+        try {
+          const response = await fetch('api/unassign_ride.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ride_id: rideId })
+          });
+          if (response.status === 401) { window.location.href = '/'; return; }
+          const result = await response.json();
+          if (!response.ok || !result.success) {
+            throw new Error(result.error || 'Failed to unassign ride');
+          }
+          // Refresh tabs/counts immediately so the row leaves the Assigned tab.
+          await checkRideStatusChanges();
+          showPreorderToast('Ride unassigned and reopened for searching.', 'success');
+        } catch (err) {
+          console.error('Unassign error:', err);
+          showPreorderToast(err.message || 'Failed to unassign ride.', 'error');
+        }
+      }
+
+      // Lightweight promise-based confirmation dialog (no external dependency).
+      function showConfirmDialog(opts) {
+        const o = opts || {};
+        return new Promise((resolve) => {
+          const overlay = document.createElement('div');
+          overlay.style.cssText =
+            'position:fixed; inset:0; background:rgba(15,23,42,0.45); z-index:20000; display:flex; align-items:center; justify-content:center; padding:16px;';
+
+          const box = document.createElement('div');
+          box.style.cssText =
+            'background:#fff; border-radius:14px; max-width:420px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.25); overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;';
+          box.innerHTML = `
+            <div style="padding:20px 22px 8px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span style="width:34px; height:34px; border-radius:9px; background:#FFF3E8; color:#f37a20; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  <i class="bi bi-exclamation-triangle-fill" style="font-size:16px;"></i>
+                </span>
+                <div style="font-size:16px; font-weight:700; color:#18181B;">${o.title || 'Are you sure?'}</div>
+              </div>
+              <div style="margin-top:12px; font-size:13.5px; color:#52525B; line-height:1.5;">${o.message || ''}</div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:8px; padding:16px 22px 18px;">
+              <button type="button" data-act="cancel" style="height:38px; padding:0 16px; border-radius:8px; border:1.5px solid #E4E4E7; background:#fff; color:#52525B; font-size:0.8125rem; font-weight:600; cursor:pointer;">${o.cancelText || 'Cancel'}</button>
+              <button type="button" data-act="confirm" style="height:38px; padding:0 16px; border-radius:8px; border:1.5px solid #f37a20; background:#f37a20; color:#fff; font-size:0.8125rem; font-weight:700; cursor:pointer;">${o.confirmText || 'Confirm'}</button>
+            </div>
+          `;
+          overlay.appendChild(box);
+          document.body.appendChild(overlay);
+
+          const cleanup = (val) => {
+            document.removeEventListener('keydown', onKey);
+            overlay.remove();
+            resolve(val);
+          };
+          const onKey = (e) => {
+            if (e.key === 'Escape') cleanup(false);
+            if (e.key === 'Enter') cleanup(true);
+          };
+          document.addEventListener('keydown', onKey);
+          overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); });
+          box.querySelector('[data-act="cancel"]').addEventListener('click', () => cleanup(false));
+          box.querySelector('[data-act="confirm"]').addEventListener('click', () => cleanup(true));
+        });
+      }
+
+      // Minimal toast for action feedback.
+      function showPreorderToast(message, type) {
+        const toast = document.createElement('div');
+        const bg = type === 'error' ? '#DC2626' : '#16A34A';
+        toast.style.cssText =
+          `position:fixed; bottom:24px; right:24px; z-index:20001; background:${bg}; color:#fff; padding:12px 16px; border-radius:10px; font-size:0.8125rem; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,0.2); max-width:340px; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.transition = 'opacity 0.4s'; toast.style.opacity = '0'; }, 2600);
+        setTimeout(() => toast.remove(), 3100);
       }
 
       function updateAssignedTabCount(count) {
