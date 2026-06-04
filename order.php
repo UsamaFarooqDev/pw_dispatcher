@@ -472,8 +472,18 @@ foreach ($rideTypes as $t) {
 
             <div class="mb-3">
               <span class="fw-bold d-block mb-2" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Payment</span>
-              <a href="https://buy.stripe.com/14A5kDeAx6fFec5fMjfQI05" target="_blank" rel="noopener noreferrer"
-                 class="d-inline-flex align-items-center gap-2 text-decoration-none fw-semibold"
+              <div class="d-flex flex-column gap-2">
+                <div class="d-flex align-items-center gap-2 rounded-2 px-2 py-1" style="background:#fff; border:1.5px solid #EBEBEB;">
+                  <input class="form-check-input m-0 flex-shrink-0" type="radio" name="paymentMethod" id="paymentCash" value="cash" checked style="accent-color:#f37a20; width:15px; height:15px;" />
+                  <label class="form-check-label" for="paymentCash" style="font-size:0.8rem; color:#52525B; cursor:pointer;">Cash</label>
+                </div>
+                <div class="d-flex align-items-center gap-2 rounded-2 px-2 py-1" style="background:#fff; border:1.5px solid #EBEBEB;">
+                  <input class="form-check-input m-0 flex-shrink-0" type="radio" name="paymentMethod" id="paymentStripe" value="stripe" style="accent-color:#f37a20; width:15px; height:15px;" />
+                  <label class="form-check-label" for="paymentStripe" style="font-size:0.8rem; color:#52525B; cursor:pointer;">Pay with Stripe</label>
+                </div>
+              </div>
+              <a id="stripePayLink" href="https://buy.stripe.com/14A5kDeAx6fFec5fMjfQI05" target="_blank" rel="noopener noreferrer"
+                 class="d-none align-items-center gap-2 text-decoration-none fw-semibold mt-2"
                  style="background:#635BFF; color:#fff; font-size:0.8125rem; padding:8px 14px; border-radius:8px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
                 Pay with Stripe
@@ -1501,6 +1511,10 @@ async function createOrder() {
     return;
   }
 
+        // Payment method: Cash → 'cash', Pay with Stripe → 'prepaid'
+        const paymentChoice = document.querySelector('input[name="paymentMethod"]:checked');
+        const paymentMethod = (paymentChoice && paymentChoice.value === 'stripe') ? 'prepaid' : 'cash';
+
         const payload = {
           user_id: passengerId,
           customer_name: customerName,
@@ -1520,7 +1534,7 @@ async function createOrder() {
           distance_km: currentDistance,
           duration_min: currentDuration,
           fare_eur: currentFare,
-          payment_method: 'cash',
+          payment_method: paymentMethod,
           service_type_display: serviceType,
           scheduled_at: pickupTimeStr,
           is_scheduled: isScheduled,
@@ -1582,6 +1596,19 @@ modal.show();
         } else {
           console.warn('clearFieldsYesBtn not found in DOM');
         }
+
+        // Show the Stripe checkout link only when "Pay with Stripe" is selected.
+        const stripeLink = document.getElementById('stripePayLink');
+        const syncStripeLink = () => {
+          const stripeSelected = document.getElementById('paymentStripe')?.checked;
+          if (!stripeLink) return;
+          stripeLink.classList.toggle('d-none', !stripeSelected);
+          stripeLink.classList.toggle('d-inline-flex', !!stripeSelected);
+        };
+        document.querySelectorAll('input[name="paymentMethod"]').forEach((r) => {
+          r.addEventListener('change', syncStripeLink);
+        });
+        syncStripeLink();
       });
 
       window.clearAllFields = function clearAllFields() {
@@ -1622,6 +1649,15 @@ modal.show();
           const el = document.getElementById(id);
           if (el) el.checked = false;
         });
+
+        // Reset payment method back to Cash and hide the Stripe link
+        const cashRadio = document.getElementById('paymentCash');
+        if (cashRadio) cashRadio.checked = true;
+        const stripeLink = document.getElementById('stripePayLink');
+        if (stripeLink) {
+          stripeLink.classList.add('d-none');
+          stripeLink.classList.remove('d-inline-flex');
+        }
 
         const suggestions = document.getElementById('customerSuggestions');
         if (suggestions) {
