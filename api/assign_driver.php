@@ -30,12 +30,21 @@ if (!$input || !isset($input['ride_id']) || !isset($input['driver_id'])) {
 try {
     $db = new SupabaseDB(null, true);
 
-    // Always transition to 'assigned' when a driver is manually set.
-    // This moves the ride from the Pre-Order tab to the Assigned tab immediately,
-    // which is the expected dispatcher workflow.
-    // The 40-min auto-transition (processScheduledRideTransitions) already skips rides
-    // that are no longer in 'scheduled' status, so there is no double-notification risk.
-    $newStatus = 'assigned';
+    // force_assign is sent by the 40-min auto-transition to activate a scheduled
+    // ride (move it to 'assigned'); a normal manual assignment does not set it.
+    $forceAssign = !empty($input['force_assign']) && $input['force_assign'] !== 'false';
+
+    // Look up the current status. Pre-assigning a driver to a *scheduled* ride must
+    // keep it scheduled (just attach the driver) — it should not activate early.
+    // Only force_assign (the timed activation) flips a scheduled ride to assigned.
+    $existing = $db->findData('rides', ['id' => $input['ride_id']]);
+    $currentStatus = !empty($existing) ? strtolower((string)($existing[0]['status'] ?? '')) : '';
+
+    if ($currentStatus === 'scheduled' && !$forceAssign) {
+        $newStatus = 'scheduled';
+    } else {
+        $newStatus = 'assigned';
+    }
 
     // Prepare update data
     $updateData = [
@@ -81,7 +90,9 @@ try {
             $driverName = $d['name'] ?? $d['full_name'] ?? null;
         }
     }
-    if ($passengerEmail) {
+    // Only notify when the ride actually becomes assigned/active — not when a
+    // driver is merely pre-attached to a still-scheduled future booking.
+    if ($passengerEmail && $newStatus === 'assigned') {
         require_once __DIR__ . '/../lib/mail_helper.php';
         $pickupAddr = $updatedRide['pickup_addr'] ?? '';
         $destAddr = $updatedRide['dest_addr'] ?? '';

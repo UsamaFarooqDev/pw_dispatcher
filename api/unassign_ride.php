@@ -30,10 +30,18 @@ if (!$input || empty($input['ride_id'])) {
 try {
     $db = new SupabaseDB(null, true); // Service role to bypass RLS
 
-    // Unassign: open the ride back up for broadcast searching and clear the
-    // driver + their live GPS so the previous driver is fully detached.
+    // A scheduled (future) ride that had a driver pre-assigned should NOT become
+    // an active 'searching' broadcast when unassigned — it should stay scheduled
+    // and simply lose its driver. Other rides reopen for searching as normal.
+    $scheduledStatuses = ['scheduled', 'upcoming', 'pending', 'awaiting_assignment'];
+    $existing = $db->findData('rides', ['id' => $input['ride_id']]);
+    $currentStatus = !empty($existing) ? strtolower((string)($existing[0]['status'] ?? '')) : '';
+    $newStatus = in_array($currentStatus, $scheduledStatuses, true) ? 'scheduled' : 'searching';
+
+    // Unassign: detach the driver + their live GPS so the previous driver is
+    // fully removed; keep the ride in the appropriate queue per its status.
     $updateData = [
-        'status'     => 'searching',
+        'status'     => $newStatus,
         'driver_id'  => null,
         'driver_lat' => null,
         'driver_lng' => null,

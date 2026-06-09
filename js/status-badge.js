@@ -41,3 +41,30 @@ function renderStatusBadge(rawStatus) {
   const s = STATUS_CONFIG[key] || { bg: '#F4F4F5', color: '#71717A', label: rawStatus || '-' };
   return `<span class="rounded-pill px-2 py-1 fw-semibold" style="font-size:0.72rem; background:${s.bg}; color:${s.color}; white-space:nowrap;">${s.label}</span>`;
 }
+
+// Payment-method badge configuration (cash, prepaid/online card, etc.)
+const PAYMENT_CONFIG = {
+  cash:    { bg: '#F0FDF4', color: '#16A34A', label: 'Cash',    icon: 'bi-cash-coin'             },
+  prepaid: { bg: '#EEF2FF', color: '#4F46E5', label: 'Prepaid', icon: 'bi-credit-card-2-front'   },
+  stripe:  { bg: '#EEF2FF', color: '#635BFF', label: 'Stripe',  icon: 'bi-credit-card'           },
+  card:    { bg: '#EFF6FF', color: '#2563EB', label: 'Card',    icon: 'bi-credit-card'           },
+  online:  { bg: '#EEF2FF', color: '#4F46E5', label: 'Online',  icon: 'bi-globe'                 },
+};
+
+/**
+ * Returns an HTML string for a styled payment-method pill badge.
+ * @param {string} rawMethod - The raw payment_method string from the API.
+ * @returns {string} HTML string for the badge (em-dash when empty).
+ */
+function renderPaymentBadge(rawMethod) {
+  if (rawMethod === null || rawMethod === undefined || String(rawMethod).trim() === '') {
+    return '<span style="color:#A1A1AA; font-size:0.72rem;">—</span>';
+  }
+  const key = String(rawMethod).trim().toLowerCase().replace(/\s+/g, '_');
+  const p = PAYMENT_CONFIG[key] || {
+    bg: '#F4F4F5', color: '#71717A',
+    label: String(rawMethod).replace(/\b\w/g, (c) => c.toUpperCase()),
+    icon: 'bi-wallet2'
+  };
+  return `<span class="rounded-pill px-2 py-1 fw-semibold d-inline-flex align-items-center gap-1" style="font-size:0.72rem; background:${p.bg}; color:${p.color}; white-space:nowrap;"><i class="bi ${p.icon}" style="font-size:0.72rem;"></i>${p.label}</span>`;
+}

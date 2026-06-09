@@ -586,6 +586,12 @@ function initGoogleMaps() {
 
 document.addEventListener('DOMContentLoaded', async () => {
 
+  // Kick off the driver list fetch up front so it loads in parallel with the
+  // passenger/ride loads below. This way the Assign-Driver dropdown is ready by
+  // the time the dispatcher clicks it (it previously only started after those
+  // awaited fetches, causing a noticeable delay on first click).
+  loadDrivers();
+
   /* Make all readonly inputs editable */
   document.querySelectorAll('input[readonly]').forEach(input => {
     input.removeAttribute('readonly');
@@ -682,16 +688,37 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (result.success && result.data) {
         const ride = result.data;
         
-        // Prefill Customer Details (passenger from dropdown only)
+        // Prefill Customer Details (passenger from dropdown)
         const customerNameSelect = document.getElementById('customerNameSelect');
         if (customerNameSelect && ride.user_id) {
+          // Ensure the ride's passenger exists as an option even if they weren't
+          // in the batch loaded by loadPassengers() (limit=500) — otherwise the
+          // selection silently fails and the name doesn't appear.
+          const exists = Array.from(customerNameSelect.options)
+            .some((o) => String(o.value) === String(ride.user_id));
+          if (!exists) {
+            const opt = document.createElement('option');
+            opt.value = ride.user_id;
+            opt.textContent = (ride.passenger_name && ride.passenger_name !== 'N/A')
+              ? ride.passenger_name : 'Passenger';
+            customerNameSelect.appendChild(opt);
+            // Keep passengersList in sync so the change-handler can resolve phone.
+            if (Array.isArray(passengersList)) {
+              passengersList.push({
+                id: ride.user_id,
+                name: ride.passenger_name,
+                phone: ride.passenger_phone,
+                email: ride.passenger_email,
+              });
+            }
+          }
           customerNameSelect.value = String(ride.user_id);
         }
         const customerId = document.getElementById('customerId');
         if (customerId) customerId.value = ride.user_id || '';
 
         const phoneNumber = document.getElementById('phoneNumber');
-        if (phoneNumber && ride.passenger_phone) {
+        if (phoneNumber && ride.passenger_phone && ride.passenger_phone !== 'N/A') {
           // Remove country code if present, as it's already in the static field
           let phone = String(ride.passenger_phone);
           if (phone.startsWith('+353')) {
@@ -808,9 +835,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // initGoogleMaps is called by Maps API callback when script is ready (autocomplete set up there)
-
-  // Load drivers
-  loadDrivers();
+  // (driver list load was kicked off at the top of init so it runs in parallel)
 
   // Setup event listeners for route calculation
   const pickupInput = document.getElementById('pickupLocation');
@@ -1306,7 +1331,18 @@ function selectDriver(driver) {
 
 function showDriverDropdown() {
   const list = document.getElementById('driverDropdownList');
-  if (list) list.style.display = 'block';
+  if (!list) return;
+  const input = document.getElementById('driverSearchInput');
+  // When opened with no search term, show the full approved list — or a loading
+  // hint if the fetch hasn't finished yet (it auto-renders on completion).
+  if (!input || !input.value.trim()) {
+    if (approvedDrivers && approvedDrivers.length) {
+      renderDriverDropdown(approvedDrivers);
+    } else {
+      list.innerHTML = '<div class="px-3 py-2 text-muted" style="font-size:0.8125rem;">Loading drivers…</div>';
+    }
+  }
+  list.style.display = 'block';
 }
 
 function hideDriverDropdown() {

@@ -73,6 +73,7 @@ require('modules/head.php');
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;" id="actionHeader">Action</th>
             </tr></thead>
@@ -91,6 +92,9 @@ require('modules/head.php');
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Prebook</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Source</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Action</th>
             </tr></thead>
@@ -109,6 +113,7 @@ require('modules/head.php');
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Driver</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
               <th class="fw-semibold text-nowrap px-3 py-2 text-end" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:130px;">Action</th>
@@ -128,6 +133,7 @@ require('modules/head.php');
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Category</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Action</th>
@@ -147,6 +153,7 @@ require('modules/head.php');
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
             </tr></thead>
             <tbody id="cancelledRidesBody"></tbody>
@@ -164,6 +171,7 @@ require('modules/head.php');
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
             </tr></thead>
             <tbody id="completedRidesBody"></tbody>
@@ -441,15 +449,13 @@ require('modules/head.php');
             return status === 'searching';
           });
 
-          const assignedRides = rides.filter((ride) => {
-            const status = (ride.status || '').toLowerCase();
-            return status === 'assigned';
-          });
+          const assignedRides = rides.filter(isAssignedTabRide);
 
-          const scheduledRides = rides.filter((ride) => {
-            const status = (ride.status || '').toLowerCase();
-            return status === 'upcoming' || status === 'scheduled' || status === 'pending' || status === 'awaiting_assignment';
-          });
+          // All scheduled-status rides — used for the 40-min auto-activation below.
+          const allScheduledRides = rides.filter(isScheduledStatus);
+          // Scheduled TAB shows only those without a driver; driver-assigned
+          // scheduled rides are surfaced in the Assigned tab instead.
+          const scheduledRides = allScheduledRides.filter((ride) => !rideHasDriver(ride));
 
           const onTripRides = rides.filter((ride) => {
             const status = (ride.status || '').toLowerCase();
@@ -475,8 +481,9 @@ require('modules/head.php');
             });
           }
 
-          // Auto-transition scheduled rides based on time proximity
-          await processScheduledRideTransitions(scheduledRides);
+          // Auto-transition scheduled rides based on time proximity (include
+          // driver-assigned scheduled rides so they still activate at the 40-min mark).
+          await processScheduledRideTransitions(allScheduledRides);
 
           // Check for beeping rides (always check, regardless of UI updates)
           checkForBeepingRides(unassignedRides, rides);
@@ -678,7 +685,7 @@ require('modules/head.php');
 
         if (showLoading && tbody) {
           tbody.innerHTML =
-            '<tr><td colspan="7" class="text-center py-4 text-muted">Loading rides...</td></tr>';
+            '<tr><td colspan="8" class="text-center py-4 text-muted">Loading rides...</td></tr>';
         }
 
         try {
@@ -743,7 +750,7 @@ require('modules/head.php');
           console.error('Error details:', error.message, error.stack);
           if (tbody) {
             tbody.innerHTML =
-              '<tr><td colspan="7" class="text-center py-4 text-danger">Error loading rides. Please refresh the page.</td></tr>';
+              '<tr><td colspan="8" class="text-center py-4 text-danger">Error loading rides. Please refresh the page.</td></tr>';
           }
           if (preorderPagination) {
             preorderPagination.update(0, 1);
@@ -826,7 +833,7 @@ require('modules/head.php');
 
           if (!rides || rides.length === 0) {
             tbody.innerHTML =
-              '<tr><td colspan="7" class="text-center py-4 text-muted">No unassigned rides to show</td></tr>';
+              '<tr><td colspan="8" class="text-center py-4 text-muted">No unassigned rides to show</td></tr>';
             return;
           }
 
@@ -849,6 +856,7 @@ require('modules/head.php');
                 <td>${pickup}</td>
                 <td>${destination}</td>
                 <td>${renderStatusBadge(status)}</td>
+                <td>${renderPaymentBadge(ride.payment_method)}</td>
                 <td class="text-end pe-4">${fare}</td>
                 <td class="text-end pe-4">
                   <a href="orderassigned.php?id=${rideId}" class="view-details-btn">
@@ -869,7 +877,7 @@ require('modules/head.php');
           const tbody = document.getElementById('unassignedRidesBody');
           if (tbody) {
             tbody.innerHTML =
-              '<tr><td colspan="7" class="text-center py-4 text-danger">Error displaying rides data</td></tr>';
+              '<tr><td colspan="8" class="text-center py-4 text-danger">Error displaying rides data</td></tr>';
           }
         }
       }
@@ -957,6 +965,85 @@ require('modules/head.php');
         }
       }
 
+      // ── Assigned vs Scheduled classification ──────────────────────────────
+      // Statuses considered "scheduled / pre-order".
+      const SCHEDULED_STATUSES = ['upcoming', 'scheduled', 'pending', 'awaiting_assignment'];
+
+      function rideHasDriver(ride) {
+        return !!(ride && ride.driver_id != null && String(ride.driver_id).trim() !== '');
+      }
+      function isScheduledStatus(ride) {
+        return SCHEDULED_STATUSES.includes((ride.status || '').toLowerCase());
+      }
+      // Assigned tab: rides with status 'assigned', plus scheduled rides that
+      // already have a driver attached (so the dispatcher can track acceptance).
+      function isAssignedTabRide(ride) {
+        return (ride.status || '').toLowerCase() === 'assigned'
+          || (isScheduledStatus(ride) && rideHasDriver(ride));
+      }
+      // Scheduled tab: scheduled rides that don't yet have a driver (once a driver
+      // is assigned they move to the Assigned tab above).
+      function isScheduledTabRide(ride) {
+        return isScheduledStatus(ride) && !rideHasDriver(ride);
+      }
+
+      // driver_accepted lives in the ride's jsonb `meta` (string or object).
+      function getRideMeta(ride) {
+        let meta = ride && ride.meta;
+        if (typeof meta === 'string') { try { meta = JSON.parse(meta); } catch (_) { meta = null; } }
+        return (meta && typeof meta === 'object') ? meta : null;
+      }
+      function isDriverAccepted(ride) {
+        const meta = getRideMeta(ride);
+        return !!(meta && meta.driver_accepted === true);
+      }
+
+      // A ride is "scheduled" (pre-order / future pickup) when it carries a
+      // scheduled_at timestamp or the is_scheduled flag — independent of its
+      // current status (a scheduled ride flips to 'assigned' once a driver accepts).
+      function isScheduledRide(ride) {
+        if (ride && (ride.is_scheduled === true || ride.is_scheduled === 'true')) return true;
+        const sa = ride && ride.scheduled_at;
+        return sa != null && String(sa).trim() !== '';
+      }
+
+      // Status badge for the Assigned tab. A scheduled ride shows whether the
+      // driver has accepted (meta.driver_accepted); any other ride shows its real DB status.
+      function renderAssignedStatusBadge(ride) {
+        if (isScheduledRide(ride)) {
+          return isDriverAccepted(ride)
+            ? '<span class="rounded-pill px-2 py-1 fw-semibold" style="font-size:0.72rem; background:#F0FDF4; color:#16A34A; white-space:nowrap;">Accepted</span>'
+            : '<span class="rounded-pill px-2 py-1 fw-semibold" style="font-size:0.72rem; background:#FEF3C7; color:#D97706; white-space:nowrap;">Awaiting Acceptance</span>';
+        }
+        return renderStatusBadge(ride.status || 'N/A');
+      }
+
+      // Prebook (pre-booked / scheduled) Yes-No badge.
+      function renderPrebookBadge(ride) {
+        return isScheduledRide(ride)
+          ? '<span class="rounded-pill px-2 py-1 fw-semibold" style="font-size:0.72rem; background:#EFF6FF; color:#2563EB; white-space:nowrap;">Yes</span>'
+          : '<span class="rounded-pill px-2 py-1 fw-semibold" style="font-size:0.72rem; background:#F4F4F5; color:#71717A; white-space:nowrap;">No</span>';
+      }
+
+      // Booking source badge (e.g. App, Dispatcher, Corporate) from rides.source.
+      function renderSourceBadge(rawSource) {
+        if (rawSource === null || rawSource === undefined || String(rawSource).trim() === '') {
+          return '<span style="color:#A1A1AA; font-size:0.72rem;">—</span>';
+        }
+        const SRC = {
+          app:        { bg: '#EEF2FF', color: '#4F46E5', label: 'App'        },
+          dispatcher: { bg: '#FFF3E8', color: '#f37a20', label: 'Dispatcher' },
+          corporate:  { bg: '#F5F3FF', color: '#7C3AED', label: 'Corporate'  },
+          web:        { bg: '#ECFEFF', color: '#0891B2', label: 'Web'        },
+        };
+        const key = String(rawSource).trim().toLowerCase();
+        const s = SRC[key] || {
+          bg: '#F4F4F5', color: '#71717A',
+          label: String(rawSource).replace(/\b\w/g, (c) => c.toUpperCase())
+        };
+        return `<span class="rounded-pill px-2 py-1 fw-semibold" style="font-size:0.72rem; background:${s.bg}; color:${s.color}; white-space:nowrap;">${s.label}</span>`;
+      }
+
       async function loadAssignedRides(showLoading = false) {
         try {
           // Fetch all rides (use high limit to get all rides for client-side filtering)
@@ -975,10 +1062,7 @@ require('modules/head.php');
           
           const rides = result && result.data ? result.data : [];
 
-          const assignedRides = rides.filter((ride) => {
-            const status = (ride.status || '').toLowerCase();
-            return status === 'assigned';
-          });
+          const assignedRides = rides.filter(isAssignedTabRide);
 
           // Update cache
           currentRidesData.assigned = assignedRides;
@@ -1003,7 +1087,7 @@ require('modules/head.php');
 
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="7" class="text-center py-4 text-muted">No assigned rides to show</td></tr>';
+            '<tr><td colspan="10" class="text-center py-4 text-muted">No assigned rides to show</td></tr>';
           return;
         }
 
@@ -1023,7 +1107,10 @@ require('modules/head.php');
             <td>${orderTime}</td>
             <td>${pickup}</td>
             <td>${destination}</td>
-            <td>${renderStatusBadge(status)}</td>
+            <td>${renderAssignedStatusBadge(ride)}</td>
+            <td>${renderPaymentBadge(ride.payment_method)}</td>
+            <td>${renderPrebookBadge(ride)}</td>
+            <td>${renderSourceBadge(ride.source)}</td>
             <td class="text-end pe-4">${fare}</td>
             <td class="text-end pe-4">
               <div class="d-inline-flex align-items-center gap-2">
@@ -1198,10 +1285,7 @@ require('modules/head.php');
           
           const rides = result && result.data ? result.data : [];
 
-          const scheduledRides = rides.filter((ride) => {
-            const status = (ride.status || '').toLowerCase();
-            return status === 'upcoming' || status === 'scheduled' || status === 'pending' || status === 'awaiting_assignment';
-          });
+          const scheduledRides = rides.filter(isScheduledTabRide);
 
           // Update cache
           currentRidesData.scheduled = scheduledRides;
@@ -1240,7 +1324,7 @@ require('modules/head.php');
 
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="8" class="text-center py-4 text-muted">No pre-orders to show</td></tr>';
+            '<tr><td colspan="9" class="text-center py-4 text-muted">No pre-orders to show</td></tr>';
           return;
         }
 
@@ -1271,6 +1355,7 @@ require('modules/head.php');
             <td>${pickup}</td>
             <td>${destination}</td>
             <td>${renderStatusBadge(status)}</td>
+            <td>${renderPaymentBadge(ride.payment_method)}</td>
             <td>${categoryBadge}</td>
             <td class="text-end pe-4">${fare}</td>
             <td class="text-end pe-4">${actionCell}</td>
@@ -1321,7 +1406,7 @@ require('modules/head.php');
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="6" class="text-center py-4 text-muted">No cancelled rides to show</td></tr>';
+            '<tr><td colspan="7" class="text-center py-4 text-muted">No cancelled rides to show</td></tr>';
           return;
         }
         rides.forEach((ride) => {
@@ -1338,6 +1423,7 @@ require('modules/head.php');
             <td>${pickup}</td>
             <td>${destination}</td>
             <td>${renderStatusBadge(status)}</td>
+            <td>${renderPaymentBadge(ride.payment_method)}</td>
             <td class="text-end pe-4">${fare}</td>
           `;
           tbody.appendChild(row);
@@ -1386,7 +1472,7 @@ require('modules/head.php');
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="6" class="text-center py-4 text-muted">No completed rides to show</td></tr>';
+            '<tr><td colspan="7" class="text-center py-4 text-muted">No completed rides to show</td></tr>';
           return;
         }
         rides.forEach((ride) => {
@@ -1403,6 +1489,7 @@ require('modules/head.php');
             <td>${pickup}</td>
             <td>${destination}</td>
             <td>${renderStatusBadge(status)}</td>
+            <td>${renderPaymentBadge(ride.payment_method)}</td>
             <td class="text-end pe-4">${fare}</td>
           `;
           tbody.appendChild(row);
@@ -1516,7 +1603,7 @@ require('modules/head.php');
         if (!tbody) return;
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">No on-trip rides to show</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">No on-trip rides to show</td></tr>';
           return;
         }
         rides.forEach((ride) => {
@@ -1535,6 +1622,7 @@ require('modules/head.php');
             <td>${pickup}</td>
             <td>${destination}</td>
             <td>${renderStatusBadge(status)}</td>
+            <td>${renderPaymentBadge(ride.payment_method)}</td>
             <td>${driverName}</td>
             <td>${fare}</td>
             <td class="text-end pe-4">
@@ -1632,7 +1720,7 @@ require('modules/head.php');
             <td>${orderTime}</td>
             <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${pickup}">${pickup}</td>
             <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${destination}">${destination}</td>
-            <td>${payment}</td>
+            <td>${renderPaymentBadge(ride.payment_method)}</td>
             <td class="text-end pe-2">${fare}</td>
             <td>${renderStatusBadge(status)}</td>
             <td class="text-end pe-4">${actionCell}</td>
