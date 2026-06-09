@@ -74,6 +74,8 @@ require('modules/head.php');
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Prebook</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Source</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;" id="actionHeader">Action</th>
             </tr></thead>
@@ -114,6 +116,8 @@ require('modules/head.php');
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Prebook</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Source</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Driver</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
               <th class="fw-semibold text-nowrap px-3 py-2 text-end" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:130px;">Action</th>
@@ -172,6 +176,8 @@ require('modules/head.php');
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Prebook</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Source</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
             </tr></thead>
             <tbody id="completedRidesBody"></tbody>
@@ -685,7 +691,7 @@ require('modules/head.php');
 
         if (showLoading && tbody) {
           tbody.innerHTML =
-            '<tr><td colspan="8" class="text-center py-4 text-muted">Loading rides...</td></tr>';
+            '<tr><td colspan="10" class="text-center py-4 text-muted">Loading rides...</td></tr>';
         }
 
         try {
@@ -750,7 +756,7 @@ require('modules/head.php');
           console.error('Error details:', error.message, error.stack);
           if (tbody) {
             tbody.innerHTML =
-              '<tr><td colspan="8" class="text-center py-4 text-danger">Error loading rides. Please refresh the page.</td></tr>';
+              '<tr><td colspan="10" class="text-center py-4 text-danger">Error loading rides. Please refresh the page.</td></tr>';
           }
           if (preorderPagination) {
             preorderPagination.update(0, 1);
@@ -833,7 +839,7 @@ require('modules/head.php');
 
           if (!rides || rides.length === 0) {
             tbody.innerHTML =
-              '<tr><td colspan="8" class="text-center py-4 text-muted">No unassigned rides to show</td></tr>';
+              '<tr><td colspan="10" class="text-center py-4 text-muted">No unassigned rides to show</td></tr>';
             return;
           }
 
@@ -857,6 +863,8 @@ require('modules/head.php');
                 <td>${destination}</td>
                 <td>${renderStatusBadge(status)}</td>
                 <td>${renderPaymentBadge(ride.payment_method)}</td>
+                <td>${renderPrebookBadge(ride)}</td>
+                <td>${renderSourceBadge(ride.source)}</td>
                 <td class="text-end pe-4">${fare}</td>
                 <td class="text-end pe-4">
                   <a href="orderassigned.php?id=${rideId}" class="view-details-btn">
@@ -877,7 +885,7 @@ require('modules/head.php');
           const tbody = document.getElementById('unassignedRidesBody');
           if (tbody) {
             tbody.innerHTML =
-              '<tr><td colspan="8" class="text-center py-4 text-danger">Error displaying rides data</td></tr>';
+              '<tr><td colspan="10" class="text-center py-4 text-danger">Error displaying rides data</td></tr>';
           }
         }
       }
@@ -1472,7 +1480,7 @@ require('modules/head.php');
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="7" class="text-center py-4 text-muted">No completed rides to show</td></tr>';
+            '<tr><td colspan="9" class="text-center py-4 text-muted">No completed rides to show</td></tr>';
           return;
         }
         rides.forEach((ride) => {
@@ -1490,6 +1498,8 @@ require('modules/head.php');
             <td>${destination}</td>
             <td>${renderStatusBadge(status)}</td>
             <td>${renderPaymentBadge(ride.payment_method)}</td>
+            <td>${renderPrebookBadge(ride)}</td>
+            <td>${renderSourceBadge(ride.source)}</td>
             <td class="text-end pe-4">${fare}</td>
           `;
           tbody.appendChild(row);
@@ -1603,7 +1613,7 @@ require('modules/head.php');
         if (!tbody) return;
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">No on-trip rides to show</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="11" class="text-center py-4 text-muted">No on-trip rides to show</td></tr>';
           return;
         }
         rides.forEach((ride) => {
@@ -1623,6 +1633,8 @@ require('modules/head.php');
             <td>${destination}</td>
             <td>${renderStatusBadge(status)}</td>
             <td>${renderPaymentBadge(ride.payment_method)}</td>
+            <td>${renderPrebookBadge(ride)}</td>
+            <td>${renderSourceBadge(ride.source)}</td>
             <td>${driverName}</td>
             <td>${fare}</td>
             <td class="text-end pe-4">
