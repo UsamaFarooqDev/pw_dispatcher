@@ -361,8 +361,15 @@ const DRIVER_ROUTE_THRESHOLD_M = 40; // recalculate only when driver moves ≥ 4
 
 // Smooth marker animation — glide across the full poll interval (continuous motion)
 let driverAnimTimer = null;
-const DRIVER_POLL_MS = 5000;            // driver-location poll cadence
+let driverLastPosition = null;          // previous lat/lng for bearing when API heading is absent
+let hasCenteredOnDriver = false;        // auto-fit map to driver on first live fix
+const DRIVER_POLL_MS = 3000;            // match Live Map poll cadence
 const MARKER_ANIM_MS = DRIVER_POLL_MS;  // animate across the whole interval so the car never freezes
+const TELEPORT_SNAP_METERS = 1000;      // snap instead of animating across huge GPS jumps
+const ROUTE_REFRESH_MS = 15000;
+const ROUTE_REDRAW_METERS = 150;
+let driverTrackPolyline = null;         // road route from driver → destination (Live Map style)
+let driverTrackMeta = null;             // throttle state for route redraws
 
 // Route progress visualization (switches on when ride status → on_trip)
 let currentRoutePath = [];
@@ -379,23 +386,40 @@ let currentDriverBearing = 0;
 async function fetchAndUpdateDriverMarker(driverId) {
   if (!map || !driverId) return;
   try {
-    let lat, lng, driverName = 'Driver', vehicle = '';
+    let lat, lng, driverName = 'Driver', vehicle = '', trackDriver = null;
 
     if (isViewMode && currentRideId) {
-      // Active ride: GPS written to rides.driver_lat/lng by the driver app
+      // Active ride: same GPS priority as Live Map (ride GPS → driver table fallback)
       const resp = await fetch(`api/get_ride_location.php?ride_id=${encodeURIComponent(currentRideId)}`, { cache: 'no-store' });
       if (!resp.ok) return;
       const result = await resp.json();
-      if (!result.success || !result.data || result.data.lat === null) return;
-      lat = parseFloat(result.data.lat);
-      lng = parseFloat(result.data.lng);
+      if (!result.success || !result.data) return;
 
-      // Drive status state machine
-      const newStatus = (result.data.status || '').toLowerCase();
+      const loc = result.data;
+      if (loc.lat === null || loc.lng === null) return;
+      lat = parseFloat(loc.lat);
+      lng = parseFloat(loc.lng);
+      if (isNaN(lat) || isNaN(lng)) return;
+
+      driverName = loc.full_name || loc.name || 'Driver';
+      vehicle    = [loc.vehicle_number, loc.vehicle_make].filter(Boolean).join(' · ');
+      trackDriver = loc;
+
+      // Prefer compass heading from the driver app; fall back to computed bearing
+      const apiHeading = parseFloat(loc.heading ?? loc.driver_heading ?? NaN);
+      if (!isNaN(apiHeading) && apiHeading !== 0) {
+        currentDriverBearing = apiHeading;
+      } else if (driverLastPosition) {
+        const comp = computeBearing(driverLastPosition.lat, driverLastPosition.lng, lat, lng);
+        if (comp !== null) currentDriverBearing = comp;
+      }
+
+      updateDispatcherOverlayFromDriver(loc);
+
+      const newStatus = (loc.status || '').toLowerCase();
       if (newStatus && newStatus !== currentRideStatus) {
         handleRideStatusChange(currentRideStatus, newStatus);
         currentRideStatus = newStatus;
-        if (driverLiveMarker) driverLiveMarker.setIcon(buildDriverIcon(currentDriverBearing, newStatus));
       }
     } else {
       // Idle/fleet: GPS in drivers.current_lat/lng
@@ -409,18 +433,25 @@ async function fetchAndUpdateDriverMarker(driverId) {
       driverName = loc.full_name || loc.name || 'Driver';
       vehicle    = loc.vehicle_number || loc.vehicle_make || '';
       const apiHeading = parseFloat(loc.heading ?? loc.driver_heading ?? NaN);
-      if (!isNaN(apiHeading)) currentDriverBearing = apiHeading;
+      if (!isNaN(apiHeading) && apiHeading !== 0) {
+        currentDriverBearing = apiHeading;
+      } else if (driverLastPosition) {
+        const comp = computeBearing(driverLastPosition.lat, driverLastPosition.lng, lat, lng);
+        if (comp !== null) currentDriverBearing = comp;
+      }
     }
 
     if (isNaN(lat) || isNaN(lng)) return;
 
+    const icon = buildDriverIcon(currentDriverBearing, currentRideStatus);
+
     if (driverLiveMarker) {
-      animateDriverMarker(lat, lng);
+      animateDriverMarker(lat, lng, icon);
     } else {
       driverLiveMarker = new google.maps.Marker({
         position: { lat, lng },
         map,
-        icon: buildDriverIcon(currentDriverBearing, currentRideStatus),
+        icon,
         title: driverName,
         zIndex: 20,
       });
@@ -437,11 +468,18 @@ async function fetchAndUpdateDriverMarker(driverId) {
       driverLiveMarker.addListener('click', () => infoWin.open(map, driverLiveMarker));
     }
 
-    // Driver→Pickup route: only when not yet on trip
-    if (isViewMode && currentPickupLat && currentPickupLng && !routeProgressActive) {
-      const needsUpdate = lastDriverRouteLat === null ||
-        geoDistanceMeters(lat, lng, lastDriverRouteLat, lastDriverRouteLng) >= DRIVER_ROUTE_THRESHOLD_M;
-      if (needsUpdate) updateDriverToPickupRoute(lat, lng);
+    driverLastPosition = { lat, lng };
+
+    // Auto-center on driver the first time we get a live fix in view mode
+    if (isViewMode && !hasCenteredOnDriver) {
+      hasCenteredOnDriver = true;
+      map.panTo({ lat, lng });
+      if (map.getZoom() < 14) map.setZoom(14);
+    }
+
+    // Draw the road track to pickup/destination (Live Map style)
+    if (isViewMode && trackDriver && !routeProgressActive) {
+      maybeUpdateDriverTrack(lat, lng, trackDriver);
     }
 
     // Route progress: active once trip starts
@@ -456,7 +494,7 @@ async function fetchAndUpdateDriverMarker(driverId) {
 // Smooth interpolation across the full poll interval, driven by requestAnimationFrame
 // (≈60 fps) so the marker glides continuously instead of jumping to the new point and
 // freezing until the next poll. Rotates icon to face direction of travel.
-function animateDriverMarker(toLat, toLng) {
+function animateDriverMarker(toLat, toLng, icon) {
   if (!driverLiveMarker) return;
   if (driverAnimTimer) { cancelAnimationFrame(driverAnimTimer); driverAnimTimer = null; }
 
@@ -467,11 +505,19 @@ function animateDriverMarker(toLat, toLng) {
   const fromLng = fromPos.lng();
   if (fromLat === toLat && fromLng === toLng) return;
 
-  // Compute bearing once at start and update icon direction
-  const bearing = computeBearing(fromLat, fromLng, toLat, toLng);
-  if (bearing !== null) {
-    currentDriverBearing = bearing;
-    driverLiveMarker.setIcon(buildDriverIcon(currentDriverBearing, currentRideStatus));
+  if (icon) driverLiveMarker.setIcon(icon);
+
+  // Guard against teleports — snap instead of animating across the city
+  let jumpMeters = 0;
+  if (google.maps.geometry && google.maps.geometry.spherical) {
+    jumpMeters = google.maps.geometry.spherical.computeDistanceBetween(
+      new google.maps.LatLng(fromLat, fromLng),
+      new google.maps.LatLng(toLat, toLng)
+    );
+  }
+  if (jumpMeters > TELEPORT_SNAP_METERS) {
+    driverLiveMarker.setPosition({ lat: toLat, lng: toLng });
+    return;
   }
 
   const startTs = performance.now();
@@ -493,7 +539,7 @@ function animateDriverMarker(toLat, toLng) {
 function startDriverTracking() {
   if (!assignedDriverId || !mapReadyForTracking) return;
   if (driverTrackingInterval) return;  // already running
-  if (driverRouteRenderer && map) driverRouteRenderer.setMap(map);
+  if (!isViewMode && driverRouteRenderer && map) driverRouteRenderer.setMap(map);
   fetchAndUpdateDriverMarker(assignedDriverId);
   driverTrackingInterval = setInterval(() => fetchAndUpdateDriverMarker(assignedDriverId), DRIVER_POLL_MS);
 }
@@ -511,9 +557,12 @@ function stopDriverTracking() {
     driverLiveMarker.setMap(null);
     driverLiveMarker = null;
   }
+  driverLastPosition = null;
+  hasCenteredOnDriver = false;
   lastDriverRouteLat = null;
   lastDriverRouteLng = null;
   if (driverRouteRenderer) driverRouteRenderer.setMap(null);
+  clearDriverTrack();
   clearRouteProgress();
 }
 
@@ -540,7 +589,7 @@ function initGoogleMaps() {
   directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
   directionsRenderer.setMap(map);
 
-  // Driver → Pickup: solid orange road route
+  // Driver → Pickup: solid orange road route (assign mode only; view mode uses driverTrackPolyline)
   driverRouteRenderer = new google.maps.DirectionsRenderer({
     suppressMarkers: true,
     polylineOptions: {
@@ -549,7 +598,7 @@ function initGoogleMaps() {
       strokeWeight: 5,
     },
   });
-  driverRouteRenderer.setMap(map);
+  if (!isViewMode) driverRouteRenderer.setMap(map);
 
   // Signal that the map is ready and start driver tracking if a driver is already set
   mapReadyForTracking = true;
@@ -773,6 +822,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Store ride ID for assignment
         currentRideId = rideId;
+        if (ride.status) {
+          currentRideStatus = String(ride.status).toLowerCase();
+          const onTrip = ['on_trip','started','in_progress','trip_started'].includes(currentRideStatus);
+          if (onTrip) routeProgressActive = true;
+        }
 
         // Start live driver tracking if the ride already has an assigned driver
         if (ride.driver_id) {
@@ -827,6 +881,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (isNormalViewMode) {
           applyCorporateViewMode();
           applyViewModeLayout();
+          populateDispatcherOverlay(ride);
+          if (ride.driver_id) loadDriverOverlayInfo(ride.driver_id);
         }
       }
     } catch (error) {
@@ -1639,6 +1695,9 @@ function applyViewModeLayout() {
   const mainEl = document.querySelector('main.main-content');
   if (mainEl) mainEl.classList.add('view-mode-active');
 
+  const overlay = document.getElementById('dispatcherOverlay');
+  if (overlay) overlay.style.display = 'block';
+
   // Prevent page-level scrolling in tracking view
   document.documentElement.style.overflow = 'hidden';
   document.body.style.overflow = 'hidden';
@@ -1698,6 +1757,127 @@ function updateDriverToPickupRoute(driverLat, driverLng) {
   });
 }
 
+// Where is the driver headed? Same logic as Live Map.
+function tripDestinationFor(driver) {
+  const s = (driver.status || '').toLowerCase();
+  const onTrip    = ['on_trip', 'started', 'in_progress', 'trip_started'].includes(s);
+  const prePickup = ['assigned', 'accepted', 'driver_accepted', 'arrived_at_pickup', 'driver_arrived', 'arrived'].includes(s);
+  const num = (v) => (v != null && v !== '' && !isNaN(parseFloat(v))) ? parseFloat(v) : null;
+
+  let lat = null, lng = null;
+  if (onTrip) {
+    lat = num(driver.dest_lat);   lng = num(driver.dest_lng);
+    if (lat === null || lng === null) { lat = num(driver.pickup_lat); lng = num(driver.pickup_lng); }
+  } else if (prePickup) {
+    lat = num(driver.pickup_lat); lng = num(driver.pickup_lng);
+    if (lat === null || lng === null) { lat = num(currentPickupLat); lng = num(currentPickupLng); }
+    if (lat === null || lng === null) { lat = num(driver.dest_lat); lng = num(driver.dest_lng); }
+  } else {
+    return null;
+  }
+  if (lat === null || lng === null) return null;
+  return { lat, lng };
+}
+
+function clearDriverTrack() {
+  if (driverTrackPolyline) {
+    driverTrackPolyline.setMap(null);
+    driverTrackPolyline = null;
+  }
+  driverTrackMeta = null;
+}
+
+// Throttled road route from driver → pickup/destination (Live Map style polyline)
+function maybeUpdateDriverTrack(fromLat, fromLng, driver) {
+  const target = tripDestinationFor(driver);
+  if (!target) { clearDriverTrack(); return; }
+  if (!directionsService) return;
+
+  const targetKey = target.lat.toFixed(5) + ',' + target.lng.toFixed(5);
+  const now = Date.now();
+  let needs = false;
+  if (!driverTrackMeta || driverTrackMeta.targetKey !== targetKey) {
+    needs = true;
+  } else if (now - driverTrackMeta.ts > ROUTE_REFRESH_MS) {
+    needs = true;
+  } else if (google.maps.geometry && google.maps.geometry.spherical) {
+    const moved = google.maps.geometry.spherical.computeDistanceBetween(
+      new google.maps.LatLng(driverTrackMeta.fromLat, driverTrackMeta.fromLng),
+      new google.maps.LatLng(fromLat, fromLng)
+    );
+    if (moved > ROUTE_REDRAW_METERS) needs = true;
+  }
+  if (!needs) return;
+
+  driverTrackMeta = { targetKey, ts: now, fromLat, fromLng };
+
+  directionsService.route({
+    origin: { lat: fromLat, lng: fromLng },
+    destination: { lat: target.lat, lng: target.lng },
+    travelMode: google.maps.TravelMode.DRIVING,
+  }, (result, status) => {
+    if (status !== 'OK' || !result.routes || !result.routes[0]) return;
+    const path = result.routes[0].overview_path;
+    if (driverTrackPolyline) {
+      driverTrackPolyline.setPath(path);
+    } else {
+      driverTrackPolyline = new google.maps.Polyline({
+        path,
+        map,
+        strokeColor: '#f37a20',
+        strokeOpacity: 0.85,
+        strokeWeight: 4,
+        zIndex: 1,
+      });
+    }
+  });
+}
+
+function populateDispatcherOverlay(ride) {
+  const pickupEl  = document.getElementById('overlayPickup');
+  const dropoffEl = document.getElementById('overlayDropoff');
+  if (pickupEl)  pickupEl.textContent  = ride.pickup_addr || ride.actual_start_addr || '—';
+  if (dropoffEl) dropoffEl.textContent = ride.dest_addr || ride.actual_end_addr || '—';
+
+  if (ride.pickup_lat != null && ride.pickup_lng != null) {
+    currentPickupLat = parseFloat(ride.pickup_lat);
+    currentPickupLng = parseFloat(ride.pickup_lng);
+  }
+  if (ride.dest_lat != null && ride.dest_lng != null) {
+    currentDropLat = parseFloat(ride.dest_lat);
+    currentDropLng = parseFloat(ride.dest_lng);
+  }
+}
+
+async function loadDriverOverlayInfo(driverId) {
+  try {
+    const resp = await fetch(`api/get_live_drivers.php?driver_id=${encodeURIComponent(driverId)}`, { cache: 'no-store' });
+    if (!resp.ok) return;
+    const result = await resp.json();
+    if (!result.success || !result.data || !result.data.length) return;
+    const d = result.data[0];
+    const nameEl = document.getElementById('overlayDriverName');
+    const vehEl  = document.getElementById('overlayVehicle');
+    if (nameEl) nameEl.textContent = d.full_name || d.name || 'Driver';
+    if (vehEl) {
+      const parts = [d.vehicle_make, d.vehicle_number].filter(Boolean);
+      vehEl.textContent = parts.length ? parts.join(' · ') : '—';
+    }
+  } catch (e) {
+    console.warn('Could not load driver overlay info:', e);
+  }
+}
+
+function updateDispatcherOverlayFromDriver(loc) {
+  const nameEl = document.getElementById('overlayDriverName');
+  const vehEl  = document.getElementById('overlayVehicle');
+  if (nameEl && loc.full_name) nameEl.textContent = loc.full_name;
+  if (vehEl) {
+    const parts = [loc.vehicle_make, loc.vehicle_number].filter(Boolean);
+    if (parts.length) vehEl.textContent = parts.join(' · ');
+  }
+}
+
 function placeViewModeMarkers() {
   if (!map || !currentPickupLat || !currentPickupLng || !currentDropLat || !currentDropLng) return;
 
@@ -1751,6 +1931,7 @@ function buildDriverIcon(bearingDeg, rideStatus) {
   const s   = (rideStatus || '').toLowerCase();
   const col = ['on_trip','started','in_progress','trip_started'].includes(s)          ? '#3B82F6'
             : ['arrived_at_pickup','driver_arrived','arrived'].includes(s)             ? '#22C55E'
+            : ['assigned','accepted','driver_accepted'].includes(s)                    ? '#f37a20'
             : '#f37a20';
   const b   = Math.round((bearingDeg || 0) % 360);
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44"><g transform="translate(22,22) rotate(${b})"><ellipse cx="0" cy="1" rx="13" ry="11" fill="rgba(0,0,0,0.18)"/><rect x="-9" y="-12" width="18" height="24" rx="5" fill="${col}" stroke="white" stroke-width="1.5"/><rect x="-7" y="-10" width="14" height="8" rx="3" fill="rgba(255,255,255,0.45)"/><rect x="-6" y="6" width="12" height="5" rx="2" fill="rgba(255,255,255,0.25)"/><rect x="-14" y="-11" width="5" height="9" rx="2.5" fill="#1E293B"/><rect x="9" y="-11" width="5" height="9" rx="2.5" fill="#1E293B"/><rect x="-14" y="2" width="5" height="9" rx="2.5" fill="#1E293B"/><rect x="9" y="2" width="5" height="9" rx="2.5" fill="#1E293B"/><polygon points="0,-19 -5,-12 5,-12" fill="white" opacity="0.9"/></g></svg>`;
@@ -1833,12 +2014,14 @@ function handleRideStatusChange(oldStatus, newStatus) {
 
   if (isArrived) {
     if (driverRouteRenderer) driverRouteRenderer.setMap(null);
+    clearDriverTrack();
     showRideStatusNotification('Driver arrived at pickup', 'arrived');
     updateDispatcherOverlayStatus('Arrived at Pickup', '#22C55E');
   }
 
   if (isOnTrip && !routeProgressActive) {
     if (driverRouteRenderer) driverRouteRenderer.setMap(null);
+    clearDriverTrack();
     routeProgressActive = true;
     if (directionsRenderer) directionsRenderer.setOptions({ suppressPolylines: true });
     showRideStatusNotification('Trip in progress', 'on_trip');
