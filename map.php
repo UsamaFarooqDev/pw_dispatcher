@@ -88,9 +88,15 @@ require('modules/head.php');
       let driverAnimTimers = {};    // per-driver smooth animation timers
       let driverLastPositions = {}; // previous lat/lng for bearing computation
       let driverBearings = {};      // current bearing (heading) per driver
+      let driverRoutes = {};        // per-driver route polyline (the "track" to destination)
+      let driverRouteMeta = {};     // per-driver {targetKey, ts, fromLat, fromLng} to throttle Directions calls
+      let directionsService = null; // lazily created Google Directions client
       let allDrivers = [];
-      const UPDATE_INTERVAL = 5000; // 5-second polling for live feel
+      const UPDATE_INTERVAL = 3000; // poll cadence — tighter = closer to real-time
       const MARKER_ANIM_MS = UPDATE_INTERVAL; // glide across the whole interval so the car moves continuously
+      const TELEPORT_SNAP_METERS = 1000; // a jump larger than this can't be real movement in one interval → snap, don't drive across the map
+      const ROUTE_REFRESH_MS = 15000;   // re-route at most this often per driver (Directions API is metered)
+      const ROUTE_REDRAW_METERS = 150;  // ...or sooner once the car has moved this far along its track
       let updateIntervalId = null;
       let currentSearchQuery = '';
       let activeInfoWindow = null;
@@ -127,6 +133,8 @@ require('modules/head.php');
           ]
         });
 
+        directionsService = new google.maps.DirectionsService();
+
         // Once the user pans or zooms manually, stop auto-fitting the camera
         // so their selected view is preserved across polling refreshes.
         const markInteracted = () => { hasUserInteractedWithMap = true; };
@@ -152,6 +160,24 @@ require('modules/head.php');
         const y  = Math.sin(Δλ) * Math.cos(φ2);
         const x  = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
         return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+      }
+
+      // Human-readable "how fresh is this GPS fix" from an ISO timestamp.
+      // Returns { text, stale } — stale=true when the fix is old enough that the
+      // shown position should not be trusted as the driver's live location.
+      function formatUpdatedAgo(updatedAt) {
+        if (!updatedAt) return null;
+        const t = new Date(updatedAt).getTime();
+        if (isNaN(t)) return null;
+        const secs = Math.max(0, Math.round((Date.now() - t) / 1000));
+        const stale = secs > 120; // >2 min without a fix → treat position as not live
+        let text;
+        if (secs < 10)        text = 'just now';
+        else if (secs < 60)   text = secs + 's ago';
+        else if (secs < 3600) text = Math.round(secs / 60) + 'm ago';
+        else if (secs < 86400) text = Math.round(secs / 3600) + 'h ago';
+        else                  text = Math.round(secs / 86400) + 'd ago';
+        return { text, stale };
       }
 
       // Build a rotated top-down car SVG icon. Color varies by ride status.
@@ -187,6 +213,91 @@ require('modules/head.php');
           return true;
         }
         return false;
+      }
+
+      // Where is this driver headed? Returns the live leg's target (pickup before
+      // pickup, destination during the trip) or null for idle/available drivers,
+      // who have no destination and therefore no track to draw.
+      function tripDestinationFor(driver) {
+        const s = (driver.status || '').toLowerCase();
+        const onTrip    = ['on_trip', 'started', 'in_progress', 'trip_started'].includes(s);
+        const prePickup = ['assigned', 'accepted', 'driver_accepted', 'arrived_at_pickup', 'driver_arrived', 'arrived'].includes(s);
+        const num = (v) => (v != null && v !== '' && !isNaN(parseFloat(v))) ? parseFloat(v) : null;
+
+        let lat = null, lng = null, kind = null;
+        if (onTrip) {
+          lat = num(driver.dest_lat);   lng = num(driver.dest_lng);   kind = 'dest';
+          if (lat === null || lng === null) { lat = num(driver.pickup_lat); lng = num(driver.pickup_lng); kind = 'pickup'; }
+        } else if (prePickup) {
+          lat = num(driver.pickup_lat); lng = num(driver.pickup_lng); kind = 'pickup';
+          if (lat === null || lng === null) { lat = num(driver.dest_lat); lng = num(driver.dest_lng); kind = 'dest'; }
+        } else {
+          return null;
+        }
+        if (lat === null || lng === null) return null;
+        return { lat, lng, kind };
+      }
+
+      // Remove a driver's drawn track (and its throttle state).
+      function clearDriverRoute(driverId) {
+        if (driverRoutes[driverId]) {
+          driverRoutes[driverId].setMap(null);
+          delete driverRoutes[driverId];
+        }
+        delete driverRouteMeta[driverId];
+      }
+
+      // Draw / refresh the road route from the driver's current position to where
+      // they're going. Throttled so we don't hammer the (metered) Directions API:
+      // we re-route only when the destination changes, periodically, or once the
+      // car has advanced far enough along the existing track.
+      function maybeUpdateDriverRoute(driverId, fromLat, fromLng, driver) {
+        const target = tripDestinationFor(driver);
+        if (!target) { clearDriverRoute(driverId); return; }
+        if (!directionsService) return;
+
+        const targetKey = target.kind + ':' + target.lat.toFixed(5) + ',' + target.lng.toFixed(5);
+        const meta = driverRouteMeta[driverId];
+        const now  = Date.now();
+        let needs = false;
+        if (!meta || meta.targetKey !== targetKey) {
+          needs = true;                                   // first route or destination changed
+        } else if (now - meta.ts > ROUTE_REFRESH_MS) {
+          needs = true;                                   // periodic refresh
+        } else if (google.maps.geometry && google.maps.geometry.spherical) {
+          const moved = google.maps.geometry.spherical.computeDistanceBetween(
+            new google.maps.LatLng(meta.fromLat, meta.fromLng),
+            new google.maps.LatLng(fromLat, fromLng)
+          );
+          if (moved > ROUTE_REDRAW_METERS) needs = true;  // car advanced along the track
+        }
+        if (!needs) return;
+
+        // Reserve the throttle slot up front so overlapping polls don't double-fire.
+        driverRouteMeta[driverId] = { targetKey, ts: now, fromLat, fromLng };
+
+        directionsService.route({
+          origin:      { lat: fromLat, lng: fromLng },
+          destination: { lat: target.lat, lng: target.lng },
+          travelMode:  google.maps.TravelMode.DRIVING,
+        }, (result, status) => {
+          if (status !== 'OK' || !result.routes || !result.routes[0]) return;
+          // Driver may have gone idle / left while the request was in flight.
+          if (!tripDestinationFor(driver) && !driverMarkers[driverId]) { clearDriverRoute(driverId); return; }
+          const path = result.routes[0].overview_path;
+          if (driverRoutes[driverId]) {
+            driverRoutes[driverId].setPath(path);
+          } else {
+            driverRoutes[driverId] = new google.maps.Polyline({
+              path,
+              map,
+              strokeColor:   '#f37a20',
+              strokeOpacity: 0.85,
+              strokeWeight:  4,
+              zIndex:        1,
+            });
+          }
+        });
       }
 
       // Fetch all active drivers: on-trip (from rides table) + idle online (from drivers table)
@@ -276,6 +387,16 @@ require('modules/head.php');
               ${rating !== null ? row('bi-star-fill', 'Rating', `${rating} / 5`) : ''}
               ${completed !== null ? row('bi-check2-circle', 'Completed', `${completed} rides`) : ''}
               ${isOnTrip && driver.dest_addr ? row('bi-geo-alt-fill', 'Heading to', driver.dest_addr) : ''}
+              ${(() => {
+                const f = formatUpdatedAgo(driver.updated_at);
+                if (!f) return '';
+                const c = f.stale ? '#EF4444' : '#16A34A';
+                return `<div style="display:flex; align-items:center; gap:8px; margin-top:6px; font-size:12px;">
+                  <i class="bi bi-broadcast-pin" style="font-size:13px; color:#A1A1AA; width:14px;"></i>
+                  <span style="color:#71717A;">Last fix:</span>
+                  <span style="color:${c}; font-weight:600;">${f.text}${f.stale ? ' (stale)' : ''}</span>
+                </div>`;
+              })()}
             </div>
           </div>
         `;
@@ -317,6 +438,8 @@ require('modules/head.php');
             || (driver.lat != null && driver.lng != null
                 ? `${parseFloat(driver.lat).toFixed(4)}, ${parseFloat(driver.lng).toFixed(4)}`
                 : '');
+
+          const freshness = formatUpdatedAgo(driver.updated_at);
 
           const card = document.createElement('button');
           card.type = 'button';
@@ -360,6 +483,10 @@ require('modules/head.php');
               <i class="bi bi-telephone-fill" style="font-size:10px; color:#A1A1AA;"></i>
               <span style="font-size:11px; color:#52525B; font-weight:500;">${phone}</span>
             </div>` : ''}
+            ${freshness ? `<div style="margin-top:6px; display:flex; align-items:center; gap:6px;">
+              <i class="bi bi-broadcast-pin" style="font-size:10px; color:${freshness.stale ? '#EF4444' : '#16A34A'};"></i>
+              <span style="font-size:11px; color:${freshness.stale ? '#EF4444' : '#71717A'}; font-weight:500;">Last fix: ${freshness.text}${freshness.stale ? ' · stale' : ''}</span>
+            </div>` : ''}
           `;
 
           card.addEventListener('click', () => focusDriverOnMap(driver.id));
@@ -398,6 +525,7 @@ require('modules/head.php');
               cancelAnimationFrame(driverAnimTimers[driverId]);
               delete driverAnimTimers[driverId];
             }
+            clearDriverRoute(driverId);
             delete driverLastPositions[driverId];
             delete driverBearings[driverId];
           }
@@ -422,6 +550,12 @@ require('modules/head.php');
           driverBearings[driverId] = bearing;
 
           const icon = buildDriverIcon(bearing, driver.status);
+          // Fade drivers whose last GPS fix is stale so live cars stand out.
+          const freshness = formatUpdatedAgo(driver.updated_at);
+          const markerOpacity = (freshness && freshness.stale) ? 0.4 : 1.0;
+
+          // Draw / refresh the track to where this driver is headed (on-trip only).
+          maybeUpdateDriverRoute(driverId, lat, lng, driver);
 
           if (driverMarkers[driverId]) {
             const marker  = driverMarkers[driverId];
@@ -437,6 +571,26 @@ require('modules/head.php');
                 cancelAnimationFrame(driverAnimTimers[driverId]);
                 driverAnimTimers[driverId] = null;
               }
+
+              // Guard against teleports: when a previously-stale driver gets a fresh
+              // fix far from its last-known point (or GPS jitters wildly), snap to the
+              // new position instead of animating a car "driving" across the city.
+              let jumpMeters = 0;
+              if (google.maps.geometry && google.maps.geometry.spherical) {
+                jumpMeters = google.maps.geometry.spherical.computeDistanceBetween(
+                  new google.maps.LatLng(fromLat, fromLng),
+                  new google.maps.LatLng(lat, lng)
+                );
+              }
+              if (jumpMeters > TELEPORT_SNAP_METERS) {
+                marker.setPosition({ lat, lng });
+                if (!marker.getMap()) marker.setMap(map);
+                marker.setOpacity(markerOpacity);
+                if (marker.infoWindow) marker.infoWindow.setContent(buildDriverInfoContent(driver));
+                driverLastPositions[driverId] = { lat, lng };
+                return; // skip the glide for this driver this round
+              }
+
               // Glide across the full poll interval with requestAnimationFrame so
               // the car moves continuously (≈60 fps) instead of darting to the new
               // point and freezing until the next poll. A fresh poll cancels this
@@ -458,6 +612,7 @@ require('modules/head.php');
             }
 
             if (!marker.getMap()) marker.setMap(map);
+            marker.setOpacity(markerOpacity);
             if (marker.infoWindow) marker.infoWindow.setContent(buildDriverInfoContent(driver));
           } else {
             const marker = new google.maps.Marker({
@@ -465,6 +620,7 @@ require('modules/head.php');
               map,
               icon,
               title: driverName,
+              opacity: markerOpacity,
             });
             const infoWindow = new google.maps.InfoWindow({
               content: buildDriverInfoContent(driver),
@@ -503,6 +659,7 @@ require('modules/head.php');
           if (driverAnimTimers[id]) cancelAnimationFrame(driverAnimTimers[id]);
         });
         driverAnimTimers = {};
+        Object.keys(driverRoutes).forEach((id) => clearDriverRoute(id));
       }
 
       // Setup search functionality

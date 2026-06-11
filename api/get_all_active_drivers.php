@@ -51,7 +51,7 @@ try {
     // before the driver app has written its first location update to the ride.
     $activeRides = pgGet(
         $supabaseUrl . '/rest/v1/rides'
-        . '?select=id,driver_id,driver_lat,driver_lng,status,pickup_addr,dest_addr'
+        . '?select=id,driver_id,driver_lat,driver_lng,driver_heading,status,pickup_addr,dest_addr,pickup_lat,pickup_lng,dest_lat,dest_lng,updated_at'
         . '&status=in.(assigned,accepted,driver_accepted,arrived_at_pickup,driver_arrived,arrived,on_trip,started,in_progress,trip_started)'
         . '&driver_id=not.is.null',
         $supabaseKey
@@ -91,13 +91,19 @@ try {
             if ($lat === null || $lng === null) continue;
             if (abs($lat) > 90 || abs($lng) > 180) continue;
 
+            // Driver-reported compass heading from the trip (0–359). The driver app
+            // writes this to rides.driver_heading; it is the most accurate facing.
+            $heading = (isset($ride['driver_heading']) && $ride['driver_heading'] !== null && $ride['driver_heading'] !== '')
+                ? floatval($ride['driver_heading']) : 0;
+
             $name = $pr['full_name'] ?? 'Driver';
             $result[] = [
                 'id'             => $driverId,
                 'driver_id'      => $driverId,
                 'lat'            => $lat,
                 'lng'            => $lng,
-                'heading'        => 0,
+                'heading'        => $heading,
+                'updated_at'     => $ride['updated_at'] ?? null,
                 'full_name'      => $name,
                 'name'           => $name,
                 'phone'          => $pr['phone']          ?? '',
@@ -108,6 +114,10 @@ try {
                 'ride_id'        => $ride['id'],
                 'pickup_addr'    => $ride['pickup_addr']  ?? '',
                 'dest_addr'      => $ride['dest_addr']    ?? '',
+                'pickup_lat'     => isset($ride['pickup_lat']) ? floatval($ride['pickup_lat']) : null,
+                'pickup_lng'     => isset($ride['pickup_lng']) ? floatval($ride['pickup_lng']) : null,
+                'dest_lat'       => isset($ride['dest_lat'])   ? floatval($ride['dest_lat'])   : null,
+                'dest_lng'       => isset($ride['dest_lng'])   ? floatval($ride['dest_lng'])   : null,
                 'is_online'      => true,
             ];
             $seenDrivers[$driverId] = true;
@@ -129,6 +139,9 @@ try {
         if ($lat === null || $lng === null || is_nan($lat) || is_nan($lng)) continue;
         if (abs($lat) > 90 || abs($lng) > 180) continue;
 
+        // drivers has no heading column, so heading is derived client-side from
+        // successive GPS fixes. Surface the GPS freshness so the dispatcher can
+        // tell a live position from a stale last-known one.
         $name = $dr['full_name'] ?? $dr['name'] ?? 'Driver';
         $result[] = [
             'id'             => $driverId,
@@ -136,6 +149,7 @@ try {
             'lat'            => $lat,
             'lng'            => $lng,
             'heading'        => 0,
+            'updated_at'     => $dr['location_last_updated_at'] ?? $dr['last_active'] ?? $dr['updated_at'] ?? null,
             'full_name'      => $name,
             'name'           => $name,
             'phone'          => $dr['phone']          ?? '',
