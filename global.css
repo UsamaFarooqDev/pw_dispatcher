@@ -247,3 +247,31 @@ h1, h2, h3, h4, h5, h6 {
   outline: 2px solid #DC2626;
   outline-offset: 1px;
 }
+
+.complete-ride-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #16A34A;
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 6px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.complete-ride-btn i {
+  font-size: 11px;
+  line-height: 1;
+}
+.complete-ride-btn:hover {
+  background: #DCFCE7;
+  border-color: #86EFAC;
+}
+.complete-ride-btn:focus-visible {
+  outline: 2px solid #16A34A;
+  outline-offset: 1px;
+}

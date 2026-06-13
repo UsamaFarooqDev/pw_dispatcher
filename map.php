@@ -165,18 +165,20 @@ require('modules/head.php');
       // Human-readable "how fresh is this GPS fix" from an ISO timestamp.
       // Returns { text, stale } — stale=true when the fix is old enough that the
       // shown position should not be trusted as the driver's live location.
+      // Returns how long ago the driver last sent a GPS fix, plus a stale flag.
+      // "just now" covers up to 60 s — driver apps in background send roughly every 30 s.
+      // Stale threshold: > 2 min means the driver app is likely closed / offline.
       function formatUpdatedAgo(updatedAt) {
         if (!updatedAt) return null;
         const t = new Date(updatedAt).getTime();
         if (isNaN(t)) return null;
         const secs = Math.max(0, Math.round((Date.now() - t) / 1000));
-        const stale = secs > 120; // >2 min without a fix → treat position as not live
+        const stale = secs > 120;
         let text;
-        if (secs < 10)        text = 'just now';
-        else if (secs < 60)   text = secs + 's ago';
-        else if (secs < 3600) text = Math.round(secs / 60) + 'm ago';
+        if (secs < 60)         text = 'just now';
+        else if (secs < 3600)  text = Math.round(secs / 60) + 'm ago';
         else if (secs < 86400) text = Math.round(secs / 3600) + 'h ago';
-        else                  text = Math.round(secs / 86400) + 'd ago';
+        else                   text = Math.round(secs / 86400) + 'd ago';
         return { text, stale };
       }
 

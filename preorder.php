@@ -32,7 +32,7 @@ require('modules/head.php');
           <span class="po-tab__count" id="count-assigned">0</span>
         </button>
 
-        <button type="button" class="po-tab tab-btn" id="tab-on-trip" role="tab" aria-selected="false">
+        <button type="button" class="po-tab tab-btn" id="tab-on-trip" role="tab" aria-selected="false" style="display:none;">
           <i class="bi bi-car-front po-tab__icon"></i>
           <span class="po-tab__label">On Trip</span>
           <span class="po-tab__count" id="count-on-trip">0</span>
@@ -86,19 +86,19 @@ require('modules/head.php');
 
       <!-- Assigned -->
       <div id="pane-assigned" class="tab-pane-table" style="display:none;">
-        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
-          <table class="table mb-0" style="border-collapse:collapse;">
+        <div class="table-responsive rounded-2" style="border:1px solid #EBEBEB; min-height:362px; overflow-x:auto; overflow-y:hidden;">
+          <table class="table mb-0" style="border-collapse:collapse; min-width:1100px;">
             <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:120px;">Name</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:110px;">Order Time</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:200px;">Pickup</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:200px;">Destination</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Prebook</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Source</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Action</th>
+              <th class="fw-semibold text-nowrap px-4 py-2 text-end" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:300px;">Action</th>
             </tr></thead>
             <tbody id="assignedRidesBody"></tbody>
           </table>
@@ -1108,20 +1108,25 @@ require('modules/head.php');
             ride.dest_addr || ride.actual_end_addr || 'N/A';
           const status = ride.status || 'N/A';
           const fare = formatFare(ride.fare_eur, ride.estimate_fare);
+          const rawFare = ride.fare_eur != null ? parseFloat(ride.fare_eur) : (ride.estimate_fare != null ? parseFloat(ride.estimate_fare) : 0);
 
           const row = document.createElement('tr');
           row.innerHTML = `
             <td class="ps-3">${name}</td>
             <td>${orderTime}</td>
-            <td>${pickup}</td>
-            <td>${destination}</td>
+            <td style="white-space:normal; word-break:break-word;">${pickup}</td>
+            <td style="white-space:normal; word-break:break-word;">${destination}</td>
             <td>${renderAssignedStatusBadge(ride)}</td>
             <td>${renderPaymentBadge(ride.payment_method)}</td>
             <td>${renderPrebookBadge(ride)}</td>
             <td>${renderSourceBadge(ride.source)}</td>
             <td class="text-end pe-4">${fare}</td>
             <td class="text-end pe-4">
-              <div class="d-inline-flex align-items-center gap-2">
+              <div class="d-inline-flex align-items-center gap-2 flex-nowrap">
+                <button type="button" class="complete-ride-btn" onclick="completeRide('${encodeURIComponent(ride.id)}', ${rawFare})">
+                  <i class="bi bi-check-circle-fill"></i>
+                  <span>Complete</span>
+                </button>
                 <button type="button" class="unassign-btn" onclick="unassignRide('${encodeURIComponent(ride.id)}')">
                   <i class="bi bi-person-dash"></i>
                   <span>Unassign</span>
@@ -1168,6 +1173,36 @@ require('modules/head.php');
         } catch (err) {
           console.error('Unassign error:', err);
           showPreorderToast(err.message || 'Failed to unassign ride.', 'error');
+        }
+      }
+
+      async function completeRide(encodedRideId, fareEur) {
+        const rideId = decodeURIComponent(encodedRideId);
+        const fareLabel = fareEur > 0 ? `€${parseFloat(fareEur).toFixed(2)}` : 'the estimated fare';
+        const ok = await showConfirmDialog({
+          title: 'Mark ride as complete?',
+          message: `Estimated fare of <strong>${fareLabel}</strong> will be marked as the total charged. This action cannot be undone.`,
+          confirmText: 'Yes, complete ride',
+          cancelText: 'Cancel',
+        });
+        if (!ok) return;
+
+        try {
+          const response = await fetch('api/complete_ride.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ride_id: rideId, fare_eur: fareEur }),
+          });
+          if (response.status === 401) { window.location.href = '/'; return; }
+          const result = await response.json();
+          if (!response.ok || !result.success) {
+            throw new Error(result.error || 'Failed to complete ride');
+          }
+          await checkRideStatusChanges();
+          showPreorderToast('Ride marked as completed successfully.', 'success');
+        } catch (err) {
+          console.error('Complete ride error:', err);
+          showPreorderToast(err.message || 'Failed to complete ride.', 'error');
         }
       }
 
