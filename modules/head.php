@@ -14,4 +14,5 @@ if (!isset($pageTitle)) {
     <link rel="stylesheet" href="/global.css" />
     <script src="js/status-badge.js"></script>
     <script src="js/beep-monitor.js"></script>
+    <script src="js/searching-ride-beep.js"></script>
 </head>

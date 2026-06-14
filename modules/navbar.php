@@ -44,7 +44,14 @@ if ($user_name === '' && $user_email !== '') {
     </div>
 
 
-    <div class="dropdown ms-auto">
+    <div id="voiceReminderToggle" class="vr-toggle is-on ms-auto" role="switch" aria-checked="true" tabindex="0"
+         title="Continuously announce how many pre-orders still have no driver">
+      <i class="bi bi-volume-up-fill vr-toggle__icon" id="voiceReminderIcon"></i>
+      <span class="vr-toggle__label d-none d-md-inline">Reminders</span>
+      <span class="vr-toggle__track"><span class="vr-toggle__knob"></span></span>
+    </div>
+
+    <div class="dropdown ms-2">
       <div
         class="d-flex align-items-center gap-2 text-decoration-none"
         data-bs-toggle="dropdown"
@@ -123,6 +130,36 @@ if ($user_name === '' && $user_email !== '') {
   </div>
 </nav>
 
+<style>
+  /* Voice-reminder toggle switch — matches the app's orange accent */
+  .vr-toggle {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 12px; border-radius: 999px; border: 1.5px solid transparent;
+    cursor: pointer; user-select: none; white-space: nowrap;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .vr-toggle:hover { background: #FAFAFA; border-color: #EBEBEB; }
+  .vr-toggle:focus-visible { outline: none; border-color: #f37a20; }
+  .vr-toggle__icon { font-size: 15px; color: #A1A1AA; transition: color 0.15s; }
+  .vr-toggle.is-on .vr-toggle__icon { color: #f37a20; }
+  .vr-toggle__label { font-size: 0.8125rem; font-weight: 600; color: #52525B; }
+  /* The switch track + knob */
+  .vr-toggle__track {
+    position: relative; width: 34px; height: 19px; flex-shrink: 0;
+    background: #E4E4E7; border-radius: 999px; transition: background 0.18s;
+  }
+  .vr-toggle__knob {
+    position: absolute; top: 2px; left: 2px; width: 15px; height: 15px;
+    background: #fff; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+    transition: transform 0.18s;
+  }
+  .vr-toggle.is-on .vr-toggle__track { background: #f37a20; }
+  .vr-toggle.is-on .vr-toggle__knob { transform: translateX(15px); }
+  /* Brief pulse while a line is being spoken */
+  .vr-toggle.is-announcing .vr-toggle__track { box-shadow: 0 0 0 3px rgba(243,122,32,0.25); }
+</style>
+
+<script src="js/preorder-voice-reminder.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const sidebarToggle = document.getElementById('sidebarToggle');

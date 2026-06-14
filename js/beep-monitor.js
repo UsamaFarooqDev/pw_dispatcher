@@ -1,8 +1,8 @@
 (function () {
   'use strict';
 
-  const BEEP_INTERVAL_MS = 47000;
-  const BEEP_DELAY_MS = 47000;
+  const BEEP_INTERVAL_MS = 7000;
+  const BEEP_DELAY_MS = 7000;
   const BEEP_DURATION_SECONDS = 0.2;
   const STORAGE_KEY_RIDES = 'beeping_ride_ids';
   const STORAGE_KEY_ACTIVE = 'beep_active';
