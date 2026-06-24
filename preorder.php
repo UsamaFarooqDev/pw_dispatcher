@@ -1018,8 +1018,10 @@ require('modules/head.php');
       // Status badge for the Assigned tab. A scheduled ride shows whether the
       // driver has accepted (meta.driver_accepted); any other ride shows its real DB status.
       function renderAssignedStatusBadge(ride) {
+        const s = (ride.status || '').toLowerCase();
+        const driverActed = ['driver_accepted','accepted','arrived_at_pickup','driver_arrived','arrived','on_trip','started','in_progress','trip_started'].includes(s);
         if (isScheduledRide(ride)) {
-          return isDriverAccepted(ride)
+          return (driverActed || isDriverAccepted(ride))
             ? '<span class="rounded-pill px-2 py-1 fw-semibold" style="font-size:0.72rem; background:#F0FDF4; color:#16A34A; white-space:nowrap;">Accepted</span>'
             : '<span class="rounded-pill px-2 py-1 fw-semibold" style="font-size:0.72rem; background:#FEF3C7; color:#D97706; white-space:nowrap;">Awaiting Acceptance</span>';
         }

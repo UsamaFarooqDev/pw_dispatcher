@@ -208,54 +208,62 @@ try {
     $db = new SupabaseDB(null, true);
 
     $phoneNumber = trim($input['phone_number']);
-    if (!preg_match('/^\+/', $phoneNumber)) {
-
-    }
-
-    $passengers = $db->findData('passengers', ['phone' => $phoneNumber]);
+    $skipPassengerLookup = !empty($input['skip_passenger_lookup']);
     $userId = null;
 
-    if (!empty($passengers)) {
-        $userId = $passengers[0]['id'];
+    if ($skipPassengerLookup) {
+        // Dispatcher typed a custom name — no passenger record needed.
+        // user_id stays null; passenger_name & passenger_phone go on the ride.
+        $userId = null;
     } else {
-        $userEmail = isset($input['email']) ? $input['email'] : null;
-        try {
-            $authUser = createSupabaseUser($userEmail, $phoneNumber);
-            $userId = $authUser['id'];
-        } catch (Exception $e) {
-            try {
-                $tempEmail = $userEmail ?: $phoneNumber . '@temp.passenger';
-                $authUser = getUserByEmail($tempEmail);
-                $userId = $authUser['id'];
-            } catch (Exception $e2) {
-                http_response_code(500);
-                echo json_encode([
-                    'success' => false,
-                    'error' => 'Failed to create or find user: ' . $e->getMessage(),
-                    'data' => null
-                ], JSON_PRETTY_PRINT);
-                exit;
-            }
+        if (!preg_match('/^\+/', $phoneNumber)) {
+
         }
 
+        $passengers = $db->findData('passengers', ['phone' => $phoneNumber]);
 
-        $passengerData = [
-            'id' => $userId, // Use the user ID from Auth
-            'phone' => $phoneNumber,
-            'name' => $input['customer_name'],
-            'email' => $userEmail,
-            'is_email_verified' => false
-        ];
+        if (!empty($passengers)) {
+            $userId = $passengers[0]['id'];
+        } else {
+            $userEmail = isset($input['email']) ? $input['email'] : null;
+            try {
+                $authUser = createSupabaseUser($userEmail, $phoneNumber);
+                $userId = $authUser['id'];
+            } catch (Exception $e) {
+                try {
+                    $tempEmail = $userEmail ?: $phoneNumber . '@temp.passenger';
+                    $authUser = getUserByEmail($tempEmail);
+                    $userId = $authUser['id'];
+                } catch (Exception $e2) {
+                    http_response_code(500);
+                    echo json_encode([
+                        'success' => false,
+                        'error' => 'Failed to create or find user: ' . $e->getMessage(),
+                        'data' => null
+                    ], JSON_PRETTY_PRINT);
+                    exit;
+                }
+            }
 
-        try {
-            $newPassenger = $db->insertData('passengers', $passengerData);
-        } catch (Exception $e) {
 
-            $existingPassengers = $db->findData('passengers', ['id' => $userId]);
-            if (!empty($existingPassengers)) {
-                $userId = $existingPassengers[0]['id'];
-            } else {
-                throw $e;
+            $passengerData = [
+                'id' => $userId,
+                'phone' => $phoneNumber,
+                'name' => $input['customer_name'],
+                'email' => $userEmail,
+                'is_email_verified' => false
+            ];
+
+            try {
+                $newPassenger = $db->insertData('passengers', $passengerData);
+            } catch (Exception $e) {
+
+                $existingPassengers = $db->findData('passengers', ['id' => $userId]);
+                if (!empty($existingPassengers)) {
+                    $userId = $existingPassengers[0]['id'];
+                } else {
+                    throw $e;
+                }
             }
         }
     }
@@ -339,6 +347,7 @@ try {
     $metaData = [
         'seats' => intval($input['seats']),
         'customer_name' => $input['customer_name'],
+        'customer_phone' => $phoneNumber,
         'scheduled_date' => $scheduledDate,
         'scheduled_time' => $scheduledTime,
         'scheduled_datetime' => $scheduledDateTime,
@@ -445,7 +454,6 @@ try {
     }
 
     $rideData = [
-        'user_id' => $userId,
         'pickup_lat' => floatval($input['pickup_lat']),
         'pickup_lng' => floatval($input['pickup_lng']),
         'pickup_addr' => $input['pickup_addr'],
@@ -467,6 +475,10 @@ try {
         'driver_heading' => 0,
         'tip_amount' => '0'
     ];
+
+    if ($userId !== null) {
+        $rideData['user_id'] = $userId;
+    }
 
     $newRide = $db->insertData('rides', $rideData);
 

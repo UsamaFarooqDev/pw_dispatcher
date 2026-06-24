@@ -44,6 +44,116 @@ foreach ($rideTypes as $t) {
 .toast {
   pointer-events: auto;
 }
+.country-code-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #FAFAFA;
+  border: 1.5px solid #EBEBEB;
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  padding: 0 10px;
+  height: 38px;
+  font-size: 0.845rem;
+  color: #18181B;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.country-code-btn:hover { background: #F4F4F5; }
+.country-code-btn img { border-radius: 2px; }
+.country-code-btn .bi-chevron-down { font-size: 9px; color: #A1A1AA; margin-left: 2px; }
+.country-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1050;
+  min-width: 280px;
+  max-height: 300px;
+  background: #fff;
+  border: 1.5px solid #EBEBEB;
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+  margin-top: 4px;
+  overflow: hidden;
+}
+.country-search {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #F4F4F5;
+  padding: 10px 12px;
+  font-size: 0.83rem;
+  outline: none;
+  background: #FAFAFA;
+}
+.country-search:focus { background: #fff; }
+.country-options {
+  max-height: 240px;
+  overflow-y: auto;
+}
+.country-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  font-size: 0.83rem;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  color: #18181B;
+}
+.country-option:hover { background: #FFF7ED; }
+.country-option.is-selected { background: #FFF7ED; font-weight: 600; }
+.country-option img { border-radius: 2px; flex-shrink: 0; }
+.country-option .dial { color: #71717A; margin-left: auto; font-size: 0.8rem; }
+.pax-mode-toggle {
+  display: inline-flex;
+  background: #F4F4F5;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+.pax-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #71717A;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pax-mode-btn:hover { color: #f37a20; }
+.pax-mode-btn.is-active { background: #f37a20; color: #fff; box-shadow: 0 1px 3px rgba(243,122,32,0.25); }
+.pax-mode-btn i { font-size: 13px; }
+.pax-selected-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #F0FDF4;
+  border: 1.5px solid #BBF7D0;
+  border-radius: 8px;
+  height: 38px;
+}
+.pax-selected-card .pax-name { font-weight: 600; font-size: 0.845rem; color: #16A34A; }
+.pax-selected-card .pax-clear {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #71717A;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 2px;
+  line-height: 1;
+}
+.pax-selected-card .pax-clear:hover { color: #DC2626; }
 </style>
   </head> 
   <body>
@@ -60,22 +170,77 @@ foreach ($rideTypes as $t) {
         <span>Passenger Details</span>
       </div>
 
+      <input type="hidden" id="customerId" />
+      <input type="hidden" id="passengerMode" value="existing" />
+
       <div class="row g-3 mt-1 mb-3">
-        <div class="col-md-6 position-relative">
-          <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Passenger Name</label>
-          <input type="text" class="form-control" placeholder="Type to search passenger"
-            id="customerNameInput" autocomplete="off"
+        <!-- EXISTING mode: search + select from DB -->
+        <div class="col-md-6 position-relative" id="paxExistingPane">
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <label class="form-label fw-semibold mb-0" style="font-size:0.8125rem; color:#18181B;">Passenger Name</label>
+            <div class="pax-mode-toggle">
+              <button type="button" class="pax-mode-btn is-active" id="paxModeExisting" onclick="switchPaxMode('existing')">
+                <i class="bi bi-search"></i> Existing
+              </button>
+              <button type="button" class="pax-mode-btn" id="paxModeCustom" onclick="switchPaxMode('custom')">
+                <i class="bi bi-person-plus"></i> New
+              </button>
+            </div>
+          </div>
+          <!-- Search input (hidden once a passenger is selected) -->
+          <div id="paxSearchWrapper">
+            <input type="text" class="form-control" placeholder="Type name to search..."
+              id="customerNameInput" autocomplete="off"
+              style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; color:#18181B; background:#FAFAFA;"
+              onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+              onblur="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA'; this.style.boxShadow='none';" />
+            <div id="customerSuggestions" class="list-group position-absolute w-100"
+              style="z-index:10; max-height:200px; overflow-y:auto; display:none; border:1.5px solid #EBEBEB; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.10); top:100%; margin-top:4px;"></div>
+          </div>
+          <!-- Selected passenger card (hidden until one is picked) -->
+          <div id="paxSelectedCard" class="pax-selected-card" style="display:none;">
+            <i class="bi bi-person-check-fill" style="color:#16A34A; font-size:16px;"></i>
+            <span class="pax-name" id="paxSelectedName"></span>
+            <button type="button" class="pax-clear" title="Change passenger" onclick="clearSelectedPassenger()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- CUSTOM mode: just type a name -->
+        <div class="col-md-6" id="paxCustomPane" style="display:none;">
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <label class="form-label fw-semibold mb-0" style="font-size:0.8125rem; color:#18181B;">Passenger Name</label>
+            <div class="pax-mode-toggle">
+              <button type="button" class="pax-mode-btn" id="paxModeExisting2" onclick="switchPaxMode('existing')">
+                <i class="bi bi-search"></i> Existing
+              </button>
+              <button type="button" class="pax-mode-btn is-active" id="paxModeCustom2" onclick="switchPaxMode('custom')">
+                <i class="bi bi-person-plus"></i> New
+              </button>
+            </div>
+          </div>
+          <input type="text" class="form-control" placeholder="Enter passenger name"
+            id="customPassengerName" autocomplete="off"
             style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; color:#18181B; background:#FAFAFA;"
             onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
             onblur="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA'; this.style.boxShadow='none';" />
-          <input type="hidden" id="customerId" />
-          <div id="customerSuggestions" class="list-group position-absolute w-100"
-            style="z-index:10; max-height:200px; overflow-y:auto; display:none; border:1.5px solid #EBEBEB; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.10); top:100%; margin-top:4px;"></div>
         </div>
+
         <div class="col-md-6">
           <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Phone Number</label>
           <div class="input-group" style="height:38px;">
-            <span class="input-group-text" style="background:#FAFAFA; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; font-size:0.845rem; color:#71717A; height:38px;">+353</span>
+            <div style="position:relative;" id="countryCodeWrapper">
+              <button type="button" class="country-code-btn" id="countryCodeBtn">
+                <img src="https://flagcdn.com/w20/ie.png" width="20" height="15" alt="IE" id="selectedFlag">
+                <span id="selectedDialCode">+353</span>
+                <i class="bi bi-chevron-down"></i>
+              </button>
+              <div class="country-dropdown" id="countryDropdown">
+                <input type="text" class="country-search" id="countrySearch" placeholder="Search country...">
+                <div class="country-options" id="countryOptions"></div>
+              </div>
+            </div>
             <input type="tel" class="form-control" id="customerPhone"
               style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px; background:#FAFAFA;"
               onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
@@ -899,6 +1064,39 @@ foreach ($rideTypes as $t) {
         }
       }
 
+      // ── Passenger mode switching ──
+      function switchPaxMode(mode) {
+        document.getElementById('passengerMode').value = mode;
+        document.getElementById('paxModeExisting').classList.toggle('is-active', mode === 'existing');
+        document.getElementById('paxModeCustom').classList.toggle('is-active', mode === 'custom');
+        document.getElementById('paxModeExisting2').classList.toggle('is-active', mode === 'existing');
+        document.getElementById('paxModeCustom2').classList.toggle('is-active', mode === 'custom');
+        document.getElementById('paxExistingPane').style.display = mode === 'existing' ? '' : 'none';
+        document.getElementById('paxCustomPane').style.display = mode === 'custom' ? '' : 'none';
+
+        // Reset state when switching
+        selectedPassengerId = null;
+        document.getElementById('customerId').value = '';
+        document.getElementById('customerNameInput').value = '';
+        document.getElementById('customPassengerName').value = '';
+        document.getElementById('customerPhone').value = '';
+        document.getElementById('customerSuggestions').style.display = 'none';
+        document.getElementById('paxSelectedCard').style.display = 'none';
+        document.getElementById('paxSearchWrapper').style.display = '';
+        if (typeof selectCountry === 'function') selectCountry('ie');
+      }
+
+      function clearSelectedPassenger() {
+        selectedPassengerId = null;
+        document.getElementById('customerId').value = '';
+        document.getElementById('customerNameInput').value = '';
+        document.getElementById('customerPhone').value = '';
+        document.getElementById('paxSelectedCard').style.display = 'none';
+        document.getElementById('paxSearchWrapper').style.display = '';
+        if (typeof selectCountry === 'function') selectCountry('ie');
+        document.getElementById('customerNameInput').focus();
+      }
+
       function setupCustomerAutocomplete() {
         const nameInput = document.getElementById('customerNameInput');
         const phoneInput = document.getElementById('customerPhone');
@@ -912,16 +1110,24 @@ foreach ($rideTypes as $t) {
             return;
           }
           items.forEach((p) => {
+            const displayName = p.name || p.full_name || 'Unknown';
+            const displayPhone = p.phone || p.phone_number || '';
             const div = document.createElement('button');
             div.type = 'button';
             div.className = 'list-group-item list-group-item-action';
-            div.textContent = p.name || p.full_name || 'Unknown';
+            div.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 12px;';
+            div.innerHTML = '<span style="font-weight:600; font-size:0.84rem; color:#18181B;">' + displayName + '</span>' +
+              (displayPhone ? '<span style="font-size:0.78rem; color:#71717A;">' + displayPhone + '</span>' : '');
             div.addEventListener('click', () => {
-              nameInput.value = p.name || p.full_name || '';
-              phoneInput.value = (p.phone || p.phone_number || '').replace('+353', '');
+              nameInput.value = displayName;
+              setPhoneFromFullNumber(displayPhone);
               customerIdInput.value = p.id || '';
               selectedPassengerId = p.id || null;
               suggestions.style.display = 'none';
+              // Show selected card, hide search input
+              document.getElementById('paxSelectedName').textContent = displayName;
+              document.getElementById('paxSelectedCard').style.display = 'flex';
+              document.getElementById('paxSearchWrapper').style.display = 'none';
             });
             suggestions.appendChild(div);
           });
@@ -931,6 +1137,8 @@ foreach ($rideTypes as $t) {
         let debounceTimer = null;
         nameInput.addEventListener('input', (e) => {
           clearTimeout(debounceTimer);
+          selectedPassengerId = null;
+          customerIdInput.value = '';
           const term = e.target.value.toLowerCase();
           debounceTimer = setTimeout(() => {
             if (!term) {
@@ -1453,8 +1661,11 @@ function setButtonLoading(isLoading, customText = null) {
 }
 
 async function createOrder() {
-  const passengerId = selectedPassengerId;
-  const customerName = document.getElementById('customerNameInput')?.value?.trim() || '';
+  const paxMode = document.getElementById('passengerMode')?.value || 'existing';
+  const passengerId = paxMode === 'existing' ? selectedPassengerId : null;
+  const customerName = paxMode === 'existing'
+    ? (document.getElementById('customerNameInput')?.value?.trim() || '')
+    : (document.getElementById('customPassengerName')?.value?.trim() || '');
   const phoneRaw = document.getElementById('customerPhone')?.value?.trim() || '';
   const serviceType = document.getElementById('serviceType')?.value || 'Economy';
   const seats = document.getElementById('seatCount')?.value || '';
@@ -1475,14 +1686,20 @@ async function createOrder() {
   }
   const pickupTimeStr = buildPickupDateTime();
 
+  const dialCode = document.getElementById('selectedDialCode')?.textContent || '+353';
   const phone = phoneRaw
-    ? phoneRaw.startsWith('+353')
+    ? phoneRaw.startsWith('+')
       ? phoneRaw
-      : '+353' + phoneRaw.replace(/^0+/, '')
+      : dialCode + phoneRaw.replace(/^0+/, '')
     : '';
 
   if (!customerName) {
-    showToast('Please select a customer');
+    showToast(paxMode === 'existing' ? 'Please search and select a passenger' : 'Please enter passenger name');
+    return;
+  }
+
+  if (paxMode === 'existing' && !passengerId) {
+    showToast('Please select a passenger from the search results');
     return;
   }
 
@@ -1516,11 +1733,12 @@ async function createOrder() {
         const paymentMethod = (paymentChoice && paymentChoice.value === 'stripe') ? 'prepaid' : 'cash';
 
         const payload = {
-          user_id: passengerId,
+          user_id: passengerId || null,
           customer_name: customerName,
           phone_number: phone,
           passenger_name: customerName,
           passenger_phone: phone,
+          skip_passenger_lookup: paxMode === 'custom',
           service_type: serviceType,
           seats,
           date: rideDateVal,
@@ -1612,8 +1830,11 @@ modal.show();
       });
 
       window.clearAllFields = function clearAllFields() {
+        // Reset passenger mode to Existing
+        if (typeof switchPaxMode === 'function') switchPaxMode('existing');
+
         const textIds = [
-          'customerNameInput', 'customerPhone', 'customerId',
+          'customerNameInput', 'customPassengerName', 'customerPhone', 'customerId',
           'pickupInput', 'dropoffInput',
           'estimatedFare', 'distanceKm', 'travelTime',
           'rideDate', 'rideTime',
@@ -1626,6 +1847,9 @@ modal.show();
         // Reset cached route/fare state so a new order starts clean
         currentDistance = currentDuration = currentFare = null;
         googleDistance = googleDuration = googleFare = null;
+
+        // Reset country code selector to Ireland
+        if (typeof selectCountry === 'function') selectCountry('ie');
 
         // Reset pill groups: Service Type → Economy, Seats → none
         const serviceTypeInput = document.getElementById('serviceType');
@@ -1689,6 +1913,124 @@ modal.show();
         const firstField = document.getElementById('customerNameInput');
         if (firstField) firstField.focus();
       };
+
+      // ── Country-code selector ──
+      const COUNTRY_LIST = [
+        { iso: 'ie', name: 'Ireland',        dial: '+353' },
+        { iso: 'gb', name: 'United Kingdom', dial: '+44'  },
+        { iso: 'us', name: 'United States',  dial: '+1'   },
+        { iso: 'pl', name: 'Poland',         dial: '+48'  },
+        { iso: 'ro', name: 'Romania',        dial: '+40'  },
+        { iso: 'lt', name: 'Lithuania',       dial: '+370' },
+        { iso: 'lv', name: 'Latvia',         dial: '+371' },
+        { iso: 'ee', name: 'Estonia',        dial: '+372' },
+        { iso: 'de', name: 'Germany',        dial: '+49'  },
+        { iso: 'fr', name: 'France',         dial: '+33'  },
+        { iso: 'es', name: 'Spain',          dial: '+34'  },
+        { iso: 'it', name: 'Italy',          dial: '+39'  },
+        { iso: 'pt', name: 'Portugal',       dial: '+351' },
+        { iso: 'nl', name: 'Netherlands',    dial: '+31'  },
+        { iso: 'be', name: 'Belgium',        dial: '+32'  },
+        { iso: 'at', name: 'Austria',        dial: '+43'  },
+        { iso: 'ch', name: 'Switzerland',    dial: '+41'  },
+        { iso: 'se', name: 'Sweden',         dial: '+46'  },
+        { iso: 'dk', name: 'Denmark',        dial: '+45'  },
+        { iso: 'no', name: 'Norway',         dial: '+47'  },
+        { iso: 'fi', name: 'Finland',        dial: '+358' },
+        { iso: 'cz', name: 'Czech Republic', dial: '+420' },
+        { iso: 'hu', name: 'Hungary',        dial: '+36'  },
+        { iso: 'sk', name: 'Slovakia',       dial: '+421' },
+        { iso: 'hr', name: 'Croatia',        dial: '+385' },
+        { iso: 'bg', name: 'Bulgaria',       dial: '+359' },
+        { iso: 'in', name: 'India',          dial: '+91'  },
+        { iso: 'pk', name: 'Pakistan',       dial: '+92'  },
+        { iso: 'ng', name: 'Nigeria',        dial: '+234' },
+        { iso: 'za', name: 'South Africa',   dial: '+27'  },
+        { iso: 'ph', name: 'Philippines',    dial: '+63'  },
+        { iso: 'br', name: 'Brazil',         dial: '+55'  },
+        { iso: 'au', name: 'Australia',      dial: '+61'  },
+        { iso: 'cn', name: 'China',          dial: '+86'  },
+        { iso: 'ca', name: 'Canada',         dial: '+1'   },
+      ];
+
+      function selectCountry(iso) {
+        const c = COUNTRY_LIST.find(x => x.iso === iso);
+        if (!c) return;
+        document.getElementById('selectedFlag').src = 'https://flagcdn.com/w20/' + c.iso + '.png';
+        document.getElementById('selectedFlag').alt = c.iso.toUpperCase();
+        document.getElementById('selectedDialCode').textContent = c.dial;
+        document.getElementById('countryDropdown').style.display = 'none';
+        document.querySelectorAll('#countryOptions .country-option').forEach(el => {
+          el.classList.toggle('is-selected', el.dataset.iso === iso);
+        });
+      }
+
+      function setPhoneFromFullNumber(fullPhone) {
+        const phoneInput = document.getElementById('customerPhone');
+        if (!fullPhone) { phoneInput.value = ''; return; }
+        const sorted = [...COUNTRY_LIST].sort((a, b) => b.dial.length - a.dial.length);
+        for (const c of sorted) {
+          if (fullPhone.startsWith(c.dial)) {
+            selectCountry(c.iso);
+            phoneInput.value = fullPhone.slice(c.dial.length);
+            return;
+          }
+        }
+        phoneInput.value = fullPhone.replace(/^\+/, '');
+      }
+
+      (function initCountrySelector() {
+        const btn = document.getElementById('countryCodeBtn');
+        const dropdown = document.getElementById('countryDropdown');
+        const search = document.getElementById('countrySearch');
+        const optionsContainer = document.getElementById('countryOptions');
+
+        function renderOptions(filter) {
+          const q = (filter || '').toLowerCase();
+          optionsContainer.innerHTML = '';
+          const selected = document.getElementById('selectedDialCode').textContent;
+          COUNTRY_LIST.filter(c =>
+            !q || c.name.toLowerCase().includes(q) || c.dial.includes(q) || c.iso.includes(q)
+          ).forEach(c => {
+            const el = document.createElement('button');
+            el.type = 'button';
+            el.className = 'country-option' + (c.dial === selected && c.iso === document.getElementById('selectedFlag').alt.toLowerCase() ? ' is-selected' : '');
+            el.dataset.iso = c.iso;
+            el.innerHTML = '<img src="https://flagcdn.com/w20/' + c.iso + '.png" width="20" height="15" alt="' + c.iso.toUpperCase() + '"> ' +
+              '<span>' + c.name + '</span>' +
+              '<span class="dial">' + c.dial + '</span>';
+            el.addEventListener('click', () => {
+              selectCountry(c.iso);
+              document.getElementById('customerPhone').focus();
+            });
+            optionsContainer.appendChild(el);
+          });
+        }
+
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const open = dropdown.style.display === 'block';
+          dropdown.style.display = open ? 'none' : 'block';
+          if (!open) {
+            search.value = '';
+            renderOptions('');
+            setTimeout(() => search.focus(), 50);
+          }
+        });
+
+        search.addEventListener('input', (e) => {
+          renderOptions(e.target.value);
+        });
+        search.addEventListener('click', (e) => e.stopPropagation());
+
+        document.addEventListener('click', (e) => {
+          if (!document.getElementById('countryCodeWrapper').contains(e.target)) {
+            dropdown.style.display = 'none';
+          }
+        });
+
+        renderOptions('');
+      })();
     </script>
   </body>
 </html>

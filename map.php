@@ -16,7 +16,53 @@ require('modules/head.php');
 
   <?php @require('modules/bodyHeader.php'); ?>
 
-  <div class="d-flex gap-3 mt-4" style="height:calc(100vh - 140px);">
+  <!-- View toggle -->
+  <div class="d-flex align-items-center gap-2 mt-4 mb-3">
+    <button type="button" class="map-view-toggle is-active" id="btnTableView" onclick="switchMapView('table')">
+      <i class="bi bi-table"></i> <span>Live Driver Coordinates</span>
+    </button>
+    <button type="button" class="map-view-toggle" id="btnMapView" onclick="switchMapView('map')">
+      <i class="bi bi-map"></i> <span>Live Map</span>
+    </button>
+    <span id="tableOnlineCount" class="d-inline-flex align-items-center gap-1 fw-semibold ms-auto" style="font-size:0.75rem; color:#22C55E; background:#F0FDF4; border:1px solid #DCFCE7; padding:4px 10px; border-radius:999px;">
+      <span style="width:6px; height:6px; border-radius:50%; background:#22C55E; display:inline-block;"></span>
+      <span id="tableOnlineCountVal">0</span> active drivers
+    </span>
+  </div>
+
+  <!-- TABLE VIEW (default) -->
+  <div id="viewTable" class="rounded-3 border overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+    <div class="p-3 d-flex align-items-center gap-3" style="border-bottom:1px solid #F4F4F5;">
+      <div class="position-relative" style="max-width:280px; flex:1;">
+        <i class="bi bi-search position-absolute top-50 translate-middle-y" style="left:11px; font-size:12px; color:#A1A1AA; pointer-events:none;"></i>
+        <input type="text" id="tableSearchInput" placeholder="Search by name, email, phone..." class="form-control"
+          style="height:36px; border:1px solid #E4E4E7; border-radius:8px; padding-left:32px; font-size:0.8125rem; background:#FAFAFA; color:#18181B;"
+          onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+          onblur="this.style.borderColor='#E4E4E7'; this.style.background='#FAFAFA'; this.style.boxShadow='none';" />
+      </div>
+    </div>
+    <div class="table-responsive" style="max-height:calc(100vh - 260px); overflow-y:auto;">
+      <table class="table mb-0" style="border-collapse:collapse; min-width:900px;">
+        <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB; position:sticky; top:0; z-index:2;">
+          <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:160px;">Driver Name</th>
+          <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:180px;">Email</th>
+          <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Phone</th>
+          <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+          <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Latitude</th>
+          <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Longitude</th>
+          <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:200px;">Last Location</th>
+          <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Last Fix</th>
+        </tr></thead>
+        <tbody id="driverTableBody">
+          <tr><td colspan="8" class="text-center py-4 text-muted">Loading drivers...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MAP VIEW (hidden by default) -->
+  <div id="viewMap" style="display:none; height:calc(100vh - 200px);">
+  <div class="d-flex gap-3" style="height:100%;">
 
     <div class="position-relative flex-grow-1 rounded-3 overflow-hidden" style="border:1.5px solid #EBEBEB; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
       <div id="map" style="width:100%; height:100%; border:0;"></div>
@@ -67,6 +113,7 @@ require('modules/head.php');
     </div>
 
   </div>
+  </div><!-- /viewMap -->
 
 </main>
 
@@ -78,6 +125,20 @@ require('modules/head.php');
   .orange-switch:focus {
     box-shadow: 0 0 0 3px rgba(243,122,32,0.15) !important;
   }
+  .map-view-toggle {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 14px; font-size: 0.82rem; font-weight: 600;
+    border-radius: 8px; border: 1.5px solid #E4E4E7;
+    background: #fff; color: #71717A; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .map-view-toggle:hover { border-color: #f37a20; color: #f37a20; }
+  .map-view-toggle.is-active { background: #18181B; color: #fff; border-color: #18181B; }
+  .map-view-toggle.is-active:hover { background: #27272A; border-color: #27272A; }
+  #driverTableBody tr { border-bottom: 1px solid #F4F4F5; transition: background 0.12s; }
+  #driverTableBody tr:hover { background: #FAFAFA; }
+  #driverTableBody td { padding: 12px 16px; font-size: 0.845rem; color: #18181B; vertical-align: middle; }
+  .driver-status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
 </style>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9ea0A-mjnD5iHfT9X8Dn5YYH4_KZopLI&libraries=geometry" async defer></script>
@@ -689,15 +750,173 @@ require('modules/head.php');
         });
       }
 
+      // ── View toggle (Table vs Map) ──
+      let currentView = 'table';
+      let mapInitialized = false;
+      let tablePollingId = null;
+      let tableSearchQuery = '';
+
+      function switchMapView(view) {
+        currentView = view;
+        document.getElementById('viewTable').style.display = view === 'table' ? '' : 'none';
+        document.getElementById('viewMap').style.display = view === 'map' ? '' : 'none';
+        document.getElementById('btnTableView').classList.toggle('is-active', view === 'table');
+        document.getElementById('btnMapView').classList.toggle('is-active', view === 'map');
+
+        if (view === 'map' && !mapInitialized) {
+          mapInitialized = true;
+          initMap();
+          setupSearch();
+        } else if (view === 'map' && mapInitialized) {
+          google.maps.event.trigger(map, 'resize');
+        }
+
+        if (view === 'table') {
+          loadTableDrivers();
+          startTablePolling();
+        } else {
+          stopTablePolling();
+        }
+      }
+
+      function startTablePolling() {
+        stopTablePolling();
+        tablePollingId = setInterval(loadTableDrivers, UPDATE_INTERVAL);
+      }
+      function stopTablePolling() {
+        if (tablePollingId) { clearInterval(tablePollingId); tablePollingId = null; }
+      }
+
+      const geocodeCache = {};
+      let geocoder = null;
+
+      function reverseGeocode(lat, lng, callback) {
+        const key = parseFloat(lat).toFixed(4) + ',' + parseFloat(lng).toFixed(4);
+        if (geocodeCache[key]) { callback(geocodeCache[key]); return; }
+        if (!geocoder) {
+          if (typeof google === 'undefined' || !google.maps) { callback(null); return; }
+          geocoder = new google.maps.Geocoder();
+        }
+        geocoder.geocode({ location: { lat: parseFloat(lat), lng: parseFloat(lng) } }, (results, status) => {
+          if (status === 'OK' && results && results[0]) {
+            geocodeCache[key] = results[0].formatted_address;
+            callback(geocodeCache[key]);
+          } else {
+            callback(null);
+          }
+        });
+      }
+
+      async function loadTableDrivers() {
+        try {
+          const res = await fetch('api/get_all_active_drivers.php', { cache: 'no-store' });
+          if (res.status === 401) { window.location.href = '/'; return; }
+          const data = await res.json();
+          if (data.success && data.data) {
+            const drivers = data.data.filter(d => d.lat != null && d.lng != null);
+            renderDriverTable(drivers);
+          }
+        } catch (e) { console.error('Table driver fetch error:', e); }
+      }
+
+      function renderDriverTable(drivers) {
+        const tbody = document.getElementById('driverTableBody');
+        const countEl = document.getElementById('tableOnlineCountVal');
+        if (countEl) countEl.textContent = drivers.length;
+
+        const q = tableSearchQuery.toLowerCase().trim();
+        const filtered = q ? drivers.filter(d => {
+          const name = (d.full_name || d.name || '').toLowerCase();
+          const email = (d.email || '').toLowerCase();
+          const phone = (d.phone || '').toLowerCase();
+          return name.includes(q) || email.includes(q) || phone.includes(q);
+        }) : drivers;
+
+        if (!filtered.length) {
+          tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">No active drivers found</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = '';
+        filtered.forEach(d => {
+          const name = d.full_name || d.name || 'Driver';
+          const email = d.email || '—';
+          const phone = d.phone || '—';
+          const lat = d.lat != null ? parseFloat(d.lat).toFixed(6) : '—';
+          const lng = d.lng != null ? parseFloat(d.lng).toFixed(6) : '—';
+          const rawStatus = (d.status || 'online').toLowerCase();
+          const isBusy = ['on_trip','started','in_progress','trip_started','arrived_at_pickup','driver_arrived','arrived','assigned','accepted','driver_accepted'].includes(rawStatus);
+          const statusLabel = isBusy ? 'Busy' : 'Available';
+          const dotColor = isBusy ? '#F59E0B' : '#22C55E';
+          const dbAddress = d.current_address || d.dest_addr || d.pickup_addr || '';
+          const freshness = formatUpdatedAgo(d.updated_at);
+          const fixText = freshness ? freshness.text : '—';
+          const fixColor = freshness && freshness.stale ? '#EF4444' : '#16A34A';
+          const staleTag = freshness && freshness.stale ? ' <span style="color:#EF4444; font-size:0.75rem;">· stale</span>' : '';
+          const initials = name.trim().split(/\s+/).map(p => p[0]).slice(0,2).join('').toUpperCase() || 'D';
+          const locationCellId = 'loc-' + d.id;
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#f37a20,#d96010); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:11px; flex-shrink:0;">${initials}</div>
+                <span class="fw-semibold">${name}</span>
+              </div>
+            </td>
+            <td style="color:#71717A; font-size:0.82rem;">${email}</td>
+            <td>${phone}</td>
+            <td>
+              <span class="d-inline-flex align-items-center gap-1">
+                <span class="driver-status-dot" style="background:${dotColor};"></span>
+                <span style="font-size:0.8rem; font-weight:600; color:${dotColor};">${statusLabel}</span>
+              </span>
+            </td>
+            <td style="font-family:monospace; font-size:0.82rem;">${lat}</td>
+            <td style="font-family:monospace; font-size:0.82rem;">${lng}</td>
+            <td id="${locationCellId}" style="font-size:0.82rem; max-width:220px; white-space:normal; word-break:break-word;">${dbAddress || '<span style="color:#A1A1AA;">Resolving...</span>'}</td>
+            <td>
+              <span style="color:${fixColor}; font-weight:600; font-size:0.82rem;">${fixText}</span>${staleTag}
+            </td>
+          `;
+          tbody.appendChild(tr);
+
+          if (!dbAddress && d.lat != null && d.lng != null) {
+            reverseGeocode(d.lat, d.lng, (addr) => {
+              const cell = document.getElementById(locationCellId);
+              if (cell) cell.textContent = addr || (parseFloat(d.lat).toFixed(4) + ', ' + parseFloat(d.lng).toFixed(4));
+            });
+          }
+        });
+      }
+
       // Initialize map when page loads
       document.addEventListener('DOMContentLoaded', () => {
-        initMap();
-        setupSearch();
+        // Start in table view — map init deferred until user clicks "Live Map"
+        loadTableDrivers();
+        startTablePolling();
+
+        // Table search
+        const tableSearch = document.getElementById('tableSearchInput');
+        if (tableSearch) {
+          let tst;
+          tableSearch.addEventListener('input', e => {
+            clearTimeout(tst);
+            tst = setTimeout(() => {
+              tableSearchQuery = e.target.value;
+              loadTableDrivers();
+            }, 300);
+          });
+          tableSearch.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { tableSearch.value = ''; tableSearchQuery = ''; loadTableDrivers(); }
+          });
+        }
       });
 
       // Clean up on page unload
       window.addEventListener('beforeunload', () => {
         stopPolling();
+        stopTablePolling();
       });
     </script>
   </body>

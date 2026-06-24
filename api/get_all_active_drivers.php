@@ -68,7 +68,7 @@ try {
         // record when the ride table doesn't yet have a GPS fix.
         $profiles = pgGet(
             $supabaseUrl . '/rest/v1/drivers'
-            . '?select=id,full_name,phone,vehicle_number,vehicle_make,vehicle_model,current_lat,current_lng'
+            . '?select=*'
             . '&id=in.(' . $ids . ')',
             $supabaseKey
         );
@@ -106,14 +106,16 @@ try {
                 'updated_at'     => $ride['updated_at'] ?? null,
                 'full_name'      => $name,
                 'name'           => $name,
-                'phone'          => $pr['phone']          ?? '',
-                'vehicle_number' => $pr['vehicle_number'] ?? '',
-                'vehicle_make'   => $pr['vehicle_make']   ?? '',
-                'vehicle_model'  => $pr['vehicle_model']  ?? '',
-                'status'         => $ride['status']       ?? 'on_trip',
-                'ride_id'        => $ride['id'],
-                'pickup_addr'    => $ride['pickup_addr']  ?? '',
-                'dest_addr'      => $ride['dest_addr']    ?? '',
+                'email'           => $pr['email']           ?? '',
+                'phone'           => $pr['phone']           ?? '',
+                'current_address' => $pr['current_address'] ?? '',
+                'vehicle_number'  => $pr['vehicle_number']  ?? '',
+                'vehicle_make'    => $pr['vehicle_make']    ?? '',
+                'vehicle_model'   => $pr['vehicle_model']   ?? '',
+                'status'          => $ride['status']        ?? 'on_trip',
+                'ride_id'         => $ride['id'],
+                'pickup_addr'     => $ride['pickup_addr']   ?? '',
+                'dest_addr'       => $ride['dest_addr']     ?? '',
                 'pickup_lat'     => isset($ride['pickup_lat']) ? floatval($ride['pickup_lat']) : null,
                 'pickup_lng'     => isset($ride['pickup_lng']) ? floatval($ride['pickup_lng']) : null,
                 'dest_lat'       => isset($ride['dest_lat'])   ? floatval($ride['dest_lat'])   : null,
@@ -150,14 +152,16 @@ try {
             'lng'            => $lng,
             'heading'        => 0,
             'updated_at'     => $dr['location_last_updated_at'] ?? $dr['last_active'] ?? $dr['updated_at'] ?? null,
-            'full_name'      => $name,
-            'name'           => $name,
-            'phone'          => $dr['phone']          ?? '',
-            'vehicle_number' => $dr['vehicle_number'] ?? '',
-            'vehicle_make'   => $dr['vehicle_make']   ?? '',
-            'vehicle_model'  => $dr['vehicle_model']  ?? '',
-            'status'         => 'available',
-            'is_online'      => true,
+            'full_name'       => $name,
+            'name'            => $name,
+            'email'           => $dr['email']           ?? '',
+            'phone'           => $dr['phone']           ?? '',
+            'current_address' => $dr['current_address'] ?? '',
+            'vehicle_number'  => $dr['vehicle_number']  ?? '',
+            'vehicle_make'    => $dr['vehicle_make']    ?? '',
+            'vehicle_model'   => $dr['vehicle_model']   ?? '',
+            'status'          => 'available',
+            'is_online'       => true,
         ];
     }
 

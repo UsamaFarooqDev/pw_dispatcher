@@ -8,6 +8,7 @@
       <i class="bi bi-plus-circle" style="font-size:15px;"></i>
       New Order
     </a>
+    <?php if (basename($_SERVER['PHP_SELF']) !== 'map.php'): ?>
     <a href="map.php"
       class="btn d-flex align-items-center gap-2 fw-semibold px-4"
       style="background:#fff; color:#18181B; border:1.5px solid #18181b; border-radius:8px; height:38px; font-size:0.85rem; letter-spacing:0.01em;"
@@ -16,6 +17,7 @@
       <i class="bi bi-map" style="font-size:15px;"></i>
       Open Map
     </a>
+    <?php endif; ?>
   </div>
 
   <div class="position-relative" style="width:100%; max-width:280px;">

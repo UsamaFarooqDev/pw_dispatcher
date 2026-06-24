@@ -49,7 +49,8 @@ try {
                 $ride['passenger_email'] = $passenger['email'] ?? 'N/A';
                 $ride['company'] = $passenger['company'] ?? 'N/A';
             } else {
-                $ride['passenger_name'] = 'N/A';
+                $meta = isset($ride['meta']) ? (is_string($ride['meta']) ? json_decode($ride['meta'], true) : $ride['meta']) : [];
+                $ride['passenger_name'] = $meta['customer_name'] ?? 'N/A';
                 $ride['passenger_email'] = 'N/A';
                 $ride['company'] = 'N/A';
             }
