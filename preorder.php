@@ -796,6 +796,8 @@ require('modules/head.php');
             preorderPagination.update(0, 1);
           }
           updateUnassignedTabCount(0);
+        } finally {
+          if (typeof hideGlobalLoader === 'function') hideGlobalLoader();
         }
       }
 

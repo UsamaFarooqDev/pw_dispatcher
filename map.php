@@ -817,6 +817,7 @@ require('modules/head.php');
             renderDriverTable(drivers);
           }
         } catch (e) { console.error('Table driver fetch error:', e); }
+        finally { if (typeof hideGlobalLoader === 'function') hideGlobalLoader(); }
       }
 
       function renderDriverTable(drivers) {

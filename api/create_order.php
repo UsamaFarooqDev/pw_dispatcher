@@ -466,7 +466,7 @@ try {
         'duration_min' => $durationMin,
         'fare_eur' => number_format($fareEur, 2, '.', ''),
         'status' => $status,
-        'scheduled_at' => $scheduledDateTime . '+00',
+        'scheduled_at' => $isScheduled ? ($scheduledDateTime . '+00') : null,
         'driver_id' => $driverId,
         'meta' => json_encode($metaData),
         'source' => 'dispatcher',

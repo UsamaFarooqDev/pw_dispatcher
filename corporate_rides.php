@@ -698,6 +698,8 @@ require('modules/head.php');
         console.error('Corporate rides error:', err);
         tbody.innerHTML = `<tr><td colspan="10" class="text-center py-4" style="border:none; color:#E11D48; font-size:0.845rem;">
           Failed to load — please refresh.</td></tr>`;
+      } finally {
+        if (typeof hideGlobalLoader === 'function') hideGlobalLoader();
       }
     }
 

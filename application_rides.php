@@ -238,6 +238,8 @@ require('modules/head.php');
           if (ridesPagination) {
             ridesPagination.update(0, 1);
           }
+        } finally {
+          if (typeof hideGlobalLoader === 'function') hideGlobalLoader();
         }
       }
 

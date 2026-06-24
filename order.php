@@ -1058,6 +1058,7 @@ foreach ($rideTypes as $t) {
           const data = await res.json();
           if (data.success && data.data) {
             passengers = data.data;
+            if (typeof hideGlobalLoader === 'function') hideGlobalLoader();
           }
         } catch (err) {
           console.error('Error fetching passengers', err);

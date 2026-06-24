@@ -15,6 +15,9 @@ require('modules/head.php');
     from { opacity: 0; transform: translateX(16px); }
     to   { opacity: 1; transform: translateX(0); }
   }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
 
   /* ── View mode: assigned ride tracking ──────────────────────────────── */
   main.view-mode-active { padding: 20px !important; background: #F4F4F5 !important; min-height: 0 !important; overflow: hidden !important; }
@@ -259,6 +262,13 @@ require('modules/head.php');
               </div>
             </div>
           </div>
+          <!-- Live ride progress status -->
+          <div id="rideProgressCard" style="display:none; margin-top:10px; padding:9px 12px; border-radius:8px; background:#EFF6FF; border:1px solid #DBEAFE;">
+            <div style="display:flex; align-items:center; gap:7px;">
+              <i id="rideProgressIcon" class="bi bi-car-front-fill" style="font-size:14px; color:#2563EB;"></i>
+              <span id="rideProgressText" style="font-size:0.78rem; font-weight:600; color:#1E40AF; line-height:1.35;"></span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -473,6 +483,7 @@ async function fetchAndUpdateDriverMarker(driverId) {
     // Auto-center on driver the first time we get a live fix in view mode
     if (isViewMode && !hasCenteredOnDriver) {
       hasCenteredOnDriver = true;
+      hideMapLoadingSkeleton();
       map.panTo({ lat, lng });
       if (map.getZoom() < 14) map.setZoom(14);
     }
@@ -635,69 +646,7 @@ function initGoogleMaps() {
 
 document.addEventListener('DOMContentLoaded', async () => {
 
-  // Kick off the driver list fetch up front so it loads in parallel with the
-  // passenger/ride loads below. This way the Assign-Driver dropdown is ready by
-  // the time the dispatcher clicks it (it previously only started after those
-  // awaited fetches, causing a noticeable delay on first click).
-  loadDrivers();
-
-  /* Make all readonly inputs editable */
-  document.querySelectorAll('input[readonly]').forEach(input => {
-    input.removeAttribute('readonly');
-    input.classList.remove('bg-light');
-    input.classList.add('editable');
-  });
-
-  /* Make contenteditable fields editable */
-  document.querySelectorAll('.editable-field').forEach(field => {
-    field.setAttribute('contenteditable', 'true');
-    field.classList.remove('bg-light');
-    field.classList.add('editable');
-  });
-
-  /* Show editable customer fields */
-  const phoneReadonly = document.getElementById('phoneReadonly');
-  const phoneEditable = document.getElementById('phoneEditable');
-  if (phoneReadonly) phoneReadonly.style.display = 'none';
-  if (phoneEditable) phoneEditable.style.display = 'flex';
-
-  const serviceReadonly = document.getElementById('serviceReadonly');
-  const serviceEditable = document.getElementById('serviceEditable');
-  if (serviceReadonly) serviceReadonly.style.display = 'none';
-  if (serviceEditable) serviceEditable.style.display = 'block';
-
-  const dateReadonly = document.getElementById('dateReadonly');
-  const dateEditable = document.getElementById('dateEditable');
-  if (dateReadonly) dateReadonly.style.display = 'none';
-  if (dateEditable) dateEditable.style.display = 'block';
-
-  const timeReadonly = document.getElementById('timeReadonly');
-  const timeEditable = document.getElementById('timeEditable');
-  if (timeReadonly) timeReadonly.style.display = 'none';
-  if (timeEditable) timeEditable.style.display = 'block';
-
-  /* Enable extras */
-  const creditCard = document.getElementById('creditCard');
-  const extraLuggage = document.getElementById('extraLuggage');
-  if (creditCard) creditCard.disabled = false;
-  if (extraLuggage) extraLuggage.disabled = false;
-
-  /* Driver fields editable */
-  const driverServiceReadonly = document.getElementById('driverServiceReadonly');
-  const driverServiceEditable = document.getElementById('driverServiceEditable');
-  if (driverServiceReadonly) driverServiceReadonly.style.display = 'none';
-  if (driverServiceEditable) driverServiceEditable.style.display = 'block';
-
-  const driverPhoneReadonly = document.getElementById('driverPhoneReadonly');
-  const driverPhoneEditable = document.getElementById('driverPhoneEditable');
-  if (driverPhoneReadonly) driverPhoneReadonly.style.display = 'none';
-  if (driverPhoneEditable) driverPhoneEditable.style.display = 'block';
-
-  /* Optional: hide unnecessary buttons */
-  document.getElementById('assignToMeBtn')?.remove();
-  document.getElementById('goBackBtn')?.remove();
-
-  // Detect mode from URL: corporate-ride mode has ?corp_id=, normal has ?id=
+  // Detect mode from URL early — view mode skips heavy passenger/driver loading
   const urlParams = new URLSearchParams(window.location.search);
   const rideId = urlParams.get('id');
   const corpId = urlParams.get('corp_id');
@@ -706,23 +655,79 @@ document.addEventListener('DOMContentLoaded', async () => {
   isViewMode = !!rideId && !isCorporateMode && urlParams.get('view') === '1';
   const isNormalViewMode = isViewMode;
 
-  if (isCorporateMode) {
-    // Relabel the "Passenger" dropdown for corporate context
-    const passengerLabel = document.querySelector('label[for="customerNameSelect"]')
-      || document.querySelector('#customerNameSelect')?.previousElementSibling;
-    if (passengerLabel && passengerLabel.tagName === 'LABEL') {
-      passengerLabel.textContent = 'Corporate Employee';
+  if (!isNormalViewMode) {
+    // Edit/assign mode: load passengers, drivers, setup form fields
+    loadDrivers();
+
+    document.querySelectorAll('input[readonly]').forEach(input => {
+      input.removeAttribute('readonly');
+      input.classList.remove('bg-light');
+      input.classList.add('editable');
+    });
+    document.querySelectorAll('.editable-field').forEach(field => {
+      field.setAttribute('contenteditable', 'true');
+      field.classList.remove('bg-light');
+      field.classList.add('editable');
+    });
+
+    const phoneReadonly = document.getElementById('phoneReadonly');
+    const phoneEditable = document.getElementById('phoneEditable');
+    if (phoneReadonly) phoneReadonly.style.display = 'none';
+    if (phoneEditable) phoneEditable.style.display = 'flex';
+
+    const serviceReadonly = document.getElementById('serviceReadonly');
+    const serviceEditable = document.getElementById('serviceEditable');
+    if (serviceReadonly) serviceReadonly.style.display = 'none';
+    if (serviceEditable) serviceEditable.style.display = 'block';
+
+    const dateReadonly = document.getElementById('dateReadonly');
+    const dateEditable = document.getElementById('dateEditable');
+    if (dateReadonly) dateReadonly.style.display = 'none';
+    if (dateEditable) dateEditable.style.display = 'block';
+
+    const timeReadonly = document.getElementById('timeReadonly');
+    const timeEditable = document.getElementById('timeEditable');
+    if (timeReadonly) timeReadonly.style.display = 'none';
+    if (timeEditable) timeEditable.style.display = 'block';
+
+    const creditCard = document.getElementById('creditCard');
+    const extraLuggage = document.getElementById('extraLuggage');
+    if (creditCard) creditCard.disabled = false;
+    if (extraLuggage) extraLuggage.disabled = false;
+
+    const driverServiceReadonly = document.getElementById('driverServiceReadonly');
+    const driverServiceEditable = document.getElementById('driverServiceEditable');
+    if (driverServiceReadonly) driverServiceReadonly.style.display = 'none';
+    if (driverServiceEditable) driverServiceEditable.style.display = 'block';
+
+    const driverPhoneReadonly = document.getElementById('driverPhoneReadonly');
+    const driverPhoneEditable = document.getElementById('driverPhoneEditable');
+    if (driverPhoneReadonly) driverPhoneReadonly.style.display = 'none';
+    if (driverPhoneEditable) driverPhoneEditable.style.display = 'block';
+
+    document.getElementById('assignToMeBtn')?.remove();
+    document.getElementById('goBackBtn')?.remove();
+
+    if (isCorporateMode) {
+      const passengerLabel = document.querySelector('label[for="customerNameSelect"]')
+        || document.querySelector('#customerNameSelect')?.previousElementSibling;
+      if (passengerLabel && passengerLabel.tagName === 'LABEL') {
+        passengerLabel.textContent = 'Corporate Employee';
+      }
+      const customerNameSelect = document.getElementById('customerNameSelect');
+      if (customerNameSelect) {
+        customerNameSelect.innerHTML = '<option value="">Select corporate employee from list</option>';
+      }
+      await loadCorporateRide(corpId);
+      setupCorporateEmployeeSelect();
+    } else {
+      await loadPassengers();
+      setupPassengerSelect();
     }
-    const customerNameSelect = document.getElementById('customerNameSelect');
-    if (customerNameSelect) {
-      customerNameSelect.innerHTML = '<option value="">Select corporate employee from list</option>';
-    }
-    await loadCorporateRide(corpId);
-    setupCorporateEmployeeSelect();
   } else {
-    // Normal flow: load passengers dropdown, then prefill from rides table
-    await loadPassengers();
-    setupPassengerSelect();
+    // View mode: show loading skeleton on the map immediately
+    showMapLoadingSkeleton();
+    setTimeout(hideMapLoadingSkeleton, 5000);
   }
 
   if (rideId && !isCorporateMode) {
@@ -883,10 +888,13 @@ document.addEventListener('DOMContentLoaded', async () => {
           applyViewModeLayout();
           populateDispatcherOverlay(ride);
           if (ride.driver_id) loadDriverOverlayInfo(ride.driver_id);
+          updateRideProgressCard(currentRideStatus);
         }
       }
     } catch (error) {
       console.error('Error loading ride data:', error);
+    } finally {
+      if (typeof hideGlobalLoader === 'function') hideGlobalLoader();
     }
   }
 
@@ -1880,6 +1888,7 @@ function updateDispatcherOverlayFromDriver(loc) {
 
 function placeViewModeMarkers() {
   if (!map || !currentPickupLat || !currentPickupLng || !currentDropLat || !currentDropLng) return;
+  hideMapLoadingSkeleton();
 
   if (!viewModePickupMarker) {
     viewModePickupMarker = new google.maps.Marker({
@@ -2002,6 +2011,71 @@ function clearRouteProgress() {
   routeProgressActive = false;
 }
 
+// ── Map loading skeleton ───────────────────────────────────────────────────
+function showMapLoadingSkeleton() {
+  const container = document.getElementById('mapContainer');
+  if (!container || document.getElementById('mapLoadingSkeleton')) return;
+  const skeleton = document.createElement('div');
+  skeleton.id = 'mapLoadingSkeleton';
+  skeleton.style.cssText = 'position:absolute;inset:0;z-index:25;background:#F4F4F5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;';
+  skeleton.innerHTML = `
+    <div style="width:44px;height:44px;border:3px solid #E4E4E7;border-top-color:#f37a20;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+    <div style="font-size:0.84rem;font-weight:600;color:#71717A;">Loading ride details...</div>
+  `;
+  container.appendChild(skeleton);
+}
+function hideMapLoadingSkeleton() {
+  document.getElementById('mapLoadingSkeleton')?.remove();
+}
+
+// ── Ride progress status card ─────────────────────────────────────────────
+function updateRideProgressCard(status) {
+  const card = document.getElementById('rideProgressCard');
+  const icon = document.getElementById('rideProgressIcon');
+  const text = document.getElementById('rideProgressText');
+  if (!card || !icon || !text) return;
+
+  const s = (status || '').toLowerCase();
+  const isAssigned    = ['assigned','driver_accepted','accepted'].includes(s);
+  const isArrived     = ['arrived_at_pickup','driver_arrived','arrived'].includes(s);
+  const isOnTrip      = ['on_trip','started','in_progress','trip_started'].includes(s);
+  const isCompleted   = ['completed','finished','done'].includes(s);
+  const isCancelled   = ['cancelled','canceled'].includes(s);
+
+  let msg = '', iconCls = '', bg = '', border = '', color = '';
+
+  if (isCompleted) {
+    msg = 'Passenger dropped off. Trip completed.';
+    iconCls = 'bi-check-circle-fill'; bg = '#F0FDF4'; border = '#DCFCE7'; color = '#16A34A';
+  } else if (isOnTrip) {
+    msg = 'Passenger picked up. Driver is heading to the destination.';
+    iconCls = 'bi-car-front-fill'; bg = '#EFF6FF'; border = '#DBEAFE'; color = '#2563EB';
+  } else if (isArrived) {
+    msg = 'Driver arrived at pickup. Waiting for passenger.';
+    iconCls = 'bi-geo-alt-fill'; bg = '#FFF7ED'; border = '#FED7AA'; color = '#EA580C';
+  } else if (isAssigned) {
+    msg = 'Driver is on the way to pick up the passenger.';
+    iconCls = 'bi-arrow-right-circle-fill'; bg = '#F5F3FF'; border = '#DDD6FE'; color = '#7C3AED';
+  } else if (isCancelled) {
+    msg = 'Ride has been cancelled.';
+    iconCls = 'bi-x-circle-fill'; bg = '#FFF1F2'; border = '#FFE4E6'; color = '#E11D48';
+  } else if (s === 'searching') {
+    msg = 'Searching for a nearby driver...';
+    iconCls = 'bi-broadcast'; bg = '#FEF3C7'; border = '#FDE68A'; color = '#D97706';
+  } else {
+    card.style.display = 'none';
+    return;
+  }
+
+  card.style.display = 'block';
+  card.style.background = bg;
+  card.style.borderColor = border;
+  icon.className = 'bi ' + iconCls;
+  icon.style.color = color;
+  text.style.color = color;
+  text.textContent = msg;
+}
+
 // ── Ride status state machine ──────────────────────────────────────────────
 
 function handleRideStatusChange(oldStatus, newStatus) {
@@ -2011,6 +2085,8 @@ function handleRideStatusChange(oldStatus, newStatus) {
   const isOnTrip    = ['on_trip','started','in_progress','trip_started'].includes(s);
   const isCompleted = ['completed','finished','done'].includes(s);
   const isCancelled = ['cancelled','canceled'].includes(s);
+
+  updateRideProgressCard(s);
 
   if (isArrived) {
     if (driverRouteRenderer) driverRouteRenderer.setMap(null);

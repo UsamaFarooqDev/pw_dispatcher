@@ -604,6 +604,8 @@ require_once __DIR__ . '/auth/config.php';
       renderPerformance(data);
     } catch (err) {
       console.error('Failed to load dashboard stats:', err);
+    } finally {
+      if (typeof hideGlobalLoader === 'function') hideGlobalLoader();
     }
   }
 

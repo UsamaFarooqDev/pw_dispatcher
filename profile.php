@@ -270,6 +270,8 @@ require('modules/head.php');
         } catch (err) {
           console.error('Error loading profile:', err);
           showToast('Error loading profile data', false);
+        } finally {
+          if (typeof hideGlobalLoader === 'function') hideGlobalLoader();
         }
       }
 
