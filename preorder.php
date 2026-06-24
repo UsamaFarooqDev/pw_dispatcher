@@ -140,6 +140,7 @@ require('modules/head.php');
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Category</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">AI Suggestion</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Action</th>
             </tr></thead>
             <tbody id="scheduledRidesBody"></tbody>
@@ -326,6 +327,39 @@ require('modules/head.php');
   }
   /* Keep the M&G action cell from being squeezed into invisibility */
   #meetGreetRidesBody td:last-child { white-space: nowrap; min-width: 130px; }
+  /* ── AI dispatch-suggestion button (Pre-Order tab, unassigned rows) ── */
+  .ai-suggest-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    border: 1px solid #DDD6FE; background: #F5F3FF; color: #7C3AED;
+    border-radius: 999px; padding: 4px 11px; font-size: 0.75rem; font-weight: 600;
+    cursor: pointer; transition: background 0.12s, border-color 0.12s;
+  }
+  .ai-suggest-btn:hover { background: #EDE9FE; border-color: #C4B5FD; }
+  .ai-suggest-btn:disabled { opacity: 0.6; cursor: default; }
+  .ai-suggest-btn.is-playing { background: #7C3AED; color: #fff; border-color: #7C3AED; }
+  /* Anchor for the floating popover */
+  .ai-suggest-wrap { position: relative; display: inline-block; }
+  /* Floating popover — overlays instead of expanding the table row */
+  .ai-suggest-text {
+    position: absolute; top: calc(100% + 6px); right: 0; z-index: 1080;
+    width: 260px; white-space: normal; text-align: left;
+    font-size: 0.78rem; line-height: 1.35; color: #4C1D95;
+    background: #FAF5FF; border: 1px solid #EDE9FE; border-radius: 8px; padding: 8px 10px;
+    box-shadow: 0 8px 24px rgba(76, 29, 149, 0.18);
+  }
+  /* Little caret pointing back at the button */
+  .ai-suggest-text::before {
+    content: ''; position: absolute; top: -5px; right: 16px;
+    width: 9px; height: 9px; background: #FAF5FF;
+    border-left: 1px solid #EDE9FE; border-top: 1px solid #EDE9FE;
+    transform: rotate(45deg);
+  }
+  /* Let the popover escape the Pre-Order table's clipped container */
+  #pane-scheduled .table-responsive { overflow: visible; }
+  .ai-suggest-text .ai-replay {
+    margin-left: 6px; color: #7C3AED; cursor: pointer; border: none; background: none; padding: 0;
+  }
+  .ai-suggest-text.is-error { color: #B91C1C; background: #FEF2F2; border-color: #FEE2E2; }
 </style>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/pagination.js"></script>
@@ -1369,7 +1403,7 @@ require('modules/head.php');
 
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="9" class="text-center py-4 text-muted">No pre-orders to show</td></tr>';
+            '<tr><td colspan="10" class="text-center py-4 text-muted">No pre-orders to show</td></tr>';
           return;
         }
 
@@ -1393,6 +1427,19 @@ require('modules/head.php');
                  <span>Assign</span><i class="bi bi-chevron-right"></i>
                </a>`;
 
+          // Dispatch reminder — only offered for unassigned pre-orders.
+          // Renders a button; on click it shows a fixed reminder line in-cell
+          // and reads it aloud with the browser's built-in voice (free, offline).
+          const voiceMsg = buildPreorderVoiceMessage(name, pickup, destination);
+          const aiCell = hasDriver
+            ? '<span class="text-muted" style="font-size:0.8rem;">—</span>'
+            : `<span class="ai-suggest-wrap">
+                 <button type="button" class="ai-suggest-btn" data-msg="${encodeURIComponent(voiceMsg)}" title="Read the assignment reminder aloud">
+                   <i class="bi bi-stars"></i><span>AI tip</span>
+                 </button>
+                 <div class="ai-suggest-text" style="display:none;"></div>
+               </span>`;
+
           const row = document.createElement('tr');
           row.innerHTML = `
             <td class="ps-3">${name}</td>
@@ -1403,6 +1450,7 @@ require('modules/head.php');
             <td>${renderPaymentBadge(ride.payment_method)}</td>
             <td>${categoryBadge}</td>
             <td class="text-end pe-4">${fare}</td>
+            <td class="text-nowrap">${aiCell}</td>
             <td class="text-end pe-4">${actionCell}</td>
           `;
           tbody.appendChild(row);
@@ -1415,6 +1463,74 @@ require('modules/head.php');
         const badge = document.getElementById('count-scheduled');
         if (badge) badge.textContent = count;
       }
+
+      // ── Spoken assignment reminders for unassigned pre-orders ──────────
+      // Builds a fixed reminder line from the ride's own fields (no API/AI
+      // call) and reads it aloud with the browser's built-in voice.
+      function buildPreorderVoiceMessage(name, pickup, destination) {
+        const who  = name && name !== 'N/A' ? name : 'a passenger';
+        const from = pickup && pickup !== 'N/A' ? `, pickup at ${pickup}` : '';
+        const to   = destination && destination !== 'N/A' ? `, going to ${destination}` : '';
+        return `Pre-order for ${who}${from}${to}. No driver assigned yet. Please assign a driver to this ride.`;
+      }
+
+      function speakSuggestion(text) {
+        if (!('speechSynthesis' in window) || !text) return;
+        try {
+          window.speechSynthesis.cancel(); // stop any in-flight utterance
+          const u = new SpeechSynthesisUtterance(text);
+          u.rate = 1.0; u.pitch = 1.0; u.lang = 'en-GB';
+          window.speechSynthesis.speak(u);
+        } catch (e) {
+          console.warn('Speech synthesis failed:', e);
+        }
+      }
+
+      function showSuggestionText(box, text) {
+        box.classList.remove('is-error');
+        box.style.display = 'block';
+        box.innerHTML =
+          `<i class="bi bi-stars" style="color:#7C3AED;"></i> ${escapeHtmlSafe(text)}` +
+          `<button type="button" class="ai-replay" title="Read aloud again"><i class="bi bi-volume-up-fill"></i></button>`;
+        const replay = box.querySelector('.ai-replay');
+        if (replay) replay.addEventListener('click', () => speakSuggestion(text));
+      }
+
+      function escapeHtmlSafe(s) {
+        const d = document.createElement('div');
+        d.textContent = s == null ? '' : String(s);
+        return d.innerHTML;
+      }
+
+      function closeAllSuggestionPopovers(except) {
+        document.querySelectorAll('.ai-suggest-text').forEach((b) => {
+          if (b !== except) b.style.display = 'none';
+        });
+      }
+
+      function handleAiSuggestClick(btn) {
+        const msg = btn.dataset.msg ? decodeURIComponent(btn.dataset.msg) : '';
+        if (!msg) return;
+        const box = btn.parentElement.querySelector('.ai-suggest-text');
+
+        // Toggle: a second click on the same button closes it (and stops the voice).
+        if (box.style.display === 'block') {
+          box.style.display = 'none';
+          if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+          return;
+        }
+        closeAllSuggestionPopovers(box);
+        showSuggestionText(box, msg);
+        speakSuggestion(msg);
+      }
+
+      // Delegated listener — survives table re-renders on every poll.
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.ai-suggest-btn');
+        if (btn) { handleAiSuggestClick(btn); return; }
+        // Click outside any popover/button → close them all.
+        if (!e.target.closest('.ai-suggest-text')) closeAllSuggestionPopovers(null);
+      });
 
       async function loadCancelledRides(showLoading = false) {
         try {
