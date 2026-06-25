@@ -469,7 +469,7 @@ try {
         'scheduled_at' => $isScheduled ? ($scheduledDateTime . '+00') : null,
         'driver_id' => $driverId,
         'meta' => json_encode($metaData),
-        'source' => 'dispatcher',
+        'source' => (!empty($input['source_override']) ? $input['source_override'] : 'dispatcher'),
         'created_at' => date('Y-m-d H:i:s') . '+00',
         'updated_at' => date('Y-m-d H:i:s') . '+00',
         'driver_heading' => 0,

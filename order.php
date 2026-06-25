@@ -111,27 +111,24 @@ foreach ($rideTypes as $t) {
 .pax-mode-toggle {
   display: inline-flex;
   background: #F4F4F5;
-  border-radius: 8px;
-  padding: 3px;
-  gap: 2px;
+  border-radius: 6px;
+  padding: 2px;
+  gap: 1px;
 }
 .pax-mode-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 14px;
-  font-size: 0.8rem;
+  padding: 3px 10px;
+  font-size: 0.72rem;
   font-weight: 600;
   border: none;
-  border-radius: 6px;
+  border-radius: 5px;
   background: transparent;
   color: #71717A;
   cursor: pointer;
   transition: all 0.15s;
+  line-height: 1.4;
 }
 .pax-mode-btn:hover { color: #f37a20; }
-.pax-mode-btn.is-active { background: #f37a20; color: #fff; box-shadow: 0 1px 3px rgba(243,122,32,0.25); }
-.pax-mode-btn i { font-size: 13px; }
+.pax-mode-btn.is-active { background: #f37a20; color: #fff; box-shadow: 0 1px 2px rgba(243,122,32,0.25); }
 .pax-selected-card {
   display: flex;
   align-items: center;
@@ -166,9 +163,7 @@ foreach ($rideTypes as $t) {
   <div class="rounded-3 border overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
     <div class="p-4">
 
-      <div class="section-label">
-        <span>Passenger Details</span>
-      </div>
+      <div class="section-label"><span>Passenger Details</span></div>
 
       <input type="hidden" id="customerId" />
       <input type="hidden" id="passengerMode" value="existing" />
@@ -179,15 +174,10 @@ foreach ($rideTypes as $t) {
           <div class="d-flex align-items-center justify-content-between mb-1">
             <label class="form-label fw-semibold mb-0" style="font-size:0.8125rem; color:#18181B;">Passenger Name</label>
             <div class="pax-mode-toggle">
-              <button type="button" class="pax-mode-btn is-active" id="paxModeExisting" onclick="switchPaxMode('existing')">
-                <i class="bi bi-search"></i> Existing
-              </button>
-              <button type="button" class="pax-mode-btn" id="paxModeCustom" onclick="switchPaxMode('custom')">
-                <i class="bi bi-person-plus"></i> New
-              </button>
+              <button type="button" class="pax-mode-btn is-active" id="paxModeExisting" onclick="switchPaxMode('existing')">Existing</button>
+              <button type="button" class="pax-mode-btn" id="paxModeCustom" onclick="switchPaxMode('custom')">New</button>
             </div>
           </div>
-          <!-- Search input (hidden once a passenger is selected) -->
           <div id="paxSearchWrapper">
             <input type="text" class="form-control" placeholder="Type name to search..."
               id="customerNameInput" autocomplete="off"
@@ -197,7 +187,6 @@ foreach ($rideTypes as $t) {
             <div id="customerSuggestions" class="list-group position-absolute w-100"
               style="z-index:10; max-height:200px; overflow-y:auto; display:none; border:1.5px solid #EBEBEB; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.10); top:100%; margin-top:4px;"></div>
           </div>
-          <!-- Selected passenger card (hidden until one is picked) -->
           <div id="paxSelectedCard" class="pax-selected-card" style="display:none;">
             <i class="bi bi-person-check-fill" style="color:#16A34A; font-size:16px;"></i>
             <span class="pax-name" id="paxSelectedName"></span>
@@ -212,12 +201,8 @@ foreach ($rideTypes as $t) {
           <div class="d-flex align-items-center justify-content-between mb-1">
             <label class="form-label fw-semibold mb-0" style="font-size:0.8125rem; color:#18181B;">Passenger Name</label>
             <div class="pax-mode-toggle">
-              <button type="button" class="pax-mode-btn" id="paxModeExisting2" onclick="switchPaxMode('existing')">
-                <i class="bi bi-search"></i> Existing
-              </button>
-              <button type="button" class="pax-mode-btn is-active" id="paxModeCustom2" onclick="switchPaxMode('custom')">
-                <i class="bi bi-person-plus"></i> New
-              </button>
+              <button type="button" class="pax-mode-btn" id="paxModeExisting2" onclick="switchPaxMode('existing')">Existing</button>
+              <button type="button" class="pax-mode-btn is-active" id="paxModeCustom2" onclick="switchPaxMode('custom')">New</button>
             </div>
           </div>
           <input type="text" class="form-control" placeholder="Enter passenger name"
@@ -837,19 +822,26 @@ foreach ($rideTypes as $t) {
         <div class="mb-3">
           <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Driver Phone</label>
           <div class="input-group" style="height:38px;">
-            <span class="input-group-text" style="background:#FAFAFA; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; font-size:0.8rem; color:#71717A; height:38px;">+353</span>
+            <div style="position:relative;" id="driverCountryCodeWrapper">
+              <button type="button" class="country-code-btn" id="driverCountryCodeBtn">
+                <img src="https://flagcdn.com/w20/ie.png" width="20" height="15" alt="IE" id="driverSelectedFlag">
+                <span id="driverSelectedDialCode">+353</span>
+                <i class="bi bi-chevron-down"></i>
+              </button>
+              <div class="country-dropdown" id="driverCountryDropdown">
+                <input type="text" class="country-search" id="driverCountrySearch" placeholder="Search country...">
+                <div class="country-options" id="driverCountryOptions"></div>
+              </div>
+            </div>
             <input type="tel" class="form-control" id="driverPhoneModal" readonly
               style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px; background:#FAFAFA;" />
           </div>
         </div>
         <div class="mb-4">
           <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Vehicle Number</label>
-          <select class="form-select" id="vehicleSelectModal"
-            style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem;"
-            onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
-            onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';">
-            <option selected disabled>Select vehicle</option>
-          </select>
+          <input type="text" class="form-control" id="vehicleSelectModal" readonly
+            style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#FAFAFA;"
+            placeholder="Auto-filled on driver selection" />
         </div>
         <div class="d-flex justify-content-end gap-2">
           <button type="button" class="btn fw-semibold px-4"
@@ -1070,8 +1062,10 @@ foreach ($rideTypes as $t) {
         document.getElementById('passengerMode').value = mode;
         document.getElementById('paxModeExisting').classList.toggle('is-active', mode === 'existing');
         document.getElementById('paxModeCustom').classList.toggle('is-active', mode === 'custom');
-        document.getElementById('paxModeExisting2').classList.toggle('is-active', mode === 'existing');
-        document.getElementById('paxModeCustom2').classList.toggle('is-active', mode === 'custom');
+        const e2 = document.getElementById('paxModeExisting2');
+        const c2 = document.getElementById('paxModeCustom2');
+        if (e2) e2.classList.toggle('is-active', mode === 'existing');
+        if (c2) c2.classList.toggle('is-active', mode === 'custom');
         document.getElementById('paxExistingPane').style.display = mode === 'existing' ? '' : 'none';
         document.getElementById('paxCustomPane').style.display = mode === 'custom' ? '' : 'none';
 
@@ -1210,23 +1204,43 @@ foreach ($rideTypes as $t) {
         const searchInput = document.getElementById('driverSearchModal');
         const hiddenInput = document.getElementById('driverSelectModal');
         const phoneInput = document.getElementById('driverPhoneModal');
-        const vehicleSelect = document.getElementById('vehicleSelectModal');
+        const vehicleInput = document.getElementById('vehicleSelectModal');
         const name = driver.full_name || driver.name || 'Driver';
 
         if (searchInput) searchInput.value = `${name} — ${driver.vehicle_make || ''}`;
         if (hiddenInput) hiddenInput.value = driver.id;
 
         selectedDriverId = driver.id;
-        if (phoneInput) phoneInput.value = (driver.phone || '').replace('+353', '');
-        if (vehicleSelect) {
-          vehicleSelect.innerHTML = '';
-          const opt = document.createElement('option');
-          opt.value = driver.vehicle_number || '';
-          opt.textContent = driver.vehicle_number || 'Vehicle';
-          vehicleSelect.appendChild(opt);
-        }
+        setDriverPhoneFromFullNumber(driver.phone || '');
+        if (vehicleInput) vehicleInput.value = driver.vehicle_number || '';
         selectedVehicleNumber = driver.vehicle_number || null;
         hideOrderDriverDropdown();
+      }
+
+      function setDriverPhoneFromFullNumber(fullPhone) {
+        const phoneInput = document.getElementById('driverPhoneModal');
+        if (!fullPhone) { if (phoneInput) phoneInput.value = ''; return; }
+        const sorted = [...COUNTRY_LIST].sort((a, b) => b.dial.length - a.dial.length);
+        for (const c of sorted) {
+          if (fullPhone.startsWith(c.dial)) {
+            selectDriverCountry(c.iso);
+            if (phoneInput) phoneInput.value = fullPhone.slice(c.dial.length);
+            return;
+          }
+        }
+        if (phoneInput) phoneInput.value = fullPhone.replace(/^\+/, '');
+      }
+
+      function selectDriverCountry(iso) {
+        const c = COUNTRY_LIST.find(x => x.iso === iso);
+        if (!c) return;
+        document.getElementById('driverSelectedFlag').src = 'https://flagcdn.com/w20/' + c.iso + '.png';
+        document.getElementById('driverSelectedFlag').alt = c.iso.toUpperCase();
+        document.getElementById('driverSelectedDialCode').textContent = c.dial;
+        document.getElementById('driverCountryDropdown').style.display = 'none';
+        document.querySelectorAll('#driverCountryOptions .country-option').forEach(el => {
+          el.classList.toggle('is-selected', el.dataset.iso === iso);
+        });
       }
 
       function showOrderDriverDropdown() {
@@ -1733,13 +1747,17 @@ async function createOrder() {
         const paymentChoice = document.querySelector('input[name="paymentMethod"]:checked');
         const paymentMethod = (paymentChoice && paymentChoice.value === 'stripe') ? 'prepaid' : 'cash';
 
+        const isCustomPax = paxMode === 'custom';
+        const finalName = isCustomPax ? customerName + ' (Powercabs Dispatch)' : customerName;
+
         const payload = {
           user_id: passengerId || null,
-          customer_name: customerName,
+          customer_name: finalName,
           phone_number: phone,
-          passenger_name: customerName,
+          passenger_name: finalName,
           passenger_phone: phone,
-          skip_passenger_lookup: paxMode === 'custom',
+          skip_passenger_lookup: isCustomPax,
+          source_override: isCustomPax ? 'Powercabs Dispatch' : null,
           service_type: serviceType,
           seats,
           date: rideDateVal,
@@ -2026,6 +2044,52 @@ modal.show();
 
         document.addEventListener('click', (e) => {
           if (!document.getElementById('countryCodeWrapper').contains(e.target)) {
+            dropdown.style.display = 'none';
+          }
+        });
+
+        renderOptions('');
+      })();
+
+      // ── Driver country-code selector (modal) ──
+      (function initDriverCountrySelector() {
+        const btn = document.getElementById('driverCountryCodeBtn');
+        const dropdown = document.getElementById('driverCountryDropdown');
+        const search = document.getElementById('driverCountrySearch');
+        const optionsContainer = document.getElementById('driverCountryOptions');
+        if (!btn || !dropdown) return;
+
+        function renderOptions(filter) {
+          const q = (filter || '').toLowerCase();
+          optionsContainer.innerHTML = '';
+          const selectedDial = document.getElementById('driverSelectedDialCode').textContent;
+          COUNTRY_LIST.filter(c =>
+            !q || c.name.toLowerCase().includes(q) || c.dial.includes(q) || c.iso.includes(q)
+          ).forEach(c => {
+            const el = document.createElement('button');
+            el.type = 'button';
+            el.className = 'country-option' + (c.dial === selectedDial && c.iso === document.getElementById('driverSelectedFlag').alt.toLowerCase() ? ' is-selected' : '');
+            el.dataset.iso = c.iso;
+            el.innerHTML = '<img src="https://flagcdn.com/w20/' + c.iso + '.png" width="20" height="15" alt="' + c.iso.toUpperCase() + '"> ' +
+              '<span>' + c.name + '</span>' +
+              '<span class="dial">' + c.dial + '</span>';
+            el.addEventListener('click', () => { selectDriverCountry(c.iso); });
+            optionsContainer.appendChild(el);
+          });
+        }
+
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const open = dropdown.style.display === 'block';
+          dropdown.style.display = open ? 'none' : 'block';
+          if (!open) { search.value = ''; renderOptions(''); setTimeout(() => search.focus(), 50); }
+        });
+
+        search.addEventListener('input', (e) => { renderOptions(e.target.value); });
+        search.addEventListener('click', (e) => e.stopPropagation());
+
+        document.addEventListener('click', (e) => {
+          if (!document.getElementById('driverCountryCodeWrapper').contains(e.target)) {
             dropdown.style.display = 'none';
           }
         });

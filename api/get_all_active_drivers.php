@@ -97,6 +97,8 @@ try {
                 ? floatval($ride['driver_heading']) : 0;
 
             $name = $pr['full_name'] ?? 'Driver';
+            $prMeta = isset($pr['meta']) ? (is_string($pr['meta']) ? json_decode($pr['meta'], true) : $pr['meta']) : [];
+            if (!is_array($prMeta)) $prMeta = [];
             $result[] = [
                 'id'             => $driverId,
                 'driver_id'      => $driverId,
@@ -112,6 +114,10 @@ try {
                 'vehicle_number'  => $pr['vehicle_number']  ?? '',
                 'vehicle_make'    => $pr['vehicle_make']    ?? '',
                 'vehicle_model'   => $pr['vehicle_model']   ?? '',
+                'petsAllowed'              => !empty($prMeta['petsAllowed']),
+                'acceptCardRides'          => !empty($prMeta['acceptCardRides']),
+                'personWithDisabilities'   => !empty($prMeta['personWithDisabilities']),
+                'acceptDeliveryRides'      => !empty($prMeta['acceptDeliveryRides']),
                 'status'          => $ride['status']        ?? 'on_trip',
                 'ride_id'         => $ride['id'],
                 'pickup_addr'     => $ride['pickup_addr']   ?? '',
@@ -145,6 +151,8 @@ try {
         // successive GPS fixes. Surface the GPS freshness so the dispatcher can
         // tell a live position from a stale last-known one.
         $name = $dr['full_name'] ?? $dr['name'] ?? 'Driver';
+        $drMeta = isset($dr['meta']) ? (is_string($dr['meta']) ? json_decode($dr['meta'], true) : $dr['meta']) : [];
+        if (!is_array($drMeta)) $drMeta = [];
         $result[] = [
             'id'             => $driverId,
             'driver_id'      => $driverId,
@@ -160,6 +168,10 @@ try {
             'vehicle_number'  => $dr['vehicle_number']  ?? '',
             'vehicle_make'    => $dr['vehicle_make']    ?? '',
             'vehicle_model'   => $dr['vehicle_model']   ?? '',
+            'petsAllowed'              => !empty($drMeta['petsAllowed']),
+            'acceptCardRides'          => !empty($drMeta['acceptCardRides']),
+            'personWithDisabilities'   => !empty($drMeta['personWithDisabilities']),
+            'acceptDeliveryRides'      => !empty($drMeta['acceptDeliveryRides']),
             'status'          => 'available',
             'is_online'       => true,
         ];

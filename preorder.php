@@ -32,6 +32,12 @@ require('modules/head.php');
           <span class="po-tab__count" id="count-assigned">0</span>
         </button>
 
+        <button type="button" class="po-tab tab-btn" id="tab-enroute" role="tab" aria-selected="false">
+          <i class="bi bi-geo-alt po-tab__icon"></i>
+          <span class="po-tab__label">Enroute</span>
+          <span class="po-tab__count" id="count-enroute">0</span>
+        </button>
+
         <button type="button" class="po-tab tab-btn" id="tab-on-trip" role="tab" aria-selected="false" style="display:none;">
           <i class="bi bi-car-front po-tab__icon"></i>
           <span class="po-tab__label">On Trip</span>
@@ -101,6 +107,27 @@ require('modules/head.php');
               <th class="fw-semibold text-nowrap px-4 py-2 text-end" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:300px;">Action</th>
             </tr></thead>
             <tbody id="assignedRidesBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Enroute -->
+      <div id="pane-enroute" class="tab-pane-table" style="display:none;">
+        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
+          <table class="table mb-0" style="border-collapse:collapse;">
+            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Source</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Driver</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
+              <th class="fw-semibold text-nowrap px-3 py-2 text-end" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:130px;">Action</th>
+            </tr></thead>
+            <tbody id="enrouteRidesBody"></tbody>
           </table>
         </div>
       </div>
@@ -307,16 +334,16 @@ require('modules/head.php');
   }
   /* legacy hook (still referenced elsewhere) */
   .tab-btn.active-tab { color: #18181B; }
-  #unassignedRidesBody tr, #assignedRidesBody tr,
+  #unassignedRidesBody tr, #assignedRidesBody tr, #enrouteRidesBody tr,
   #scheduledRidesBody tr, #cancelledRidesBody tr, #completedRidesBody tr,
   #meetGreetRidesBody tr {
     border-bottom: 1px solid #F4F4F5;
     transition: background 0.12s;
   }
-  #unassignedRidesBody tr:hover, #assignedRidesBody tr:hover,
+  #unassignedRidesBody tr:hover, #assignedRidesBody tr:hover, #enrouteRidesBody tr:hover,
   #scheduledRidesBody tr:hover, #cancelledRidesBody tr:hover,
   #completedRidesBody tr:hover, #meetGreetRidesBody tr:hover { background: #FAFAFA; }
-  #unassignedRidesBody td, #assignedRidesBody td,
+  #unassignedRidesBody td, #assignedRidesBody td, #enrouteRidesBody td,
   #scheduledRidesBody td, #cancelledRidesBody td, #completedRidesBody td,
   #meetGreetRidesBody td {
     padding: 14px 16px;
@@ -417,6 +444,7 @@ require('modules/head.php');
         // Load all tab data
         loadUnassignedRides(true);
         loadAssignedRides(true);
+        loadEnrouteRides(true);
         loadOnTripRides(true);
         loadScheduledRides(true);
         loadCancelledRides(true);
@@ -497,9 +525,14 @@ require('modules/head.php');
           // scheduled rides are surfaced in the Assigned tab instead.
           const scheduledRides = allScheduledRides.filter((ride) => !rideHasDriver(ride));
 
+          const enrouteRides = rides.filter((ride) => {
+            const status = (ride.status || '').toLowerCase();
+            return ENROUTE_STATUSES.includes(status);
+          });
+
           const onTripRides = rides.filter((ride) => {
             const status = (ride.status || '').toLowerCase();
-            return ['on_trip','ongoing','in_progress','ontrip','started','arrived_at_pickup','driver_arrived','arrived','enroute','en_route','en-route'].includes(status);
+            return ['on_trip','ongoing','in_progress','ontrip','started','arrived_at_pickup','driver_arrived','arrived'].includes(status);
           });
 
           const cancelledRides = rides.filter((ride) => {
@@ -531,6 +564,7 @@ require('modules/head.php');
           // Only update UI if there are actual changes
           const unassignedChanged = hasRidesChanged(currentRidesData.unassigned, unassignedRides);
           const assignedChanged = hasRidesChanged(currentRidesData.assigned, assignedRides);
+          const enrouteChanged = hasRidesChanged(currentRidesData.enroute, enrouteRides);
           const scheduledChanged = hasRidesChanged(currentRidesData.scheduled, scheduledRides);
 
           if (unassignedChanged) {
@@ -548,6 +582,16 @@ require('modules/head.php');
             updateAssignedTabCount(assignedRides.length);
             if (currentTab === 'assigned') {
               updatePaginationInfo(assignedRides.length);
+              const currentPage = preorderPagination ? preorderPagination.getCurrentPage() : 1;
+              updateTableForCurrentTab(currentPage, ITEMS_PER_PAGE);
+            }
+          }
+
+          if (enrouteChanged) {
+            currentRidesData.enroute = enrouteRides;
+            updateEnrouteTabCount(enrouteRides.length);
+            if (currentTab === 'enroute') {
+              updatePaginationInfo(enrouteRides.length);
               const currentPage = preorderPagination ? preorderPagination.getCurrentPage() : 1;
               updateTableForCurrentTab(currentPage, ITEMS_PER_PAGE);
             }
@@ -903,7 +947,7 @@ require('modules/head.php');
                 <td>${renderSourceBadge(ride.source)}</td>
                 <td class="text-end pe-4">${fare}</td>
                 <td class="text-end pe-4">
-                  <a href="orderassigned.php?id=${rideId}" class="view-details-btn">
+                  <a href="orderassigned.php?id=${rideId}&from=unassigned" class="view-details-btn">
                     <span>View Details</span>
                     <i class="bi bi-chevron-right"></i>
                   </a>
@@ -977,6 +1021,8 @@ require('modules/head.php');
             populateUnassignedTable(paginatedRides);
           } else if (currentTab === 'assigned') {
             populateAssignedTable(paginatedRides);
+          } else if (currentTab === 'enroute') {
+            populateEnrouteTable(paginatedRides);
           } else if (currentTab === 'ontrip') {
             populateOnTripTable(paginatedRides);
           } else if (currentTab === 'scheduled') {
@@ -1169,7 +1215,7 @@ require('modules/head.php');
                   <i class="bi bi-person-dash"></i>
                   <span>Unassign</span>
                 </button>
-                <a href="orderassigned.php?id=${encodeURIComponent(ride.id)}&view=1" class="view-details-btn">
+                <a href="orderassigned.php?id=${encodeURIComponent(ride.id)}&view=1&from=assigned" class="view-details-btn">
                   <span>View Details</span>
                   <i class="bi bi-chevron-right"></i>
                 </a>
@@ -1306,9 +1352,12 @@ require('modules/head.php');
         if (badge) badge.textContent = count;
       }
 
+      const ENROUTE_STATUSES = ['enroute','en_route','en-route'];
+
       const TAB_CONFIG = [
         { btnId: 'tab-unassigned', paneId: 'pane-unassigned', key: 'unassigned', action: true },
         { btnId: 'tab-assigned',   paneId: 'pane-assigned',   key: 'assigned',   action: true },
+        { btnId: 'tab-enroute',    paneId: 'pane-enroute',    key: 'enroute',    action: false },
         { btnId: 'tab-on-trip',    paneId: 'pane-ontrip',     key: 'ontrip',     action: false },
         { btnId: 'tab-scheduled',  paneId: 'pane-scheduled',  key: 'scheduled',  action: false },
         { btnId: 'tab-cancelled',  paneId: 'pane-cancelled',  key: 'cancelled',  action: false },
@@ -1346,6 +1395,14 @@ require('modules/head.php');
             }
           });
         });
+
+        // Restore tab from URL hash (e.g. #tab-assigned from back button)
+        const hash = window.location.hash;
+        if (hash && hash.startsWith('#tab-')) {
+          const target = hash.substring(1);
+          const tabBtn = document.getElementById(target);
+          if (tabBtn) tabBtn.click();
+        }
       }
 
       async function loadScheduledRides(showLoading = false) {
@@ -1421,10 +1478,10 @@ require('modules/head.php');
 
           const hasDriver = !!(ride.driver_id);
           const actionCell = hasDriver
-            ? `<a href="orderassigned.php?id=${encodeURIComponent(rideId)}&view=1" class="view-details-btn">
+            ? `<a href="orderassigned.php?id=${encodeURIComponent(rideId)}&view=1&from=scheduled" class="view-details-btn">
                  <span>View Details</span><i class="bi bi-chevron-right"></i>
                </a>`
-            : `<a href="orderassigned.php?id=${encodeURIComponent(rideId)}" class="view-details-btn"
+            : `<a href="orderassigned.php?id=${encodeURIComponent(rideId)}&from=scheduled" class="view-details-btn"
                  style="background:#f37a20 !important; color:#fff !important; border-color:#f37a20 !important;">
                  <span>Assign</span><i class="bi bi-chevron-right"></i>
                </a>`;
@@ -1738,6 +1795,31 @@ require('modules/head.php');
         if (badge) badge.textContent = count;
       }
 
+      async function loadEnrouteRides(showLoading = false) {
+        try {
+          const response = await fetch('api/get_rides.php?page=1&limit=1000');
+          if (response.status === 401) { window.location.href = '/'; return; }
+          if (!response.ok) throw new Error('Failed to fetch rides');
+          const result = await response.json();
+          if (!result.success) throw new Error(result.error || 'Failed');
+          const rides = result && result.data ? result.data : [];
+          const enrouteRides = rides.filter((ride) => {
+            const status = (ride.status || '').toLowerCase();
+            return ENROUTE_STATUSES.includes(status);
+          });
+          currentRidesData.enroute = enrouteRides;
+          updateEnrouteTabCount(enrouteRides.length);
+          if (currentTab === 'enroute') {
+            updatePaginationInfo(enrouteRides.length);
+            const currentPage = preorderPagination ? preorderPagination.getCurrentPage() : 1;
+            updateTableForCurrentTab(currentPage, ITEMS_PER_PAGE);
+          }
+        } catch (error) {
+          console.error('Error loading enroute rides:', error);
+          updateEnrouteTabCount(0);
+        }
+      }
+
       async function loadOnTripRides(showLoading = false) {
         try {
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
@@ -1748,7 +1830,7 @@ require('modules/head.php');
           const rides = result && result.data ? result.data : [];
           const onTripRides = rides.filter((ride) => {
             const status = (ride.status || '').toLowerCase();
-            return ['on_trip','ongoing','in_progress','ontrip','started','arrived_at_pickup','driver_arrived','arrived','enroute','en_route','en-route'].includes(status);
+            return ['on_trip','ongoing','in_progress','ontrip','started','arrived_at_pickup','driver_arrived','arrived'].includes(status);
           });
           currentRidesData.ontrip = onTripRides;
           updateOnTripTabCount(onTripRides.length);
@@ -1761,6 +1843,51 @@ require('modules/head.php');
           console.error('Error loading on-trip rides:', error);
           updateOnTripTabCount(0);
         }
+      }
+
+      function populateEnrouteTable(rides) {
+        const tbody = document.getElementById('enrouteRidesBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        if (!rides || rides.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-muted">No enroute rides to show</td></tr>';
+          return;
+        }
+        rides.forEach((ride) => {
+          const name = ride.passenger_name || 'N/A';
+          const orderTime = formatOrderTime(ride.created_at);
+          const pickup = ride.pickup_addr || ride.actual_start_addr || 'N/A';
+          const destination = ride.dest_addr || ride.actual_end_addr || 'N/A';
+          const status = ride.status || 'N/A';
+          const driverName = ride.driver_name || 'Unassigned';
+          const fare = formatFare(ride.fare_eur, ride.estimate_fare);
+          const rideId = encodeURIComponent(ride.id || '');
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td class="ps-3">${name}</td>
+            <td>${orderTime}</td>
+            <td>${pickup}</td>
+            <td>${destination}</td>
+            <td>${renderStatusBadge(status)}</td>
+            <td>${renderPaymentBadge(ride.payment_method)}</td>
+            <td>${renderSourceBadge(ride.source)}</td>
+            <td>${driverName}</td>
+            <td>${fare}</td>
+            <td class="text-end pe-4">
+              <a href="orderassigned.php?id=${rideId}&view=1&from=enroute" class="view-details-btn">
+                <span>View Live</span>
+                <i class="bi bi-geo-alt-fill"></i>
+              </a>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+        applyPreorderSearchFilterForCurrentTab();
+      }
+
+      function updateEnrouteTabCount(count) {
+        const badge = document.getElementById('count-enroute');
+        if (badge) badge.textContent = count;
       }
 
       function populateOnTripTable(rides) {
@@ -1793,7 +1920,7 @@ require('modules/head.php');
             <td>${driverName}</td>
             <td>${fare}</td>
             <td class="text-end pe-4">
-              <a href="orderassigned.php?id=${rideId}&view=1" class="view-details-btn">
+              <a href="orderassigned.php?id=${rideId}&view=1&from=on-trip" class="view-details-btn">
                 <span>View Live</span>
                 <i class="bi bi-geo-alt-fill"></i>
               </a>
