@@ -831,21 +831,22 @@ document.addEventListener('DOMContentLoaded', async () => {
           serviceType.value = value;
         }
 
-        // Prefill Date and Time from created_at
-        if (ride.created_at) {
-          const rideDate = new Date(ride.created_at);
-          
+        // Prefill Date and Time — use scheduled_at for pre-orders, created_at for instant rides
+        const timeSource = ride.scheduled_at || ride.created_at;
+        if (timeSource) {
+          const rideDate = new Date(timeSource);
+
           const dateInput = document.getElementById('rideDate');
-          if (dateInput) {
-            const dateStr = rideDate.toISOString().split('T')[0];
-            dateInput.value = dateStr;
+          if (dateInput && !isNaN(rideDate.getTime())) {
+            dateInput.value = rideDate.getFullYear() + '-' +
+              String(rideDate.getMonth() + 1).padStart(2, '0') + '-' +
+              String(rideDate.getDate()).padStart(2, '0');
           }
 
           const timeInput = document.getElementById('rideTime');
-          if (timeInput) {
-            const hours = String(rideDate.getHours()).padStart(2, '0');
-            const minutes = String(rideDate.getMinutes()).padStart(2, '0');
-            timeInput.value = `${hours}:${minutes}`;
+          if (timeInput && !isNaN(rideDate.getTime())) {
+            timeInput.value = String(rideDate.getHours()).padStart(2, '0') + ':' +
+              String(rideDate.getMinutes()).padStart(2, '0');
           }
         }
 

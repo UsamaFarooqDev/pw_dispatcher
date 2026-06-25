@@ -329,6 +329,13 @@ try {
 
     $scheduledDateTime = $scheduledDate . ' ' . $scheduledTime;
 
+    // Convert dispatcher local time → UTC using the browser's timezone offset
+    $tzOffsetMin = isset($input['tz_offset_min']) ? intval($input['tz_offset_min']) : 0;
+    $scheduledTs = strtotime($scheduledDateTime);
+    if ($scheduledTs !== false && $tzOffsetMin !== 0) {
+        $scheduledTs += ($tzOffsetMin * 60);
+        $scheduledDateTime = date('Y-m-d H:i:s', $scheduledTs);
+    }
 
     // Prefer the frontend-computed fare (which already accounts for any
     // Special Cost override the dispatcher entered). Fall back to the legacy

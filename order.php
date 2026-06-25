@@ -314,7 +314,7 @@ foreach ($rideTypes as $t) {
               <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Date</label>
               <div class="dt-input-wrap">
                 <i class="bi bi-calendar3 dt-icon"></i>
-                <input type="date" class="form-control dt-input" id="rideDate" />
+                <input type="date" class="form-control dt-input" id="rideDate" min="<?php echo date('Y-m-d'); ?>" />
               </div>
             </div>
             <div class="col-md-6">
@@ -1728,6 +1728,14 @@ async function createOrder() {
     return;
   }
 
+  if (isScheduled) {
+    const scheduledDt = new Date(rideDateVal + 'T' + rideTimeVal);
+    if (scheduledDt <= new Date()) {
+      showToast('Scheduled time must be in the future');
+      return;
+    }
+  }
+
   if (!seats) {
     showToast('Please select seats');
     return;
@@ -1775,6 +1783,7 @@ async function createOrder() {
           service_type_display: serviceType,
           scheduled_at: pickupTimeStr,
           is_scheduled: isScheduled,
+          tz_offset_min: new Date().getTimezoneOffset(),
           driver_id: selectedDriverId || null,
           vehicle_number: selectedVehicleNumber || null,
         };

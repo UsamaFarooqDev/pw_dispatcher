@@ -16,10 +16,8 @@ require('modules/head.php');
 
   <?php @require('modules/bodyHeader.php'); ?>
 
-  <div class="rounded-3 border mt-4 overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);">
-    <div class="p-4">
-
-      <nav class="po-tabs mb-4" role="tablist" aria-label="Live orders sections">
+  <!-- Tab header strip -->
+  <nav class="po-tabs mt-4" role="tablist" aria-label="Live orders sections">
         <button type="button" class="po-tab is-active tab-btn active-tab" id="tab-unassigned" role="tab" aria-selected="true">
           <i class="bi bi-hourglass-split po-tab__icon"></i>
           <span class="po-tab__label">Unassigned</span>
@@ -67,7 +65,11 @@ require('modules/head.php');
           <span class="po-tab__label">Meet &amp; Greet</span>
           <span class="po-tab__count" id="count-meet-greet">0</span>
         </button>
-      </nav>
+  </nav>
+
+  <!-- Table content card -->
+  <div class="rounded-bottom-3 border border-top-0 overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);">
+    <div class="p-4 pt-3">
 
       <!-- Unassigned -->
       <div id="pane-unassigned" class="tab-pane-table">
@@ -160,7 +162,7 @@ require('modules/head.php');
           <table class="table mb-0" style="border-collapse:collapse;">
             <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup Time</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
@@ -241,99 +243,81 @@ require('modules/head.php');
 </main>
 
 <style>
-  /* ── Live Orders tab strip — outlined pill on active ────────────────── */
+  /* ── Live Orders — bold header tab bar ──────────────────────────────── */
   .po-tabs {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: 4px;
-    margin: 0 0 1.5rem;
-    padding: 0;
+    gap: 0;
+    padding: 0 4px;
+    background: #E4E4E7;
+    border-radius: 10px 10px 0 0;
+    border: 1px solid #D4D4D8;
+    border-bottom: none;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
+  .po-tabs::-webkit-scrollbar { display: none; }
   .po-tab {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    height: 36px;
-    padding: 0 14px;
-    background: transparent;
-    border: 1.5px solid transparent;
-    border-radius: 8px;
+    gap: 7px;
+    padding: 12px 18px;
+    background: none;
+    border: none;
+    border-bottom: 2.5px solid transparent;
     color: #71717A;
     font-family: inherit;
-    font-size: 0.815rem;
-    font-weight: 500;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     line-height: 1;
-    letter-spacing: 0.005em;
+    white-space: nowrap;
     cursor: pointer;
-    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
   }
-  .po-tab:hover {
-    color: #18181B;
-    border-color: #D4D4D8;
-  }
-  .po-tab:focus-visible {
-    outline: none;
-    color: #18181B;
-    border-color: #52525B;
-  }
+  .po-tab:hover { color: #18181B; }
+  .po-tab:focus-visible { outline: none; color: #18181B; }
   .po-tab__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    height: 16px;
-    font-size: 14px;
+    font-size: 13px;
     color: #A1A1AA;
     line-height: 1;
-    transition: color 0.15s ease;
+    transition: color 0.15s;
   }
   .po-tab__label { white-space: nowrap; }
   .po-tab__count {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 20px;
-    height: 18px;
-    padding: 0 6px;
-    margin-left: 2px;
-    background: transparent;
-    color: #A1A1AA;
-    font-size: 0.685rem;
-    font-weight: 600;
+    min-width: 18px;
+    height: 17px;
+    padding: 0 5px;
+    background: #E4E4E7;
+    color: #71717A;
+    font-size: 0.65rem;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
     line-height: 1;
     border-radius: 9px;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background 0.15s, color 0.15s;
   }
   .po-tab.is-active,
   .po-tab.active-tab {
-    color: #18181B;
-    font-weight: 600;
-    background: transparent;
-    border-color: #f37a20;
-    box-shadow: 0 0 0 3px rgba(243,122,32,0.12), 0 1px 2px rgba(243,122,32,0.08);
+    color: #f37a20;
+    border-bottom-color: #f37a20;
+    background: rgba(255,255,255,0.6);
   }
   .po-tab.is-active .po-tab__icon,
-  .po-tab.active-tab .po-tab__icon {
-    color: #f37a20;
-  }
+  .po-tab.active-tab .po-tab__icon { color: #f37a20; }
   .po-tab.is-active .po-tab__count,
   .po-tab.active-tab .po-tab__count {
+    background: #FFF3E8;
     color: #f37a20;
   }
   @media (max-width: 767.98px) {
-    .po-tabs {
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-    .po-tabs::-webkit-scrollbar { display: none; }
-    .po-tab { height: 34px; padding: 0 12px; font-size: 0.78rem; }
+    .po-tab { padding: 10px 12px; font-size: 0.7rem; }
   }
-  /* legacy hook (still referenced elsewhere) */
-  .tab-btn.active-tab { color: #18181B; }
+  .tab-btn.active-tab { color: #f37a20; }
   #unassignedRidesBody tr, #assignedRidesBody tr, #enrouteRidesBody tr,
   #scheduledRidesBody tr, #cancelledRidesBody tr, #completedRidesBody tr,
   #meetGreetRidesBody tr {
@@ -926,7 +910,7 @@ require('modules/head.php');
           rides.forEach((ride) => {
             try {
               const name = ride.passenger_name || 'N/A';
-              const orderTime = formatOrderTime(ride.created_at);
+              const orderTime = getRideDisplayTime(ride);
               const pickup =
                 ride.pickup_addr || ride.actual_start_addr || 'N/A';
               const destination =
@@ -984,6 +968,29 @@ require('modules/head.php');
         const minutes = String(date.getMinutes()).padStart(2, '0');
 
         return `${day}.${month}.${year} | ${hours}:${minutes}`;
+      }
+
+      function formatScheduledTime(scheduledAt, meta) {
+        let ts = scheduledAt || null;
+        if (!ts && meta) {
+          try {
+            const m = typeof meta === 'string' ? JSON.parse(meta) : meta;
+            ts = m.scheduled_datetime || null;
+          } catch (_) {}
+        }
+        if (!ts) return '<span style="color:#A1A1AA;">Not set</span>';
+        const d = new Date(ts);
+        if (isNaN(d.getTime())) return ts;
+        const day = String(d.getDate()).padStart(2, '0');
+        const mon = d.toLocaleString('en', { month: 'short' });
+        const year = d.getFullYear();
+        const hours = String(d.getHours()).padStart(2, '0');
+        const mins = String(d.getMinutes()).padStart(2, '0');
+        return `<div style="line-height:1.3;"><div style="font-weight:600; color:#18181B;">${day} ${mon} ${year}</div><div style="color:#f37a20; font-weight:600; font-size:0.78rem;">${hours}:${mins}</div></div>`;
+      }
+
+      function getRideDisplayTime(ride) {
+        return formatOrderTime(ride.scheduled_at || ride.created_at);
       }
 
       function formatFare(fareEur, estimateFare) {
@@ -1185,7 +1192,7 @@ require('modules/head.php');
 
         rides.forEach((ride) => {
           const name = ride.passenger_name || 'N/A';
-          const orderTime = formatOrderTime(ride.created_at);
+          const orderTime = getRideDisplayTime(ride);
           const pickup =
             ride.pickup_addr || ride.actual_start_addr || 'N/A';
           const destination =
@@ -1468,7 +1475,7 @@ require('modules/head.php');
 
         rides.forEach((ride) => {
           const name = ride.passenger_name || 'N/A';
-          const orderTime = formatOrderTime(ride.created_at);
+          const pickupTime = formatScheduledTime(ride.scheduled_at, ride.meta);
           const pickup      = ride.pickup_addr || ride.actual_start_addr || 'N/A';
           const destination = ride.dest_addr   || ride.actual_end_addr   || 'N/A';
           const status = ride.status || 'N/A';
@@ -1502,7 +1509,7 @@ require('modules/head.php');
           const row = document.createElement('tr');
           row.innerHTML = `
             <td class="ps-3">${name}</td>
-            <td>${orderTime}</td>
+            <td>${pickupTime}</td>
             <td>${pickup}</td>
             <td>${destination}</td>
             <td>${renderStatusBadge(status)}</td>
@@ -1631,7 +1638,7 @@ require('modules/head.php');
         }
         rides.forEach((ride) => {
           const name = ride.passenger_name || 'N/A';
-          const orderTime = formatOrderTime(ride.created_at);
+          const orderTime = getRideDisplayTime(ride);
           const pickup = ride.pickup_addr || ride.actual_start_addr || 'N/A';
           const destination = ride.dest_addr || ride.actual_end_addr || 'N/A';
           const status = ride.status || 'N/A';
@@ -1697,7 +1704,7 @@ require('modules/head.php');
         }
         rides.forEach((ride) => {
           const name = ride.passenger_name || 'N/A';
-          const orderTime = formatOrderTime(ride.created_at);
+          const orderTime = getRideDisplayTime(ride);
           const pickup = ride.pickup_addr || ride.actual_start_addr || 'N/A';
           const destination = ride.dest_addr || ride.actual_end_addr || 'N/A';
           const status = ride.status || 'N/A';
@@ -1855,7 +1862,7 @@ require('modules/head.php');
         }
         rides.forEach((ride) => {
           const name = ride.passenger_name || 'N/A';
-          const orderTime = formatOrderTime(ride.created_at);
+          const orderTime = getRideDisplayTime(ride);
           const pickup = ride.pickup_addr || ride.actual_start_addr || 'N/A';
           const destination = ride.dest_addr || ride.actual_end_addr || 'N/A';
           const status = ride.status || 'N/A';
@@ -1900,7 +1907,7 @@ require('modules/head.php');
         }
         rides.forEach((ride) => {
           const name = ride.passenger_name || 'N/A';
-          const orderTime = formatOrderTime(ride.created_at);
+          const orderTime = getRideDisplayTime(ride);
           const pickup = ride.pickup_addr || ride.actual_start_addr || 'N/A';
           const destination = ride.dest_addr || ride.actual_end_addr || 'N/A';
           const status = ride.status || 'N/A';
@@ -1989,7 +1996,7 @@ require('modules/head.php');
         rides.forEach((ride) => {
           const company     = esc(ride.company || '—');
           const employee    = esc(ride.employee || ride.passenger_name || '—');
-          const orderTime   = formatOrderTime(ride.created_at);
+          const orderTime   = getRideDisplayTime(ride);
           const pickup      = esc(ride.pickup_addr || '—');
           const destination = esc(ride.dest_addr || '—');
           const payment     = esc(ride.payment_method || '—');
