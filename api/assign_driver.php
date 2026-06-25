@@ -52,6 +52,12 @@ try {
         'status' => $newStatus,
         'updated_at' => date('Y-m-d H:i:s') . '+00'
     ];
+
+    // When a scheduled ride is force-activated (40-min window), clear the
+    // is_scheduled flag so the driver app treats it as an active ride.
+    if ($forceAssign && $currentStatus === 'scheduled') {
+        $updateData['is_scheduled'] = false;
+    }
     
     // Update distance, duration, and fare if provided
     if (isset($input['distance_km'])) {

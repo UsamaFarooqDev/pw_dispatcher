@@ -327,15 +327,18 @@ try {
         }
     }
 
-    $scheduledDateTime = $scheduledDate . ' ' . $scheduledTime;
-
-    // Convert dispatcher local time → UTC using the browser's timezone offset
+    // Build the scheduled datetime in UTC.
+    // The dispatcher enters local time; the browser sends tz_offset_min
+    // (JS getTimezoneOffset: negative when ahead of UTC, e.g. UTC+5 → -300).
+    // Formula: UTC = local + offset.  We parse the local time as if it were UTC
+    // first, then apply the offset — this makes the result server-timezone-independent.
+    $scheduledDateTimeLocal = $scheduledDate . ' ' . $scheduledTime;
     $tzOffsetMin = isset($input['tz_offset_min']) ? intval($input['tz_offset_min']) : 0;
-    $scheduledTs = strtotime($scheduledDateTime);
-    if ($scheduledTs !== false && $tzOffsetMin !== 0) {
-        $scheduledTs += ($tzOffsetMin * 60);
-        $scheduledDateTime = date('Y-m-d H:i:s', $scheduledTs);
+    $scheduledTsUtc = strtotime($scheduledDateTimeLocal . ' UTC');
+    if ($scheduledTsUtc !== false && $tzOffsetMin !== 0) {
+        $scheduledTsUtc += ($tzOffsetMin * 60);
     }
+    $scheduledDateTime = gmdate('Y-m-d H:i:s', $scheduledTsUtc);
 
     // Prefer the frontend-computed fare (which already accounts for any
     // Special Cost override the dispatcher entered). Fall back to the legacy
@@ -358,6 +361,8 @@ try {
         'scheduled_date' => $scheduledDate,
         'scheduled_time' => $scheduledTime,
         'scheduled_datetime' => $scheduledDateTime,
+        'scheduled_local_date' => $scheduledDate,
+        'scheduled_local_time' => $scheduledTime,
         'extra_cost' => $extraCost,
         'special_cost' => $specialCost,
         'base_fare' => $baseFare,
@@ -451,8 +456,7 @@ try {
     }
 
     $isScheduled = !empty($input['is_scheduled']) && $input['is_scheduled'] !== 'false';
-    $scheduledTs = strtotime($scheduledDateTime);
-    $minutesUntil = ($scheduledTs !== false) ? (($scheduledTs - time()) / 60) : 0;
+    $minutesUntil = ($scheduledTsUtc !== false) ? (($scheduledTsUtc - time()) / 60) : 0;
     // Mark as scheduled only when explicitly flagged AND the pickup is >40 min in the future
     if ($isScheduled && $minutesUntil > 40) {
         $status = 'scheduled';
@@ -473,6 +477,7 @@ try {
         'duration_min' => $durationMin,
         'fare_eur' => number_format($fareEur, 2, '.', ''),
         'status' => $status,
+        'is_scheduled' => $isScheduled,
         'scheduled_at' => $isScheduled ? ($scheduledDateTime . '+00') : null,
         'driver_id' => $driverId,
         'meta' => json_encode($metaData),

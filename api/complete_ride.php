@@ -25,6 +25,7 @@ try {
 
     $updated = $db->updateData('rides', $input['ride_id'], [
         'status'        => 'completed',
+        'is_scheduled'  => false,
         'total_charged' => $fareEur,
         'toll_amount'   => 0,
         'updated_at'    => date('Y-m-d H:i:s') . '+00',
