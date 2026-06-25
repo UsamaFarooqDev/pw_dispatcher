@@ -100,7 +100,7 @@ if ($user_name === '' && $user_email !== '') {
         <i class="bi bi-chevron-down d-none d-md-inline" style="font-size:11px; color:#A1A1AA;"></i>
       </div>
 
-      <ul class="dropdown-menu dropdown-menu-end mt-1 p-1" style="min-width:210px; border:1px solid #EBEBEB; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.10);">
+      <ul class="dropdown-menu dropdown-menu-end mt-1 p-1" style="min-width:210px; border:1px solid #EBEBEB; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.10); z-index:1050;">
         <li>
           <div class="px-3 py-2 mb-1" style="border-bottom:1px solid #EBEBEB;">
             <div id="dropdownUserName" class="fw-bold text-truncate" style="font-size:0.875rem; color:#18181B;"><?php echo htmlspecialchars($user_name); ?></div>

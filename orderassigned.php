@@ -19,6 +19,22 @@ require('modules/head.php');
     to { transform: rotate(360deg); }
   }
 
+  /* ── Z-index layering ────────────────────────────────────────────── */
+  #assignDriverCard { position: relative; z-index: 1020; }
+  #mapContainer { position: relative; z-index: 1; }
+
+  /* ── Back button ───────────────────────────────────────────────── */
+  .oa-back-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; font-size: 0.78rem; font-weight: 600;
+    color: #52525B; background: #fff; border: 1.5px solid #E4E4E7;
+    border-radius: 7px; cursor: pointer; text-decoration: none;
+    transition: all 0.15s; margin-bottom: 8px;
+    width: fit-content;
+  }
+  .oa-back-btn:hover { border-color: #f37a20; color: #f37a20; }
+  .oa-back-btn i { font-size: 13px; }
+
   /* ── View mode: assigned ride tracking ──────────────────────────────── */
   main.view-mode-active { padding: 20px !important; background: #F4F4F5 !important; min-height: 0 !important; overflow: hidden !important; }
   main.view-mode-active .row.g-4 { margin: 0 !important; }
@@ -34,6 +50,7 @@ require('modules/head.php');
     box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
     background: #fff !important;
     overflow: hidden !important;
+    z-index: 1 !important;
   }
 </style>
 
@@ -41,8 +58,23 @@ require('modules/head.php');
 
     <?php @require('modules/sidebar.php'); ?>
 
-<?php $_vmActive = !empty($_GET['id']) && isset($_GET['view']) && $_GET['view']==='1' && !isset($_GET['corp_id']); ?>
+<?php
+  $_vmActive = !empty($_GET['id']) && isset($_GET['view']) && $_GET['view']==='1' && !isset($_GET['corp_id']);
+  $_fromTab = isset($_GET['from']) ? $_GET['from'] : '';
+  $_backUrl = 'preorder.php';
+  if ($_fromTab !== '') $_backUrl .= '#tab-' . htmlspecialchars($_fromTab, ENT_QUOTES);
+?>
 <main class="main-content p-4<?php echo $_vmActive ? ' view-mode-active' : ''; ?>" style="background:#F4F4F5; min-height:100vh;">
+
+  <!-- Page-level loading overlay (covers form + map until data is ready) -->
+  <div id="oaPageLoader" style="position:fixed; inset:0; z-index:9999; background:#F4F4F5; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;">
+    <div style="width:38px; height:38px; border:3.5px solid #E4E4E7; border-top-color:#f37a20; border-radius:50%; animation:spin .7s linear infinite;"></div>
+    <div style="font-size:0.82rem; font-weight:600; color:#71717A; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">Loading order details...</div>
+  </div>
+
+  <a href="<?php echo $_backUrl; ?>" class="oa-back-btn">
+    <i class="bi bi-arrow-left"></i> Back to Live Orders
+  </a>
 
   <div class="row g-4">
 
@@ -646,6 +678,9 @@ function initGoogleMaps() {
 
 document.addEventListener('DOMContentLoaded', async () => {
 
+  // Safety fallback: remove page loader after 6s no matter what
+  setTimeout(() => { const pl = document.getElementById('oaPageLoader'); if (pl) { pl.style.opacity='0'; pl.style.transition='opacity .3s'; setTimeout(()=>pl.remove(),350); } }, 6000);
+
   // Detect mode from URL early — view mode skips heavy passenger/driver loading
   const urlParams = new URLSearchParams(window.location.search);
   const rideId = urlParams.get('id');
@@ -796,21 +831,22 @@ document.addEventListener('DOMContentLoaded', async () => {
           serviceType.value = value;
         }
 
-        // Prefill Date and Time from created_at
-        if (ride.created_at) {
-          const rideDate = new Date(ride.created_at);
-          
+        // Prefill Date and Time — use scheduled_at for pre-orders, created_at for instant rides
+        const timeSource = ride.scheduled_at || ride.created_at;
+        if (timeSource) {
+          const rideDate = new Date(timeSource);
+
           const dateInput = document.getElementById('rideDate');
-          if (dateInput) {
-            const dateStr = rideDate.toISOString().split('T')[0];
-            dateInput.value = dateStr;
+          if (dateInput && !isNaN(rideDate.getTime())) {
+            dateInput.value = rideDate.getFullYear() + '-' +
+              String(rideDate.getMonth() + 1).padStart(2, '0') + '-' +
+              String(rideDate.getDate()).padStart(2, '0');
           }
 
           const timeInput = document.getElementById('rideTime');
-          if (timeInput) {
-            const hours = String(rideDate.getHours()).padStart(2, '0');
-            const minutes = String(rideDate.getMinutes()).padStart(2, '0');
-            timeInput.value = `${hours}:${minutes}`;
+          if (timeInput && !isNaN(rideDate.getTime())) {
+            timeInput.value = String(rideDate.getHours()).padStart(2, '0') + ':' +
+              String(rideDate.getMinutes()).padStart(2, '0');
           }
         }
 
@@ -895,6 +931,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.error('Error loading ride data:', error);
     } finally {
       if (typeof hideGlobalLoader === 'function') hideGlobalLoader();
+      const pl = document.getElementById('oaPageLoader');
+      if (pl) { pl.style.opacity = '0'; pl.style.transition = 'opacity .3s'; setTimeout(() => pl.remove(), 350); }
     }
   }
 
@@ -2036,6 +2074,7 @@ function updateRideProgressCard(status) {
   if (!card || !icon || !text) return;
 
   const s = (status || '').toLowerCase();
+  const isEnroute     = ['enroute','en_route','en-route'].includes(s);
   const isAssigned    = ['assigned','driver_accepted','accepted'].includes(s);
   const isArrived     = ['arrived_at_pickup','driver_arrived','arrived'].includes(s);
   const isOnTrip      = ['on_trip','started','in_progress','trip_started'].includes(s);
@@ -2053,8 +2092,11 @@ function updateRideProgressCard(status) {
   } else if (isArrived) {
     msg = 'Driver arrived at pickup. Waiting for passenger.';
     iconCls = 'bi-geo-alt-fill'; bg = '#FFF7ED'; border = '#FED7AA'; color = '#EA580C';
+  } else if (isEnroute) {
+    msg = 'Driver is enroute to pick up the passenger.';
+    iconCls = 'bi-geo-alt'; bg = '#EEF2FF'; border = '#C7D2FE'; color = '#4F46E5';
   } else if (isAssigned) {
-    msg = 'Driver is on the way to pick up the passenger.';
+    msg = 'Driver assigned. Waiting for driver to start.';
     iconCls = 'bi-arrow-right-circle-fill'; bg = '#F5F3FF'; border = '#DDD6FE'; color = '#7C3AED';
   } else if (isCancelled) {
     msg = 'Ride has been cancelled.';
@@ -2081,12 +2123,18 @@ function updateRideProgressCard(status) {
 function handleRideStatusChange(oldStatus, newStatus) {
   if (!newStatus) return;
   const s = newStatus.toLowerCase();
+  const isEnroute   = ['enroute','en_route','en-route'].includes(s);
   const isArrived   = ['arrived_at_pickup','driver_arrived','arrived'].includes(s);
   const isOnTrip    = ['on_trip','started','in_progress','trip_started'].includes(s);
   const isCompleted = ['completed','finished','done'].includes(s);
   const isCancelled = ['cancelled','canceled'].includes(s);
 
   updateRideProgressCard(s);
+
+  if (isEnroute) {
+    showRideStatusNotification('Driver enroute to pickup', 'enroute');
+    updateDispatcherOverlayStatus('Enroute', '#4F46E5');
+  }
 
   if (isArrived) {
     if (driverRouteRenderer) driverRouteRenderer.setMap(null);
@@ -2120,6 +2168,7 @@ function handleRideStatusChange(oldStatus, newStatus) {
 
 function showRideStatusNotification(message, type) {
   const cfg = {
+    enroute:   { bg: '#EEF2FF', text: '#4F46E5', border: '#C7D2FE', icon: 'bi-geo-alt' },
     arrived:   { bg: '#F0FDF4', text: '#16A34A', border: '#DCFCE7', icon: 'bi-geo-alt-fill' },
     on_trip:   { bg: '#EFF6FF', text: '#2563EB', border: '#DBEAFE', icon: 'bi-car-front-fill' },
     completed: { bg: '#F0FDF4', text: '#16A34A', border: '#DCFCE7', icon: 'bi-check-circle-fill' },

@@ -27,8 +27,7 @@ if (!$input || !isset($input['ride_id']) || !isset($input['status'])) {
     exit;
 }
 
-// Validate status - only allow: searching, assigned, upcoming
-$allowedStatuses = ['searching', 'assigned', 'upcoming', 'scheduled', 'cancelled'];
+$allowedStatuses = ['searching', 'assigned', 'enroute', 'scheduled', 'completed', 'cancelled'];
 $status = strtolower(trim($input['status']));
 
 if (!in_array($status, $allowedStatuses)) {
@@ -49,7 +48,16 @@ try {
         'status' => $status,
         'updated_at' => date('Y-m-d H:i:s') . '+00'
     ];
-    
+
+    // When a ride leaves the scheduled state, clear is_scheduled
+    if ($status !== 'scheduled') {
+        $existing = $db->findData('rides', ['id' => $input['ride_id']]);
+        $wasScheduled = !empty($existing) && strtolower((string)($existing[0]['status'] ?? '')) === 'scheduled';
+        if ($wasScheduled) {
+            $updateData['is_scheduled'] = false;
+        }
+    }
+
     // Update the ride
     $updatedRide = $db->updateData('rides', $input['ride_id'], $updateData);
     

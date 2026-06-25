@@ -16,10 +16,8 @@ require('modules/head.php');
 
   <?php @require('modules/bodyHeader.php'); ?>
 
-  <div class="rounded-3 border mt-4 overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);">
-    <div class="p-4">
-
-      <nav class="po-tabs mb-4" role="tablist" aria-label="Live orders sections">
+  <!-- Tab header strip -->
+  <nav class="po-tabs mt-4" role="tablist" aria-label="Live orders sections">
         <button type="button" class="po-tab is-active tab-btn active-tab" id="tab-unassigned" role="tab" aria-selected="true">
           <i class="bi bi-hourglass-split po-tab__icon"></i>
           <span class="po-tab__label">Unassigned</span>
@@ -30,6 +28,12 @@ require('modules/head.php');
           <i class="bi bi-person-check po-tab__icon"></i>
           <span class="po-tab__label">Assigned</span>
           <span class="po-tab__count" id="count-assigned">0</span>
+        </button>
+
+        <button type="button" class="po-tab tab-btn" id="tab-enroute" role="tab" aria-selected="false">
+          <i class="bi bi-geo-alt po-tab__icon"></i>
+          <span class="po-tab__label">Enroute</span>
+          <span class="po-tab__count" id="count-enroute">0</span>
         </button>
 
         <button type="button" class="po-tab tab-btn" id="tab-on-trip" role="tab" aria-selected="false" style="display:none;">
@@ -61,7 +65,11 @@ require('modules/head.php');
           <span class="po-tab__label">Meet &amp; Greet</span>
           <span class="po-tab__count" id="count-meet-greet">0</span>
         </button>
-      </nav>
+  </nav>
+
+  <!-- Table content card -->
+  <div class="rounded-bottom-3 border border-top-0 overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);">
+    <div class="p-4 pt-3">
 
       <!-- Unassigned -->
       <div id="pane-unassigned" class="tab-pane-table">
@@ -105,6 +113,27 @@ require('modules/head.php');
         </div>
       </div>
 
+      <!-- Enroute -->
+      <div id="pane-enroute" class="tab-pane-table" style="display:none;">
+        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
+          <table class="table mb-0" style="border-collapse:collapse;">
+            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Source</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Driver</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
+              <th class="fw-semibold text-nowrap px-3 py-2 text-end" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:130px;">Action</th>
+            </tr></thead>
+            <tbody id="enrouteRidesBody"></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- On Trip -->
       <div id="pane-ontrip" class="tab-pane-table" style="display:none;">
         <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
@@ -133,7 +162,7 @@ require('modules/head.php');
           <table class="table mb-0" style="border-collapse:collapse;">
             <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup Time</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
@@ -214,109 +243,91 @@ require('modules/head.php');
 </main>
 
 <style>
-  /* ── Live Orders tab strip — outlined pill on active ────────────────── */
+  /* ── Live Orders — bold header tab bar ──────────────────────────────── */
   .po-tabs {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: 4px;
-    margin: 0 0 1.5rem;
-    padding: 0;
+    gap: 0;
+    padding: 0 4px;
+    background: #E4E4E7;
+    border-radius: 10px 10px 0 0;
+    border: 1px solid #D4D4D8;
+    border-bottom: none;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
+  .po-tabs::-webkit-scrollbar { display: none; }
   .po-tab {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    height: 36px;
-    padding: 0 14px;
-    background: transparent;
-    border: 1.5px solid transparent;
-    border-radius: 8px;
+    gap: 7px;
+    padding: 12px 18px;
+    background: none;
+    border: none;
+    border-bottom: 2.5px solid transparent;
     color: #71717A;
     font-family: inherit;
-    font-size: 0.815rem;
-    font-weight: 500;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     line-height: 1;
-    letter-spacing: 0.005em;
+    white-space: nowrap;
     cursor: pointer;
-    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
   }
-  .po-tab:hover {
-    color: #18181B;
-    border-color: #D4D4D8;
-  }
-  .po-tab:focus-visible {
-    outline: none;
-    color: #18181B;
-    border-color: #52525B;
-  }
+  .po-tab:hover { color: #18181B; }
+  .po-tab:focus-visible { outline: none; color: #18181B; }
   .po-tab__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    height: 16px;
-    font-size: 14px;
+    font-size: 13px;
     color: #A1A1AA;
     line-height: 1;
-    transition: color 0.15s ease;
+    transition: color 0.15s;
   }
   .po-tab__label { white-space: nowrap; }
   .po-tab__count {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 20px;
-    height: 18px;
-    padding: 0 6px;
-    margin-left: 2px;
-    background: transparent;
-    color: #A1A1AA;
-    font-size: 0.685rem;
-    font-weight: 600;
+    min-width: 18px;
+    height: 17px;
+    padding: 0 5px;
+    background: #E4E4E7;
+    color: #71717A;
+    font-size: 0.65rem;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
     line-height: 1;
     border-radius: 9px;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background 0.15s, color 0.15s;
   }
   .po-tab.is-active,
   .po-tab.active-tab {
-    color: #18181B;
-    font-weight: 600;
-    background: transparent;
-    border-color: #f37a20;
-    box-shadow: 0 0 0 3px rgba(243,122,32,0.12), 0 1px 2px rgba(243,122,32,0.08);
+    color: #f37a20;
+    border-bottom-color: #f37a20;
+    background: rgba(255,255,255,0.6);
   }
   .po-tab.is-active .po-tab__icon,
-  .po-tab.active-tab .po-tab__icon {
-    color: #f37a20;
-  }
+  .po-tab.active-tab .po-tab__icon { color: #f37a20; }
   .po-tab.is-active .po-tab__count,
   .po-tab.active-tab .po-tab__count {
+    background: #FFF3E8;
     color: #f37a20;
   }
   @media (max-width: 767.98px) {
-    .po-tabs {
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-    .po-tabs::-webkit-scrollbar { display: none; }
-    .po-tab { height: 34px; padding: 0 12px; font-size: 0.78rem; }
+    .po-tab { padding: 10px 12px; font-size: 0.7rem; }
   }
-  /* legacy hook (still referenced elsewhere) */
-  .tab-btn.active-tab { color: #18181B; }
-  #unassignedRidesBody tr, #assignedRidesBody tr,
+  .tab-btn.active-tab { color: #f37a20; }
+  #unassignedRidesBody tr, #assignedRidesBody tr, #enrouteRidesBody tr,
   #scheduledRidesBody tr, #cancelledRidesBody tr, #completedRidesBody tr,
   #meetGreetRidesBody tr {
     border-bottom: 1px solid #F4F4F5;
     transition: background 0.12s;
   }
-  #unassignedRidesBody tr:hover, #assignedRidesBody tr:hover,
+  #unassignedRidesBody tr:hover, #assignedRidesBody tr:hover, #enrouteRidesBody tr:hover,
   #scheduledRidesBody tr:hover, #cancelledRidesBody tr:hover,
   #completedRidesBody tr:hover, #meetGreetRidesBody tr:hover { background: #FAFAFA; }
-  #unassignedRidesBody td, #assignedRidesBody td,
+  #unassignedRidesBody td, #assignedRidesBody td, #enrouteRidesBody td,
   #scheduledRidesBody td, #cancelledRidesBody td, #completedRidesBody td,
   #meetGreetRidesBody td {
     padding: 14px 16px;
@@ -417,6 +428,7 @@ require('modules/head.php');
         // Load all tab data
         loadUnassignedRides(true);
         loadAssignedRides(true);
+        loadEnrouteRides(true);
         loadOnTripRides(true);
         loadScheduledRides(true);
         loadCancelledRides(true);
@@ -497,9 +509,14 @@ require('modules/head.php');
           // scheduled rides are surfaced in the Assigned tab instead.
           const scheduledRides = allScheduledRides.filter((ride) => !rideHasDriver(ride));
 
+          const enrouteRides = rides.filter((ride) => {
+            const status = (ride.status || '').toLowerCase();
+            return ENROUTE_STATUSES.includes(status);
+          });
+
           const onTripRides = rides.filter((ride) => {
             const status = (ride.status || '').toLowerCase();
-            return ['on_trip','ongoing','in_progress','ontrip','started','arrived_at_pickup','driver_arrived','arrived','enroute','en_route','en-route'].includes(status);
+            return ['on_trip','ongoing','in_progress','ontrip','started','arrived_at_pickup','driver_arrived','arrived'].includes(status);
           });
 
           const cancelledRides = rides.filter((ride) => {
@@ -531,6 +548,7 @@ require('modules/head.php');
           // Only update UI if there are actual changes
           const unassignedChanged = hasRidesChanged(currentRidesData.unassigned, unassignedRides);
           const assignedChanged = hasRidesChanged(currentRidesData.assigned, assignedRides);
+          const enrouteChanged = hasRidesChanged(currentRidesData.enroute, enrouteRides);
           const scheduledChanged = hasRidesChanged(currentRidesData.scheduled, scheduledRides);
 
           if (unassignedChanged) {
@@ -548,6 +566,16 @@ require('modules/head.php');
             updateAssignedTabCount(assignedRides.length);
             if (currentTab === 'assigned') {
               updatePaginationInfo(assignedRides.length);
+              const currentPage = preorderPagination ? preorderPagination.getCurrentPage() : 1;
+              updateTableForCurrentTab(currentPage, ITEMS_PER_PAGE);
+            }
+          }
+
+          if (enrouteChanged) {
+            currentRidesData.enroute = enrouteRides;
+            updateEnrouteTabCount(enrouteRides.length);
+            if (currentTab === 'enroute') {
+              updatePaginationInfo(enrouteRides.length);
               const currentPage = preorderPagination ? preorderPagination.getCurrentPage() : 1;
               updateTableForCurrentTab(currentPage, ITEMS_PER_PAGE);
             }
@@ -882,7 +910,7 @@ require('modules/head.php');
           rides.forEach((ride) => {
             try {
               const name = ride.passenger_name || 'N/A';
-              const orderTime = formatOrderTime(ride.created_at);
+              const orderTime = getRideDisplayTime(ride);
               const pickup =
                 ride.pickup_addr || ride.actual_start_addr || 'N/A';
               const destination =
@@ -903,7 +931,7 @@ require('modules/head.php');
                 <td>${renderSourceBadge(ride.source)}</td>
                 <td class="text-end pe-4">${fare}</td>
                 <td class="text-end pe-4">
-                  <a href="orderassigned.php?id=${rideId}" class="view-details-btn">
+                  <a href="orderassigned.php?id=${rideId}&from=unassigned" class="view-details-btn">
                     <span>View Details</span>
                     <i class="bi bi-chevron-right"></i>
                   </a>
@@ -942,6 +970,29 @@ require('modules/head.php');
         return `${day}.${month}.${year} | ${hours}:${minutes}`;
       }
 
+      function formatScheduledTime(scheduledAt, meta) {
+        let ts = scheduledAt || null;
+        if (!ts && meta) {
+          try {
+            const m = typeof meta === 'string' ? JSON.parse(meta) : meta;
+            ts = m.scheduled_datetime || null;
+          } catch (_) {}
+        }
+        if (!ts) return '<span style="color:#A1A1AA;">Not set</span>';
+        const d = new Date(ts);
+        if (isNaN(d.getTime())) return ts;
+        const day = String(d.getDate()).padStart(2, '0');
+        const mon = d.toLocaleString('en', { month: 'short' });
+        const year = d.getFullYear();
+        const hours = String(d.getHours()).padStart(2, '0');
+        const mins = String(d.getMinutes()).padStart(2, '0');
+        return `<div style="line-height:1.3;"><div style="font-weight:600; color:#18181B;">${day} ${mon} ${year}</div><div style="color:#f37a20; font-weight:600; font-size:0.78rem;">${hours}:${mins}</div></div>`;
+      }
+
+      function getRideDisplayTime(ride) {
+        return formatOrderTime(ride.scheduled_at || ride.created_at);
+      }
+
       function formatFare(fareEur, estimateFare) {
         const value =
           fareEur != null
@@ -977,6 +1028,8 @@ require('modules/head.php');
             populateUnassignedTable(paginatedRides);
           } else if (currentTab === 'assigned') {
             populateAssignedTable(paginatedRides);
+          } else if (currentTab === 'enroute') {
+            populateEnrouteTable(paginatedRides);
           } else if (currentTab === 'ontrip') {
             populateOnTripTable(paginatedRides);
           } else if (currentTab === 'scheduled') {
@@ -1139,7 +1192,7 @@ require('modules/head.php');
 
         rides.forEach((ride) => {
           const name = ride.passenger_name || 'N/A';
-          const orderTime = formatOrderTime(ride.created_at);
+          const orderTime = getRideDisplayTime(ride);
           const pickup =
             ride.pickup_addr || ride.actual_start_addr || 'N/A';
           const destination =
@@ -1169,7 +1222,7 @@ require('modules/head.php');
                   <i class="bi bi-person-dash"></i>
                   <span>Unassign</span>
                 </button>
-                <a href="orderassigned.php?id=${encodeURIComponent(ride.id)}&view=1" class="view-details-btn">
+                <a href="orderassigned.php?id=${encodeURIComponent(ride.id)}&view=1&from=assigned" class="view-details-btn">
                   <span>View Details</span>
                   <i class="bi bi-chevron-right"></i>
                 </a>
@@ -1306,9 +1359,12 @@ require('modules/head.php');
         if (badge) badge.textContent = count;
       }
 
+      const ENROUTE_STATUSES = ['enroute','en_route','en-route'];
+
       const TAB_CONFIG = [
         { btnId: 'tab-unassigned', paneId: 'pane-unassigned', key: 'unassigned', action: true },
         { btnId: 'tab-assigned',   paneId: 'pane-assigned',   key: 'assigned',   action: true },
+        { btnId: 'tab-enroute',    paneId: 'pane-enroute',    key: 'enroute',    action: false },
         { btnId: 'tab-on-trip',    paneId: 'pane-ontrip',     key: 'ontrip',     action: false },
         { btnId: 'tab-scheduled',  paneId: 'pane-scheduled',  key: 'scheduled',  action: false },
         { btnId: 'tab-cancelled',  paneId: 'pane-cancelled',  key: 'cancelled',  action: false },
@@ -1346,6 +1402,14 @@ require('modules/head.php');
             }
           });
         });
+
+        // Restore tab from URL hash (e.g. #tab-assigned from back button)
+        const hash = window.location.hash;
+        if (hash && hash.startsWith('#tab-')) {
+          const target = hash.substring(1);
+          const tabBtn = document.getElementById(target);
+          if (tabBtn) tabBtn.click();
+        }
       }
 
       async function loadScheduledRides(showLoading = false) {
@@ -1411,7 +1475,7 @@ require('modules/head.php');
 
         rides.forEach((ride) => {
           const name = ride.passenger_name || 'N/A';
-          const orderTime = formatOrderTime(ride.created_at);
+          const pickupTime = formatScheduledTime(ride.scheduled_at, ride.meta);
           const pickup      = ride.pickup_addr || ride.actual_start_addr || 'N/A';
           const destination = ride.dest_addr   || ride.actual_end_addr   || 'N/A';
           const status = ride.status || 'N/A';
@@ -1421,10 +1485,10 @@ require('modules/head.php');
 
           const hasDriver = !!(ride.driver_id);
           const actionCell = hasDriver
-            ? `<a href="orderassigned.php?id=${encodeURIComponent(rideId)}&view=1" class="view-details-btn">
+            ? `<a href="orderassigned.php?id=${encodeURIComponent(rideId)}&view=1&from=scheduled" class="view-details-btn">
                  <span>View Details</span><i class="bi bi-chevron-right"></i>
                </a>`
-            : `<a href="orderassigned.php?id=${encodeURIComponent(rideId)}" class="view-details-btn"
+            : `<a href="orderassigned.php?id=${encodeURIComponent(rideId)}&from=scheduled" class="view-details-btn"
                  style="background:#f37a20 !important; color:#fff !important; border-color:#f37a20 !important;">
                  <span>Assign</span><i class="bi bi-chevron-right"></i>
                </a>`;
@@ -1445,7 +1509,7 @@ require('modules/head.php');
           const row = document.createElement('tr');
           row.innerHTML = `
             <td class="ps-3">${name}</td>
-            <td>${orderTime}</td>
+            <td>${pickupTime}</td>
             <td>${pickup}</td>
             <td>${destination}</td>
             <td>${renderStatusBadge(status)}</td>
@@ -1574,7 +1638,7 @@ require('modules/head.php');
         }
         rides.forEach((ride) => {
           const name = ride.passenger_name || 'N/A';
-          const orderTime = formatOrderTime(ride.created_at);
+          const orderTime = getRideDisplayTime(ride);
           const pickup = ride.pickup_addr || ride.actual_start_addr || 'N/A';
           const destination = ride.dest_addr || ride.actual_end_addr || 'N/A';
           const status = ride.status || 'N/A';
@@ -1640,7 +1704,7 @@ require('modules/head.php');
         }
         rides.forEach((ride) => {
           const name = ride.passenger_name || 'N/A';
-          const orderTime = formatOrderTime(ride.created_at);
+          const orderTime = getRideDisplayTime(ride);
           const pickup = ride.pickup_addr || ride.actual_start_addr || 'N/A';
           const destination = ride.dest_addr || ride.actual_end_addr || 'N/A';
           const status = ride.status || 'N/A';
@@ -1738,6 +1802,31 @@ require('modules/head.php');
         if (badge) badge.textContent = count;
       }
 
+      async function loadEnrouteRides(showLoading = false) {
+        try {
+          const response = await fetch('api/get_rides.php?page=1&limit=1000');
+          if (response.status === 401) { window.location.href = '/'; return; }
+          if (!response.ok) throw new Error('Failed to fetch rides');
+          const result = await response.json();
+          if (!result.success) throw new Error(result.error || 'Failed');
+          const rides = result && result.data ? result.data : [];
+          const enrouteRides = rides.filter((ride) => {
+            const status = (ride.status || '').toLowerCase();
+            return ENROUTE_STATUSES.includes(status);
+          });
+          currentRidesData.enroute = enrouteRides;
+          updateEnrouteTabCount(enrouteRides.length);
+          if (currentTab === 'enroute') {
+            updatePaginationInfo(enrouteRides.length);
+            const currentPage = preorderPagination ? preorderPagination.getCurrentPage() : 1;
+            updateTableForCurrentTab(currentPage, ITEMS_PER_PAGE);
+          }
+        } catch (error) {
+          console.error('Error loading enroute rides:', error);
+          updateEnrouteTabCount(0);
+        }
+      }
+
       async function loadOnTripRides(showLoading = false) {
         try {
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
@@ -1748,7 +1837,7 @@ require('modules/head.php');
           const rides = result && result.data ? result.data : [];
           const onTripRides = rides.filter((ride) => {
             const status = (ride.status || '').toLowerCase();
-            return ['on_trip','ongoing','in_progress','ontrip','started','arrived_at_pickup','driver_arrived','arrived','enroute','en_route','en-route'].includes(status);
+            return ['on_trip','ongoing','in_progress','ontrip','started','arrived_at_pickup','driver_arrived','arrived'].includes(status);
           });
           currentRidesData.ontrip = onTripRides;
           updateOnTripTabCount(onTripRides.length);
@@ -1763,6 +1852,51 @@ require('modules/head.php');
         }
       }
 
+      function populateEnrouteTable(rides) {
+        const tbody = document.getElementById('enrouteRidesBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        if (!rides || rides.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-muted">No enroute rides to show</td></tr>';
+          return;
+        }
+        rides.forEach((ride) => {
+          const name = ride.passenger_name || 'N/A';
+          const orderTime = getRideDisplayTime(ride);
+          const pickup = ride.pickup_addr || ride.actual_start_addr || 'N/A';
+          const destination = ride.dest_addr || ride.actual_end_addr || 'N/A';
+          const status = ride.status || 'N/A';
+          const driverName = ride.driver_name || 'Unassigned';
+          const fare = formatFare(ride.fare_eur, ride.estimate_fare);
+          const rideId = encodeURIComponent(ride.id || '');
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td class="ps-3">${name}</td>
+            <td>${orderTime}</td>
+            <td>${pickup}</td>
+            <td>${destination}</td>
+            <td>${renderStatusBadge(status)}</td>
+            <td>${renderPaymentBadge(ride.payment_method)}</td>
+            <td>${renderSourceBadge(ride.source)}</td>
+            <td>${driverName}</td>
+            <td>${fare}</td>
+            <td class="text-end pe-4">
+              <a href="orderassigned.php?id=${rideId}&view=1&from=enroute" class="view-details-btn">
+                <span>View Live</span>
+                <i class="bi bi-geo-alt-fill"></i>
+              </a>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+        applyPreorderSearchFilterForCurrentTab();
+      }
+
+      function updateEnrouteTabCount(count) {
+        const badge = document.getElementById('count-enroute');
+        if (badge) badge.textContent = count;
+      }
+
       function populateOnTripTable(rides) {
         const tbody = document.getElementById('onTripRidesBody');
         if (!tbody) return;
@@ -1773,7 +1907,7 @@ require('modules/head.php');
         }
         rides.forEach((ride) => {
           const name = ride.passenger_name || 'N/A';
-          const orderTime = formatOrderTime(ride.created_at);
+          const orderTime = getRideDisplayTime(ride);
           const pickup = ride.pickup_addr || ride.actual_start_addr || 'N/A';
           const destination = ride.dest_addr || ride.actual_end_addr || 'N/A';
           const status = ride.status || 'N/A';
@@ -1793,7 +1927,7 @@ require('modules/head.php');
             <td>${driverName}</td>
             <td>${fare}</td>
             <td class="text-end pe-4">
-              <a href="orderassigned.php?id=${rideId}&view=1" class="view-details-btn">
+              <a href="orderassigned.php?id=${rideId}&view=1&from=on-trip" class="view-details-btn">
                 <span>View Live</span>
                 <i class="bi bi-geo-alt-fill"></i>
               </a>
@@ -1862,7 +1996,7 @@ require('modules/head.php');
         rides.forEach((ride) => {
           const company     = esc(ride.company || '—');
           const employee    = esc(ride.employee || ride.passenger_name || '—');
-          const orderTime   = formatOrderTime(ride.created_at);
+          const orderTime   = getRideDisplayTime(ride);
           const pickup      = esc(ride.pickup_addr || '—');
           const destination = esc(ride.dest_addr || '—');
           const payment     = esc(ride.payment_method || '—');

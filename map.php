@@ -67,6 +67,22 @@ require('modules/head.php');
     <div class="position-relative flex-grow-1 rounded-3 overflow-hidden" style="border:1.5px solid #EBEBEB; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
       <div id="map" style="width:100%; height:100%; border:0;"></div>
 
+      <!-- Driver preference filters -->
+      <div class="position-absolute top-0 end-0 m-3 d-flex gap-2 flex-wrap" style="z-index:5;">
+        <button type="button" class="map-filter-btn" data-filter="acceptCardRides" onclick="toggleMapFilter(this)">
+          <i class="bi bi-credit-card"></i> Card Rides
+        </button>
+        <button type="button" class="map-filter-btn" data-filter="petsAllowed" onclick="toggleMapFilter(this)">
+          <i class="bi bi-hearts"></i> Pets Allowed
+        </button>
+        <button type="button" class="map-filter-btn" data-filter="personWithDisabilities" onclick="toggleMapFilter(this)">
+          <i class="bi bi-person-wheelchair"></i> Wheelchair
+        </button>
+        <button type="button" class="map-filter-btn" data-filter="acceptDeliveryRides" onclick="toggleMapFilter(this)">
+          <i class="bi bi-box-seam"></i> Delivery
+        </button>
+      </div>
+
       <div class="position-absolute bottom-0 start-0 m-3 d-flex gap-2">
         <button class="btn fw-semibold d-flex align-items-center gap-1"
           style="height:34px; background:#fff; color:#52525B; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.8rem; box-shadow:0 2px 8px rgba(0,0,0,0.08);"
@@ -139,6 +155,17 @@ require('modules/head.php');
   #driverTableBody tr:hover { background: #FAFAFA; }
   #driverTableBody td { padding: 12px 16px; font-size: 0.845rem; color: #18181B; vertical-align: middle; }
   .driver-status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .map-filter-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 5px 10px; font-size: 0.75rem; font-weight: 600;
+    border-radius: 8px; border: 1.5px solid #E4E4E7;
+    background: rgba(255,255,255,0.95); color: #52525B; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.15s;
+    backdrop-filter: blur(4px);
+  }
+  .map-filter-btn:hover { border-color: #f37a20; color: #f37a20; }
+  .map-filter-btn.is-active { background: #f37a20; color: #fff; border-color: #f37a20; box-shadow: 0 2px 10px rgba(243,122,32,0.3); }
+  .map-filter-btn i { font-size: 12px; }
 </style>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9ea0A-mjnD5iHfT9X8Dn5YYH4_KZopLI&libraries=geometry" async defer></script>
@@ -153,6 +180,7 @@ require('modules/head.php');
       let driverRouteMeta = {};     // per-driver {targetKey, ts, fromLat, fromLng} to throttle Directions calls
       let directionsService = null; // lazily created Google Directions client
       let allDrivers = [];
+      const activeMapFilters = new Set();
       const UPDATE_INTERVAL = 3000; // poll cadence — tighter = closer to real-time
       const MARKER_ANIM_MS = UPDATE_INTERVAL; // glide across the whole interval so the car moves continuously
       const TELEPORT_SNAP_METERS = 1000; // a jump larger than this can't be real movement in one interval → snap, don't drive across the map
@@ -403,10 +431,30 @@ require('modules/head.php');
         });
       }
 
-      // Apply search filter and update markers
+      // Apply search + preference filters and update markers
       function applySearchFilter() {
-        const filteredDrivers = filterDriversBySearch(allDrivers, currentSearchQuery);
-        updateDriverMarkers(filteredDrivers);
+        let filtered = filterDriversBySearch(allDrivers, currentSearchQuery);
+        if (activeMapFilters.size > 0) {
+          filtered = filtered.filter(d => {
+            for (const key of activeMapFilters) {
+              if (!d[key]) return false;
+            }
+            return true;
+          });
+        }
+        updateDriverMarkers(filtered);
+      }
+
+      function toggleMapFilter(btn) {
+        const key = btn.dataset.filter;
+        if (activeMapFilters.has(key)) {
+          activeMapFilters.delete(key);
+          btn.classList.remove('is-active');
+        } else {
+          activeMapFilters.add(key);
+          btn.classList.add('is-active');
+        }
+        applySearchFilter();
       }
 
       // Build the HTML shown inside an InfoWindow for a driver

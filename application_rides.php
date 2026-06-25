@@ -92,6 +92,23 @@ require('modules/head.php');
     color: #E11D48;
     background: #FFF1F2;
   }
+  .status-option {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 10px;
+    border: 1.5px solid #E4E4E7; background: #fff;
+    cursor: pointer; transition: all 0.15s; text-align: left;
+    position: relative;
+  }
+  .status-option:hover { border-color: #f37a20; background: #FFFBF5; }
+  .status-option.is-selected { border-color: #f37a20; background: #FFF7ED; }
+  .status-option--danger.is-selected { border-color: #E11D48; background: #FFF1F2; }
+  .status-option--danger:hover { border-color: #E11D48; background: #FFF1F2; }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .status-label { font-size: 0.84rem; font-weight: 600; color: #18181B; }
+  .status-desc { font-size: 0.72rem; color: #A1A1AA; margin-left: auto; }
+  .status-check { display: none; font-size: 14px; color: #f37a20; margin-left: 6px; flex-shrink: 0; }
+  .status-option--danger .status-check { color: #E11D48; }
+  .status-option.is-selected .status-check { display: inline; }
 </style>
 
 <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
@@ -111,17 +128,45 @@ require('modules/head.php');
         </button>
       </div>
 
-      <div class="mb-4">
-        <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Status</label>
-        <select id="rideStatusSelect" class="form-select"
-          style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; color:#18181B; background:#FAFAFA;"
-          onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
-          onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';">
-          <option value="searching">Searching</option>
-          <option value="assigned">Assigned</option>
-          <option value="upcoming">Upcoming</option>
-          <option value="scheduled">Scheduled</option>
-        </select>
+      <input type="hidden" id="rideStatusSelect" value="searching" />
+      <div class="mb-4 d-flex flex-column gap-2">
+        <label class="form-label fw-semibold mb-1" style="font-size:0.8125rem; color:#18181B;">Status</label>
+        <button type="button" class="status-option" data-value="searching" onclick="pickStatus(this)">
+          <span class="status-dot" style="background:#f37a20;"></span>
+          <span class="status-label">Searching</span>
+          <span class="status-desc">Looking for a driver</span>
+          <i class="bi bi-check-lg status-check"></i>
+        </button>
+        <button type="button" class="status-option" data-value="assigned" onclick="pickStatus(this)">
+          <span class="status-dot" style="background:#2563EB;"></span>
+          <span class="status-label">Assigned</span>
+          <span class="status-desc">Driver has been assigned</span>
+          <i class="bi bi-check-lg status-check"></i>
+        </button>
+        <button type="button" class="status-option" data-value="enroute" onclick="pickStatus(this)">
+          <span class="status-dot" style="background:#4F46E5;"></span>
+          <span class="status-label">Enroute</span>
+          <span class="status-desc">Driver heading to pickup</span>
+          <i class="bi bi-check-lg status-check"></i>
+        </button>
+        <button type="button" class="status-option" data-value="scheduled" onclick="pickStatus(this)">
+          <span class="status-dot" style="background:#7C3AED;"></span>
+          <span class="status-label">Scheduled</span>
+          <span class="status-desc">Pre-booked for later</span>
+          <i class="bi bi-check-lg status-check"></i>
+        </button>
+        <button type="button" class="status-option" data-value="completed" onclick="pickStatus(this)">
+          <span class="status-dot" style="background:#16A34A;"></span>
+          <span class="status-label">Completed</span>
+          <span class="status-desc">Trip finished</span>
+          <i class="bi bi-check-lg status-check"></i>
+        </button>
+        <button type="button" class="status-option status-option--danger" data-value="cancelled" onclick="pickStatus(this)">
+          <span class="status-dot" style="background:#E11D48;"></span>
+          <span class="status-label">Cancelled</span>
+          <span class="status-desc">Cancel this ride</span>
+          <i class="bi bi-check-lg status-check"></i>
+        </button>
       </div>
 
       <div class="d-flex justify-content-end gap-2">
@@ -377,22 +422,24 @@ require('modules/head.php');
 
       let selectedRideId = null;
 
+      function pickStatus(btn) {
+        document.querySelectorAll('.status-option').forEach(el => el.classList.remove('is-selected'));
+        btn.classList.add('is-selected');
+        document.getElementById('rideStatusSelect').value = btn.dataset.value;
+      }
+
       // Edit modal - when opened, set the current ride ID and status
       document.getElementById('editModal').addEventListener('show.bs.modal', function(e) {
         const btn = e.relatedTarget;
         selectedRideId = btn.getAttribute('data-ride-id');
         const currentStatus = (btn.getAttribute('data-ride-status') || '').toLowerCase();
-        
-        const statusSelect = document.getElementById('rideStatusSelect');
-        if (statusSelect) {
-          // Set the current status, or default to 'searching' if not in allowed list
-          const allowedStatuses = ['searching', 'assigned', 'upcoming', 'scheduled'];
-          if (allowedStatuses.includes(currentStatus)) {
-            statusSelect.value = currentStatus;
-          } else {
-            statusSelect.value = 'searching';
-          }
-        }
+
+        const allowedStatuses = ['searching', 'assigned', 'enroute', 'scheduled', 'completed', 'cancelled'];
+        const statusToSelect = allowedStatuses.includes(currentStatus) ? currentStatus : 'searching';
+        document.getElementById('rideStatusSelect').value = statusToSelect;
+        document.querySelectorAll('.status-option').forEach(el => {
+          el.classList.toggle('is-selected', el.dataset.value === statusToSelect);
+        });
       });
 
       // Save ride status button

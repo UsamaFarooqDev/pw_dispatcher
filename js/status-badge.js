@@ -10,6 +10,9 @@ const STATUS_CONFIG = {
   driver_assigned:    { bg: '#EFF6FF', color: '#2563EB', label: 'Assigned'         },
   driver_accepted:    { bg: '#EFF6FF', color: '#2563EB', label: 'Assigned'         },
   accepted:           { bg: '#EFF6FF', color: '#2563EB', label: 'Assigned'         },
+  // ── Enroute (driver heading to pickup) ──────────────────────────────────
+  enroute:            { bg: '#EEF2FF', color: '#4F46E5', label: 'Enroute'          },
+  en_route:           { bg: '#EEF2FF', color: '#4F46E5', label: 'Enroute'          },
   // ── Active / on-trip states ────────────────────────────────────────────
   on_trip:            { bg: '#FFF7ED', color: '#EA580C', label: 'On Trip'          },
   ontrip:             { bg: '#FFF7ED', color: '#EA580C', label: 'On Trip'          },
