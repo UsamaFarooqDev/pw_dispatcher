@@ -1756,7 +1756,7 @@ async function createOrder() {
         const paymentMethod = (paymentChoice && paymentChoice.value === 'stripe') ? 'prepaid' : 'cash';
 
         const isCustomPax = paxMode === 'custom';
-        const finalName = isCustomPax ? customerName + ' (Powercabs Dispatch)' : customerName;
+        const finalName = customerName;
 
         const payload = {
           user_id: passengerId || null,
