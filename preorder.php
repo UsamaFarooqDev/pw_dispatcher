@@ -197,7 +197,7 @@ require('modules/head.php');
 
       <!-- Completed -->
       <div id="pane-completed" class="tab-pane-table" style="display:none;">
-        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
+        <div class="table-responsive rounded-2" style="border:1px solid #EBEBEB; min-height:362px; overflow-x:auto; overflow-y:hidden;">
           <table class="table mb-0" style="border-collapse:collapse;">
             <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
@@ -208,7 +208,9 @@ require('modules/head.php');
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Prebook</th>
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Source</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Final Fare</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Toll Amount</th>
+              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Total Charged</th>
             </tr></thead>
             <tbody id="completedRidesBody"></tbody>
           </table>
@@ -1699,7 +1701,7 @@ require('modules/head.php');
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="9" class="text-center py-4 text-muted">No completed rides to show</td></tr>';
+            '<tr><td colspan="11" class="text-center py-4 text-muted">No completed rides to show</td></tr>';
           return;
         }
         rides.forEach((ride) => {
@@ -1708,7 +1710,9 @@ require('modules/head.php');
           const pickup = ride.pickup_addr || ride.actual_start_addr || 'N/A';
           const destination = ride.dest_addr || ride.actual_end_addr || 'N/A';
           const status = ride.status || 'N/A';
-          const fare = formatFare(ride.fare_eur, ride.estimate_fare);
+          const finalFare = formatFare(ride.final_fare, null);
+          const tollAmount = formatFare(ride.toll_amount, null);
+          const totalCharged = formatFare(ride.total_charged, null);
           const row = document.createElement('tr');
           row.innerHTML = `
             <td class="ps-3">${name}</td>
@@ -1719,7 +1723,9 @@ require('modules/head.php');
             <td>${renderPaymentBadge(ride.payment_method)}</td>
             <td>${renderPrebookBadge(ride)}</td>
             <td>${renderSourceBadge(ride.source)}</td>
-            <td class="text-end pe-4">${fare}</td>
+            <td class="text-end pe-4">${finalFare}</td>
+            <td class="text-end pe-4">${tollAmount}</td>
+            <td class="text-end pe-4">${totalCharged}</td>
           `;
           tbody.appendChild(row);
         });
