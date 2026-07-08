@@ -57,11 +57,13 @@ require('modules/head.php');
             </div>
           </div>
 
-          <button type="submit" class="btn w-100 fw-semibold d-flex align-items-center justify-content-center gap-2"
+          <button type="submit" id="loginBtn" class="btn w-100 fw-semibold d-flex align-items-center justify-content-center gap-2"
             style="height:42px; background:#f37a20; color:#fff; border:none; border-radius:8px; font-size:0.9rem; box-shadow:0 4px 14px rgba(243,122,32,0.35); letter-spacing:0.01em;"
-            onmouseover="this.style.background='#d96010'; this.style.boxShadow='0 4px 18px rgba(243,122,32,0.50)';"
-            onmouseout="this.style.background='#f37a20'; this.style.boxShadow='0 4px 14px rgba(243,122,32,0.35)';">
-            <i class="bi bi-box-arrow-in-right" style="font-size:16px;"></i> Sign In
+            onmouseover="if(!this.disabled){this.style.background='#d96010'; this.style.boxShadow='0 4px 18px rgba(243,122,32,0.50)';}"
+            onmouseout="if(!this.disabled){this.style.background='#f37a20'; this.style.boxShadow='0 4px 14px rgba(243,122,32,0.35)';}">
+            <span id="loginBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+            <i class="bi bi-box-arrow-in-right" id="loginBtnIcon" style="font-size:16px;"></i>
+            <span id="loginBtnText">Sign In</span>
           </button>
         </form>
 
@@ -350,12 +352,42 @@ require('modules/head.php');
       })();
 
       // AJAX submit
+      const loginBtn = document.getElementById('loginBtn');
+      const loginBtnSpinner = document.getElementById('loginBtnSpinner');
+      const loginBtnIcon = document.getElementById('loginBtnIcon');
+      const loginBtnText = document.getElementById('loginBtnText');
+
+      function setLoginBtnState(state) {
+        // state: 'idle' | 'loading' | 'success'
+        if (state === 'loading') {
+          loginBtn.disabled = true;
+          loginBtnSpinner.classList.remove('d-none');
+          loginBtnIcon.classList.add('d-none');
+          loginBtnText.textContent = 'Signing in...';
+        } else if (state === 'success') {
+          loginBtn.disabled = true;
+          loginBtnSpinner.classList.add('d-none');
+          loginBtnIcon.classList.remove('d-none');
+          loginBtnIcon.classList.remove('bi-box-arrow-in-right');
+          loginBtnIcon.classList.add('bi-check-circle');
+          loginBtnText.textContent = 'Login successful';
+        } else {
+          loginBtn.disabled = false;
+          loginBtnSpinner.classList.add('d-none');
+          loginBtnIcon.classList.remove('d-none');
+          loginBtnIcon.classList.remove('bi-check-circle');
+          loginBtnIcon.classList.add('bi-box-arrow-in-right');
+          loginBtnText.textContent = 'Sign In';
+        }
+      }
+
       document
         .getElementById('loginForm')
         .addEventListener('submit', async function (e) {
           e.preventDefault();
 
           const formData = new FormData(this);
+          setLoginBtnState('loading');
 
           try {
             const resp = await fetch('auth/login.php', {
@@ -365,13 +397,16 @@ require('modules/head.php');
             const json = await resp.json();
 
             if (json.success) {
+              setLoginBtnState('success');
               showToast(json.message || 'Login successful', true);
               // Redirect after a short delay so user sees toast
               setTimeout(() => (window.location.href = 'home.php'), 900);
             } else {
+              setLoginBtnState('idle');
               showToast(json.message || 'Invalid credentials', false);
             }
           } catch (err) {
+            setLoginBtnState('idle');
             showToast('Network error, try again', false);
           }
         });

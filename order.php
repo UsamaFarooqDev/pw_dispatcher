@@ -161,176 +161,7 @@ foreach ($rideTypes as $t) {
 
 <main class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
   <div class="rounded-3 border overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-    <div class="p-4">
-
-      <div class="section-label"><span>Passenger Details</span></div>
-
-      <input type="hidden" id="customerId" />
-      <input type="hidden" id="passengerMode" value="existing" />
-
-      <div class="row g-3 mt-1 mb-3">
-        <!-- EXISTING mode: search + select from DB -->
-        <div class="col-md-6 position-relative" id="paxExistingPane">
-          <div class="d-flex align-items-center justify-content-between mb-1">
-            <label class="form-label fw-semibold mb-0" style="font-size:0.8125rem; color:#18181B;">Passenger Name</label>
-            <div class="pax-mode-toggle">
-              <button type="button" class="pax-mode-btn is-active" id="paxModeExisting" onclick="switchPaxMode('existing')">Existing</button>
-              <button type="button" class="pax-mode-btn" id="paxModeCustom" onclick="switchPaxMode('custom')">New</button>
-            </div>
-          </div>
-          <div id="paxSearchWrapper">
-            <input type="text" class="form-control" placeholder="Type name to search..."
-              id="customerNameInput" autocomplete="off"
-              style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; color:#18181B; background:#FAFAFA;"
-              onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
-              onblur="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA'; this.style.boxShadow='none';" />
-            <div id="customerSuggestions" class="list-group position-absolute w-100"
-              style="z-index:10; max-height:200px; overflow-y:auto; display:none; border:1.5px solid #EBEBEB; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.10); top:100%; margin-top:4px;"></div>
-          </div>
-          <div id="paxSelectedCard" class="pax-selected-card" style="display:none;">
-            <i class="bi bi-person-check-fill" style="color:#16A34A; font-size:16px;"></i>
-            <span class="pax-name" id="paxSelectedName"></span>
-            <button type="button" class="pax-clear" title="Change passenger" onclick="clearSelectedPassenger()">
-              <i class="bi bi-x-lg"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- CUSTOM mode: just type a name -->
-        <div class="col-md-6" id="paxCustomPane" style="display:none;">
-          <div class="d-flex align-items-center justify-content-between mb-1">
-            <label class="form-label fw-semibold mb-0" style="font-size:0.8125rem; color:#18181B;">Passenger Name</label>
-            <div class="pax-mode-toggle">
-              <button type="button" class="pax-mode-btn" id="paxModeExisting2" onclick="switchPaxMode('existing')">Existing</button>
-              <button type="button" class="pax-mode-btn is-active" id="paxModeCustom2" onclick="switchPaxMode('custom')">New</button>
-            </div>
-          </div>
-          <input type="text" class="form-control" placeholder="Enter passenger name"
-            id="customPassengerName" autocomplete="off"
-            style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; color:#18181B; background:#FAFAFA;"
-            onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
-            onblur="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA'; this.style.boxShadow='none';" />
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Phone Number</label>
-          <div class="input-group" style="height:38px;">
-            <div style="position:relative;" id="countryCodeWrapper">
-              <button type="button" class="country-code-btn" id="countryCodeBtn">
-                <img src="https://flagcdn.com/w20/ie.png" width="20" height="15" alt="IE" id="selectedFlag">
-                <span id="selectedDialCode">+353</span>
-                <i class="bi bi-chevron-down"></i>
-              </button>
-              <div class="country-dropdown" id="countryDropdown">
-                <input type="text" class="country-search" id="countrySearch" placeholder="Search country...">
-                <div class="country-options" id="countryOptions"></div>
-              </div>
-            </div>
-            <input type="tel" class="form-control" id="customerPhone"
-              style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px; background:#FAFAFA;"
-              onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
-              onblur="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA'; this.style.boxShadow='none';" />
-          </div>
-        </div>
-      </div>
-
-      <div class="section-label mt-4">
-        <span>Ride Details</span>
-      </div>
-
-      <div class="row g-3 mt-1 mb-4">
-        <div class="col-12">
-          <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Service Type</label>
-          <input type="hidden" id="serviceType" value="<?php echo htmlspecialchars($defaultRideTypeName, ENT_QUOTES); ?>" />
-          <div class="ride-type-group" data-pill-target="serviceType" id="rideTypePillGroup">
-            <?php if (empty($rideTypes)): ?>
-              <div class="text-muted" style="font-size:0.78rem; grid-column: 1 / -1;">Loading ride types…</div>
-            <?php else: ?>
-              <?php foreach ($rideTypes as $idx => $t): ?>
-                <?php
-                  $isActive   = $idx === 0;
-                  $name       = htmlspecialchars($t['name'], ENT_QUOTES);
-                  $desc       = htmlspecialchars($t['description'] ?? $t['name'], ENT_QUOTES);
-                  $hasImage   = !empty($t['image_url']);
-                  $imageUrl   = htmlspecialchars($t['image_url'] ?? '', ENT_QUOTES);
-                  $emoji      = htmlspecialchars($t['icon_emoji'] ?? '', ENT_QUOTES, 'UTF-8');
-                ?>
-                <button type="button" class="ride-type-btn<?php echo $isActive ? ' active' : ''; ?>" data-value="<?php echo $name; ?>" title="<?php echo $desc; ?>">
-                  <span class="ride-type-icon">
-                    <?php if ($hasImage): ?>
-                      <img src="<?php echo $imageUrl; ?>" alt=""
-                           onerror="this.style.display='none'; const s=this.nextElementSibling; if(s) s.style.display='inline-flex';" />
-                      <?php if ($emoji !== ''): ?>
-                        <span class="ride-type-emoji-fallback" style="display:none; align-items:center; justify-content:center;"><?php echo $emoji; ?></span>
-                      <?php endif; ?>
-                    <?php elseif ($emoji !== ''): ?>
-                      <span class="ride-type-emoji"><?php echo $emoji; ?></span>
-                    <?php else: ?>
-                      <i class="bi bi-car-front"></i>
-                    <?php endif; ?>
-                  </span>
-                  <span class="ride-type-label"><?php echo $name; ?></span>
-                </button>
-              <?php endforeach; ?>
-            <?php endif; ?>
-          </div>
-        </div>
-
-        <div class="col-md-4">
-          <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Seats</label>
-          <input type="hidden" id="seatCount" value="" />
-          <div class="pill-group" data-pill-target="seatCount">
-            <button type="button" class="pill-btn pill-seat" data-value="4">4</button>
-            <button type="button" class="pill-btn pill-seat" data-value="5">5</button>
-            <button type="button" class="pill-btn pill-seat" data-value="6">6</button>
-            <button type="button" class="pill-btn pill-seat" data-value="7">7</button>
-            <button type="button" class="pill-btn pill-seat" data-value="8">8</button>
-          </div>
-        </div>
-
-        <!-- Schedule mode toggle -->
-        <div class="col-12 mt-2">
-          <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Ride Timing</label>
-          <div class="d-flex gap-2">
-            <button type="button" id="modeNowBtn"
-              class="btn fw-semibold px-4"
-              style="height:36px; border-radius:8px; font-size:0.845rem; background:#f37a20; color:#fff; border:1.5px solid #f37a20; transition:all 0.15s;"
-              onclick="setRideMode('now')">
-              <i class="bi bi-lightning-fill me-1"></i> Book Now
-            </button>
-            <button type="button" id="modeScheduleBtn"
-              class="btn fw-semibold px-4"
-              style="height:36px; border-radius:8px; font-size:0.845rem; background:#fff; color:#52525B; border:1.5px solid #EBEBEB; transition:all 0.15s;"
-              onclick="setRideMode('schedule')">
-              <i class="bi bi-calendar-event me-1"></i> Schedule for Later
-            </button>
-          </div>
-          <input type="hidden" id="rideScheduleMode" value="now" />
-        </div>
-
-        <div id="scheduleDateTimeRow" class="col-12" style="display:none;">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Date</label>
-              <div class="dt-input-wrap">
-                <i class="bi bi-calendar3 dt-icon"></i>
-                <input type="date" class="form-control dt-input" id="rideDate" min="<?php echo date('Y-m-d'); ?>" />
-              </div>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Time</label>
-              <div class="dt-input-wrap">
-                <i class="bi bi-clock dt-icon"></i>
-                <input type="time" class="form-control dt-input" id="rideTime" />
-              </div>
-            </div>
-          </div>
-          <div class="mt-2 px-1" style="font-size:0.775rem; color:#71717A;">
-            <i class="bi bi-info-circle me-1"></i>
-            Rides scheduled <strong>40+ minutes</strong> in the future will be saved as <em>Scheduled</em> and auto-activated when the time approaches.
-          </div>
-        </div>
-      </div>
+    <div class="p-3 p-lg-4">
 
       <style>
         /* Section headers — uppercase label with subtle orange accent bar */
@@ -360,6 +191,8 @@ foreach ($rideTypes as $t) {
 
         /* Seat pills — compact horizontal */
         .pill-group { display:flex; flex-wrap:wrap; gap:6px; }
+        .pill-group.pill-group-fill { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+        .pill-group-fill .pill-btn { min-width: 0; }
         .pill-btn {
           display:inline-flex; align-items:center; justify-content:center; gap:6px;
           padding:7px 12px; min-height:40px;
@@ -374,17 +207,16 @@ foreach ($rideTypes as $t) {
           box-shadow:0 0 0 3px rgba(243,122,32,0.10);
         }
         .pill-btn:focus-visible { outline:2px solid #f37a20; outline-offset:2px; }
-        .pill-seat { min-width:46px; font-weight:700; font-size:0.9rem; padding:7px 10px; }
+        .pill-seat { width:42px; height:42px; min-width:0; padding:0; margin:0 auto; border-radius:50%; font-weight:700; font-size:0.9rem; }
 
-        /* Ride-type cards — icon on top center, label below */
+        /* Ride-type cards — icon on top center, label below.
+           auto-fit/minmax collapses empty tracks and stretches the actual
+           buttons to fill the full row width instead of leaving a gap. */
         .ride-type-group {
           display: grid;
-          grid-template-columns: repeat(7, minmax(0, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
           gap: 8px;
         }
-        @media (max-width: 1399.98px) { .ride-type-group { grid-template-columns: repeat(4, 1fr); } }
-        @media (max-width: 767.98px)  { .ride-type-group { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 479.98px)  { .ride-type-group { grid-template-columns: repeat(2, 1fr); } }
 
         .ride-type-btn {
           display: flex;
@@ -403,7 +235,7 @@ foreach ($rideTypes as $t) {
           user-select: none;
           text-align: center;
           line-height: 1.2;
-          min-height: 112px;
+          min-height: 100px;
           transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
         }
         .ride-type-btn:focus-visible { outline: 2px solid #f37a20; outline-offset: 2px; }
@@ -414,15 +246,15 @@ foreach ($rideTypes as $t) {
           box-shadow: 0 0 0 3px rgba(243,122,32,0.10);
         }
         .ride-type-icon {
-          width: 60px;
-          height: 56px;
+          width: 52px;
+          height: 48px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
           background: linear-gradient(180deg,#FFFFFF 0%,#F4F4F5 100%);
           border: 1.5px solid #E4E4E7;
           border-radius: 12px;
-          font-size: 24px;
+          font-size: 22px;
           line-height: 1;
           color: #52525B;
           padding: 2px;
@@ -430,14 +262,14 @@ foreach ($rideTypes as $t) {
           transition: background .15s ease, border-color .15s ease, color .15s ease;
         }
         .ride-type-icon img {
-          width: 52px;
-          height: 48px;
+          width: 44px;
+          height: 40px;
           object-fit: contain;
           filter: drop-shadow(0 1px 1px rgba(0,0,0,0.10)) contrast(1.05);
         }
         .ride-type-icon .ride-type-emoji,
         .ride-type-icon .ride-type-emoji-fallback {
-          font-size: 30px;
+          font-size: 26px;
           line-height: 1;
         }
         .ride-type-btn.active .ride-type-icon {
@@ -531,183 +363,395 @@ foreach ($rideTypes as $t) {
           padding-right: 4px;
         }
         .pac-matched { color: #f37a20; font-weight: 500; }
+
+        /* ── Compact multi-column order form ──────────────────────────────── */
+        .oc-card {
+          background: #fff;
+          border: 1.5px solid #EBEBEB;
+          border-radius: 12px;
+          padding: 12px 14px 14px;
+        }
+        .oc-card + .oc-card { margin-top: 10px; }
+        .oc-map-wrap {
+          border: 1.5px solid #EBEBEB;
+          border-radius: 12px;
+          overflow: hidden;
+          height: 260px;
+        }
+        .oc-map-wrap #map { width: 100%; height: 100%; border: 0; }
+        @media (min-width: 1200px) {
+          .oc-map-wrap { height: 380px; }
+        }
+        .oc-driver-actions { display: flex; flex-direction: column; gap: 8px; }
+        .oc-driver-actions .btn { width: 100%; justify-content: center; }
+
+        /* Extras / Payment — toggle chips instead of checkbox rows */
+        .oc-chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+        .oc-chip {
+          display: inline-flex; align-items: center; gap: 7px;
+          padding: 8px 14px; border-radius: 999px;
+          border: 1.5px solid #EBEBEB; background: #FAFAFA;
+          font-size: 0.8125rem; font-weight: 500; color: #52525B;
+          cursor: pointer; user-select: none; white-space: nowrap;
+          transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
+        }
+        .oc-chip input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+        .oc-chip i { font-size: 14px; color: #A1A1AA; transition: color .15s ease; }
+        .oc-chip:hover { border-color: #D4D4D8; background: #fff; }
+        .oc-chip:has(input:checked) {
+          background: #FFF3E8; border-color: #f37a20; color: #f37a20; font-weight: 600;
+          box-shadow: 0 0 0 3px rgba(243,122,32,0.10);
+        }
+        .oc-chip:has(input:checked) i { color: #f37a20; }
+        .oc-chip-lg { flex: 1 1 0; justify-content: center; padding: 10px 16px; font-size: 0.845rem; }
+        .oc-chip-lg i { font-size: 16px; }
       </style>
 
       <div class="row g-3">
+        <div class="col-12 col-xl-7">
 
-        <div class="col-md-6">
-          <div class="rounded-3 p-3 h-100" style="border:1.5px solid #EBEBEB; background:#FAFAFA;">
+          <div class="oc-card">
+            <div class="section-label"><span>Passenger Details</span></div>
 
-            <div class="mb-3">
-              <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Pickup</label>
-              <div class="input-group" style="height:38px;">
-                <span class="input-group-text" style="background:#fff; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; height:38px;">
-                  <i class="bi bi-geo-alt-fill" style="color:#f37a20; font-size:14px;"></i>
-                </span>
-                <input type="text" class="form-control" id="pickupInput" placeholder="Enter pickup location"
-                  style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px; background:#fff;"
-                  onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
-                  onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';" />
-              </div>
-            </div>
+            <input type="hidden" id="customerId" />
+            <input type="hidden" id="passengerMode" value="existing" />
 
-            <div class="mb-3">
-              <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Drop Off</label>
-              <div class="input-group" style="height:38px;">
-                <span class="input-group-text" style="background:#fff; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; height:38px;">
-                  <i class="bi bi-geo-alt" style="color:#f37a20; font-size:14px;"></i>
-                </span>
-                <input type="text" class="form-control" id="dropoffInput" placeholder="Enter drop-off location"
-                  style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px; background:#fff;"
-                  onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
-                  onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';" />
-              </div>
-            </div>
-
-            <div class="row g-2 mb-4">
-              <div class="col-4">
-                <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Est. Fare</label>
-                <input type="text" class="form-control" id="estimatedFare" readonly
-                  style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#fff; color:#18181B; font-weight:600;" />
-              </div>
-              <div class="col-4">
-                <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Distance (km)</label>
-                <input type="text" class="form-control" id="distanceKm" readonly
-                  style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#fff; color:#18181B;" />
-              </div>
-              <div class="col-4">
-                <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Time (min)</label>
-                <input type="text" class="form-control" id="travelTime" readonly
-                  style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#fff; color:#18181B;" />
-              </div>
-            </div>
-
-            <div class="mb-3" style="border-top:1px solid #EBEBEB;"></div>
-
-            <div class="mb-3">
-              <span class="fw-bold d-block mb-2" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Extras</span>
-              <div class="row g-1">
-                <div class="col-6 d-flex flex-column gap-2">
-                  <div class="d-flex align-items-center gap-2 rounded-2 px-2 py-1" style="background:#fff; border:1.5px solid #EBEBEB;">
-                    <input class="form-check-input m-0 flex-shrink-0" type="checkbox" id="creditCard" style="accent-color:#f37a20; width:15px; height:15px;" />
-                    <label class="form-check-label" for="creditCard" style="font-size:0.8rem; color:#52525B; cursor:pointer;">Accept Credit Card</label>
-                  </div>
-                  <div class="d-flex align-items-center gap-2 rounded-2 px-2 py-1" style="background:#fff; border:1.5px solid #EBEBEB;">
-                    <input class="form-check-input m-0 flex-shrink-0" type="checkbox" id="personWithDisabilities" style="accent-color:#f37a20; width:15px; height:15px;" />
-                    <label class="form-check-label" for="personWithDisabilities" style="font-size:0.8rem; color:#52525B; cursor:pointer;">Person With Disabilities</label>
-                  </div>
-                  <div class="d-flex align-items-center gap-2 rounded-2 px-2 py-1" style="background:#fff; border:1.5px solid #EBEBEB;">
-                    <input class="form-check-input m-0 flex-shrink-0" type="checkbox" id="childSeat" style="accent-color:#f37a20; width:15px; height:15px;" />
-                    <label class="form-check-label" for="childSeat" style="font-size:0.8rem; color:#52525B; cursor:pointer;">Child Seat</label>
+            <div class="row g-2 mt-1">
+              <!-- EXISTING mode: search + select from DB -->
+              <div class="col-md-6 position-relative" id="paxExistingPane">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                  <label class="form-label fw-semibold mb-0" style="font-size:0.8125rem; color:#18181B;">Passenger Name</label>
+                  <div class="pax-mode-toggle">
+                    <button type="button" class="pax-mode-btn is-active" id="paxModeExisting" onclick="switchPaxMode('existing')">Existing</button>
+                    <button type="button" class="pax-mode-btn" id="paxModeCustom" onclick="switchPaxMode('custom')">New</button>
                   </div>
                 </div>
-                <div class="col-6 d-flex flex-column gap-2">
-                  <div class="d-flex align-items-center gap-2 rounded-2 px-2 py-1" style="background:#fff; border:1.5px solid #EBEBEB;">
-                    <input class="form-check-input m-0 flex-shrink-0" type="checkbox" id="extraLuggage" style="accent-color:#f37a20; width:15px; height:15px;" />
-                    <label class="form-check-label" for="extraLuggage" style="font-size:0.8rem; color:#52525B; cursor:pointer;">Extra Luggage Space</label>
-                  </div>
-                  <div class="d-flex align-items-center gap-2 rounded-2 px-2 py-1" style="background:#fff; border:1.5px solid #EBEBEB;">
-                    <input class="form-check-input m-0 flex-shrink-0" type="checkbox" id="petsAllowed" style="accent-color:#f37a20; width:15px; height:15px;" />
-                    <label class="form-check-label" for="petsAllowed" style="font-size:0.8rem; color:#52525B; cursor:pointer;">Pets Allowed</label>
-                  </div>
-                  <div class="d-flex align-items-center gap-2 rounded-2 px-2 py-1" style="background:#fff; border:1.5px solid #EBEBEB;">
-                    <input class="form-check-input m-0 flex-shrink-0" type="checkbox" id="delivery" style="accent-color:#f37a20; width:15px; height:15px;" />
-                    <label class="form-check-label" for="delivery" style="font-size:0.8rem; color:#52525B; cursor:pointer;">Delivery</label>
-                  </div>
+                <div id="paxSearchWrapper">
+                  <input type="text" class="form-control" placeholder="Type name to search..."
+                    id="customerNameInput" autocomplete="off"
+                    style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; color:#18181B; background:#FAFAFA;"
+                    onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+                    onblur="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA'; this.style.boxShadow='none';" />
+                  <div id="customerSuggestions" class="list-group position-absolute w-100"
+                    style="z-index:10; max-height:200px; overflow-y:auto; display:none; border:1.5px solid #EBEBEB; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.10); top:100%; margin-top:4px;"></div>
+                </div>
+                <div id="paxSelectedCard" class="pax-selected-card" style="display:none;">
+                  <i class="bi bi-person-check-fill" style="color:#16A34A; font-size:16px;"></i>
+                  <span class="pax-name" id="paxSelectedName"></span>
+                  <button type="button" class="pax-clear" title="Change passenger" onclick="clearSelectedPassenger()">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
                 </div>
               </div>
-            </div>
 
-            <div class="mb-3" style="border-top:1px solid #EBEBEB;"></div>
-
-            <div class="mb-3">
-              <span class="fw-bold d-block mb-2" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Payment</span>
-              <div class="d-flex flex-column gap-2">
-                <div class="d-flex align-items-center gap-2 rounded-2 px-2 py-1" style="background:#fff; border:1.5px solid #EBEBEB;">
-                  <input class="form-check-input m-0 flex-shrink-0" type="radio" name="paymentMethod" id="paymentCash" value="cash" checked style="accent-color:#f37a20; width:15px; height:15px;" />
-                  <label class="form-check-label" for="paymentCash" style="font-size:0.8rem; color:#52525B; cursor:pointer;">Cash</label>
-                </div>
-                <div class="d-flex align-items-center gap-2 rounded-2 px-2 py-1" style="background:#fff; border:1.5px solid #EBEBEB;">
-                  <input class="form-check-input m-0 flex-shrink-0" type="radio" name="paymentMethod" id="paymentStripe" value="stripe" style="accent-color:#f37a20; width:15px; height:15px;" />
-                  <label class="form-check-label" for="paymentStripe" style="font-size:0.8rem; color:#52525B; cursor:pointer;">Pay with Stripe</label>
-                </div>
-              </div>
-              <a id="stripePayLink" href="https://buy.stripe.com/14A5kDeAx6fFec5fMjfQI05" target="_blank" rel="noopener noreferrer"
-                 class="d-none align-items-center gap-2 text-decoration-none fw-semibold mt-2"
-                 style="background:#635BFF; color:#fff; font-size:0.8125rem; padding:8px 14px; border-radius:8px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-                Pay with Stripe
-              </a>
-            </div>
-
-            <div class="mb-3" style="border-top:1px solid #EBEBEB;"></div>
-
-            <div class="mb-3">
-              <span class="fw-bold d-block mb-1" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Special Cost</span>
-              <p class="mb-3" style="font-size:0.78rem; color:#A1A1AA;">Leave blank to use default fare calculation</p>
-              <div class="row g-2 mb-2">
-                <div class="col-6">
-                  <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Cost</label>
-                  <div class="input-group" style="height:38px;">
-                    <span class="input-group-text" style="background:#FAFAFA; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; font-size:0.8rem; color:#71717A; height:38px;">EUR</span>
-                    <input type="number" step="0.01" min="0" class="form-control" id="specialCost" placeholder="Override fare"
-                      style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px;"
-                      onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
-                      onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';" />
+              <!-- CUSTOM mode: just type a name -->
+              <div class="col-md-6" id="paxCustomPane" style="display:none;">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                  <label class="form-label fw-semibold mb-0" style="font-size:0.8125rem; color:#18181B;">Passenger Name</label>
+                  <div class="pax-mode-toggle">
+                    <button type="button" class="pax-mode-btn" id="paxModeExisting2" onclick="switchPaxMode('existing')">Existing</button>
+                    <button type="button" class="pax-mode-btn is-active" id="paxModeCustom2" onclick="switchPaxMode('custom')">New</button>
                   </div>
                 </div>
-                <div class="col-6">
-                  <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Km Included</label>
-                  <div class="input-group" style="height:38px;">
-                    <span class="input-group-text" style="background:#FAFAFA; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; font-size:0.8rem; color:#71717A; height:38px;">km</span>
-                    <input type="number" step="0.01" min="0" class="form-control" id="specialKm" placeholder="Override distance"
-                      style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px;"
-                      onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
-                      onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';" />
-                  </div>
-                </div>
+                <input type="text" class="form-control" placeholder="Enter passenger name"
+                  id="customPassengerName" autocomplete="off"
+                  style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; color:#18181B; background:#FAFAFA;"
+                  onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+                  onblur="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA'; this.style.boxShadow='none';" />
               </div>
-              <div>
-                <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Minutes Included</label>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Phone Number</label>
                 <div class="input-group" style="height:38px;">
-                  <span class="input-group-text" style="background:#FAFAFA; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; font-size:0.8rem; color:#71717A; height:38px;">min</span>
-                  <input type="number" step="1" min="0" class="form-control" id="specialMinutes" placeholder="Override duration"
+                  <div style="position:relative;" id="countryCodeWrapper">
+                    <button type="button" class="country-code-btn" id="countryCodeBtn">
+                      <img src="https://flagcdn.com/w20/ie.png" width="20" height="15" alt="IE" id="selectedFlag">
+                      <span id="selectedDialCode">+353</span>
+                      <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="country-dropdown" id="countryDropdown">
+                      <input type="text" class="country-search" id="countrySearch" placeholder="Search country...">
+                      <div class="country-options" id="countryOptions"></div>
+                    </div>
+                  </div>
+                  <input type="tel" class="form-control" id="customerPhone"
+                    style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px; background:#FAFAFA;"
+                    onfocus="this.style.borderColor='#f37a20'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+                    onblur="this.style.borderColor='#EBEBEB'; this.style.background='#FAFAFA'; this.style.boxShadow='none';" />
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Pickup</label>
+                <div class="input-group" style="height:38px;">
+                  <span class="input-group-text" style="background:#fff; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; height:38px;">
+                    <i class="bi bi-geo-alt-fill" style="color:#f37a20; font-size:14px;"></i>
+                  </span>
+                  <input type="text" class="form-control" id="pickupInput" placeholder="Enter pickup location"
+                    style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px; background:#fff;"
+                    onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+                    onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';" />
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Drop Off</label>
+                <div class="input-group" style="height:38px;">
+                  <span class="input-group-text" style="background:#fff; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; height:38px;">
+                    <i class="bi bi-geo-alt" style="color:#f37a20; font-size:14px;"></i>
+                  </span>
+                  <input type="text" class="form-control" id="dropoffInput" placeholder="Enter drop-off location"
+                    style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px; background:#fff;"
+                    onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+                    onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';" />
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="row g-2">
+                  <div class="col-4">
+                    <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Est. Fare</label>
+                    <input type="text" class="form-control" id="estimatedFare" readonly
+                      style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#FAFAFA; color:#18181B; font-weight:600;" />
+                  </div>
+                  <div class="col-4">
+                    <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Distance (km)</label>
+                    <input type="text" class="form-control" id="distanceKm" readonly
+                      style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#FAFAFA; color:#18181B;" />
+                  </div>
+                  <div class="col-4">
+                    <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Time (min)</label>
+                    <input type="text" class="form-control" id="travelTime" readonly
+                      style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#FAFAFA; color:#18181B;" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="oc-card">
+            <div class="section-label"><span>Ride Details</span></div>
+
+            <div class="row g-2 mt-1">
+              <div class="col-12">
+                <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Service Type</label>
+                <input type="hidden" id="serviceType" value="<?php echo htmlspecialchars($defaultRideTypeName, ENT_QUOTES); ?>" />
+                <div class="ride-type-group" data-pill-target="serviceType" id="rideTypePillGroup">
+                  <?php if (empty($rideTypes)): ?>
+                    <div class="text-muted" style="font-size:0.78rem; grid-column: 1 / -1;">Loading ride types…</div>
+                  <?php else: ?>
+                    <?php foreach ($rideTypes as $idx => $t): ?>
+                      <?php
+                        $isActive   = $idx === 0;
+                        $name       = htmlspecialchars($t['name'], ENT_QUOTES);
+                        $desc       = htmlspecialchars($t['description'] ?? $t['name'], ENT_QUOTES);
+                        $hasImage   = !empty($t['image_url']);
+                        $imageUrl   = htmlspecialchars($t['image_url'] ?? '', ENT_QUOTES);
+                        $emoji      = htmlspecialchars($t['icon_emoji'] ?? '', ENT_QUOTES, 'UTF-8');
+                      ?>
+                      <button type="button" class="ride-type-btn<?php echo $isActive ? ' active' : ''; ?>" data-value="<?php echo $name; ?>" title="<?php echo $desc; ?>">
+                        <span class="ride-type-icon">
+                          <?php if ($hasImage): ?>
+                            <img src="<?php echo $imageUrl; ?>" alt=""
+                                 onerror="this.style.display='none'; const s=this.nextElementSibling; if(s) s.style.display='inline-flex';" />
+                            <?php if ($emoji !== ''): ?>
+                              <span class="ride-type-emoji-fallback" style="display:none; align-items:center; justify-content:center;"><?php echo $emoji; ?></span>
+                            <?php endif; ?>
+                          <?php elseif ($emoji !== ''): ?>
+                            <span class="ride-type-emoji"><?php echo $emoji; ?></span>
+                          <?php else: ?>
+                            <i class="bi bi-car-front"></i>
+                          <?php endif; ?>
+                        </span>
+                        <span class="ride-type-label"><?php echo $name; ?></span>
+                      </button>
+                    <?php endforeach; ?>
+                  <?php endif; ?>
+                </div>
+              </div>
+
+              <div class="col-md-12">
+                <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Seats</label>
+                <input type="hidden" id="seatCount" value="" />
+                <div class="pill-group pill-group-fill" data-pill-target="seatCount">
+                  <button type="button" class="pill-btn pill-seat" data-value="4">4</button>
+                  <button type="button" class="pill-btn pill-seat" data-value="5">5</button>
+                  <button type="button" class="pill-btn pill-seat" data-value="6">6</button>
+                  <button type="button" class="pill-btn pill-seat" data-value="7">7</button>
+                  <button type="button" class="pill-btn pill-seat" data-value="8">8</button>
+                </div>
+              </div>
+
+              <!-- Schedule mode toggle -->
+              <div class="col-md-12">
+                <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Ride Timing</label>
+                <div class="d-flex gap-2">
+                  <button type="button" id="modeNowBtn"
+                    class="btn fw-semibold px-4 flex-fill"
+                    style="height:36px; border-radius:8px; font-size:0.845rem; background:#f37a20; color:#fff; border:1.5px solid #f37a20; transition:all 0.15s;"
+                    onclick="setRideMode('now')">
+                    <i class="bi bi-lightning-fill me-1"></i> Book Now
+                  </button>
+                  <button type="button" id="modeScheduleBtn"
+                    class="btn fw-semibold px-4 flex-fill"
+                    style="height:36px; border-radius:8px; font-size:0.845rem; background:#fff; color:#52525B; border:1.5px solid #EBEBEB; transition:all 0.15s;"
+                    onclick="setRideMode('schedule')">
+                    <i class="bi bi-calendar-event me-1"></i> Schedule for Later
+                  </button>
+                </div>
+                <input type="hidden" id="rideScheduleMode" value="now" />
+              </div>
+
+              <div id="scheduleDateTimeRow" class="col-12" style="display:none;">
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Date</label>
+                    <div class="dt-input-wrap">
+                      <i class="bi bi-calendar3 dt-icon"></i>
+                      <input type="date" class="form-control dt-input" id="rideDate" min="<?php echo date('Y-m-d'); ?>" />
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Time</label>
+                    <div class="dt-input-wrap">
+                      <i class="bi bi-clock dt-icon"></i>
+                      <input type="time" class="form-control dt-input" id="rideTime" />
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-2 px-1" style="font-size:0.775rem; color:#71717A;">
+                  <i class="bi bi-info-circle me-1"></i>
+                  Rides scheduled <strong>40+ minutes</strong> in the future will be saved as <em>Scheduled</em> and auto-activated when the time approaches.
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="col-12 col-xl-5">
+          <div class="oc-map-wrap">
+            <div id="map"></div>
+          </div>
+
+          <div class="oc-card mt-2">
+            <span class="fw-bold d-block mb-1" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Special Cost</span>
+            <p class="mb-2" style="font-size:0.75rem; color:#A1A1AA;">Leave blank to use default fare calculation</p>
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Cost</label>
+                <div class="input-group" style="height:38px;">
+                  <span class="input-group-text" style="background:#FAFAFA; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; font-size:0.8rem; color:#71717A; height:38px;">EUR</span>
+                  <input type="number" step="0.01" min="0" class="form-control" id="specialCost" placeholder="Override fare"
+                    style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px;"
+                    onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+                    onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';" />
+                </div>
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Km Included</label>
+                <div class="input-group" style="height:38px;">
+                  <span class="input-group-text" style="background:#FAFAFA; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; font-size:0.8rem; color:#71717A; height:38px;">km</span>
+                  <input type="number" step="0.01" min="0" class="form-control" id="specialKm" placeholder="Override distance"
                     style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px;"
                     onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
                     onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';" />
                 </div>
               </div>
             </div>
+            <div>
+              <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Minutes Included</label>
+              <div class="input-group" style="height:38px;">
+                <span class="input-group-text" style="background:#FAFAFA; border:1.5px solid #EBEBEB; border-right:none; border-radius:8px 0 0 8px; font-size:0.8rem; color:#71717A; height:38px;">min</span>
+                <input type="number" step="1" min="0" class="form-control" id="specialMinutes" placeholder="Override duration"
+                  style="border:1.5px solid #EBEBEB; border-left:none; border-radius:0 8px 8px 0; font-size:0.845rem; height:38px;"
+                  onfocus="this.style.borderColor='#f37a20'; this.style.boxShadow='0 0 0 3px rgba(243,122,32,0.10)';"
+                  onblur="this.style.borderColor='#EBEBEB'; this.style.boxShadow='none';" />
+              </div>
+            </div>
+          </div>
 
-            <div class="d-flex gap-2 flex-wrap mt-3">
-              <button class="btn d-flex align-items-center gap-2 fw-semibold px-3"
+          <div class="oc-card mt-2">
+            <span class="fw-bold d-block mb-2" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Driver Assignment</span>
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn d-flex align-items-center gap-2 fw-semibold px-3 flex-fill justify-content-center"
                 style="height:36px; font-size:0.8125rem; color:#f37a20; border:1.5px solid #f37a20; background:#fff; border-radius:8px;"
                 onmouseover="this.style.background='#FFF3E8';"
                 onmouseout="this.style.background='#fff';"
                 data-bs-toggle="modal" data-bs-target="#assignDriverModal">
-                <i class="bi bi-person-check" style="font-size:14px;"></i> Assign Driver Manually
+                <i class="bi bi-person-check" style="font-size:14px;"></i> Assign Manually
               </button>
-              <button type="button" class="btn d-flex align-items-center gap-2 fw-semibold px-3"
+              <button type="button" class="btn d-flex align-items-center gap-2 fw-semibold px-3 flex-fill justify-content-center"
                 style="height:36px; font-size:0.8125rem; color:#f37a20; border:1.5px solid #f37a20; background:#fff; border-radius:8px;"
                 onmouseover="this.style.background='#FFF3E8';"
                 onmouseout="this.style.background='#fff';"
                 id="assignNearestDriverOpenBtn">
-                <i class="bi bi-geo" style="font-size:14px;"></i> Assign Nearest Driver
+                <i class="bi bi-geo" style="font-size:14px;"></i> Assign Nearest
               </button>
             </div>
+          </div>
+        </div>
+      </div>
 
+      <div class="row g-3 mt-1">
+
+        <div class="col-12 col-md-6">
+          <div class="oc-card h-100">
+            <span class="fw-bold d-block mb-2" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Extras</span>
+            <div class="oc-chip-group">
+              <label class="oc-chip">
+                <input type="checkbox" id="creditCard" />
+                <i class="bi bi-credit-card"></i> Accept Credit Card
+              </label>
+              <label class="oc-chip">
+                <input type="checkbox" id="personWithDisabilities" />
+                <i class="bi bi-universal-access"></i> Person With Disabilities
+              </label>
+              <label class="oc-chip">
+                <input type="checkbox" id="childSeat" />
+                <i class="bi bi-emoji-smile"></i> Child Seat
+              </label>
+              <label class="oc-chip">
+                <input type="checkbox" id="extraLuggage" />
+                <i class="bi bi-suitcase"></i> Extra Luggage Space
+              </label>
+              <label class="oc-chip">
+                <input type="checkbox" id="petsAllowed" />
+                <i class="bi bi-heart"></i> Pets Allowed
+              </label>
+              <label class="oc-chip">
+                <input type="checkbox" id="delivery" />
+                <i class="bi bi-box-seam"></i> Delivery
+              </label>
+            </div>
           </div>
         </div>
 
-        <div class="col-md-6">
-          <div class="rounded-3 overflow-hidden h-100" style="border:1.5px solid #EBEBEB; min-height:480px;">
-            <div id="map" style="width:100%; height:100%; min-height:480px; border:0;"></div>
+        <div class="col-12 col-md-6">
+          <div class="oc-card h-100">
+            <span class="fw-bold d-block mb-2" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Payment</span>
+            <div class="oc-chip-group">
+              <label class="oc-chip oc-chip-lg">
+                <input type="radio" name="paymentMethod" id="paymentCash" value="cash" checked />
+                <i class="bi bi-cash-stack"></i> Cash
+              </label>
+              <label class="oc-chip oc-chip-lg">
+                <input type="radio" name="paymentMethod" id="paymentStripe" value="stripe" />
+                <i class="bi bi-credit-card-2-front"></i> Pay with Stripe
+              </label>
+            </div>
+            <a id="stripePayLink" href="https://buy.stripe.com/14A5kDeAx6fFec5fMjfQI05" target="_blank" rel="noopener noreferrer"
+               class="d-none align-items-center gap-2 text-decoration-none fw-semibold mt-2"
+               style="background:#635BFF; color:#fff; font-size:0.8125rem; padding:8px 14px; border-radius:8px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+              Pay with Stripe
+            </a>
           </div>
         </div>
 
       </div>
 
-      <div class="d-flex justify-content-between align-items-center mt-4 pt-3" style="border-top:1px solid #EBEBEB;">
+      <div class="d-flex justify-content-between align-items-center mt-3 pt-3" style="border-top:1px solid #EBEBEB;">
         <button type="button" class="btn d-flex align-items-center gap-1 fw-semibold p-0"
           style="font-size:0.845rem; color:#A1A1AA; background:transparent; border:none;"
           onmouseover="this.style.color='#E11D48';"
@@ -910,6 +954,22 @@ foreach ($rideTypes as $t) {
       let googleFare = null;
       let nearbyDriversList = [];
       let selectedNearbyDriverId = null;
+
+      /* ============================================================================
+       * DUBLIN-ONLY LOCATION RESTRICTION (ACTIVE)
+       * ----------------------------------------------------------------------------
+       * Pickup/drop-off must be within Dublin, Ireland. Addresses from other
+       * cities/countries (e.g. Islamabad, London) must not appear in the
+       * autocomplete dropdown, must not be accepted if somehow selected, and
+       * must not let the order be confirmed.
+       * ============================================================================ */
+      const DUBLIN_REGION_BOUNDS = { north: 53.47, south: 53.15, west: -6.60, east: -6.05 };
+
+      function isWithinDublinRegion(lat, lng) {
+        return lat != null && lng != null &&
+          lat <= DUBLIN_REGION_BOUNDS.north && lat >= DUBLIN_REGION_BOUNDS.south &&
+          lng >= DUBLIN_REGION_BOUNDS.west && lng <= DUBLIN_REGION_BOUNDS.east;
+      }
 
     function showToast(message, isSuccess = false) {
   const toastEl = document.getElementById('toastMsg');
@@ -1458,12 +1518,30 @@ foreach ($rideTypes as $t) {
         const dropoffInput = document.getElementById('dropoffInput');
 
         if (pickupInput && dropoffInput && google.maps.places) {
-          const pickupAC = new google.maps.places.Autocomplete(pickupInput);
-          const dropoffAC = new google.maps.places.Autocomplete(dropoffInput);
+          // Shared Autocomplete options — DUBLIN-ONLY RESTRICTION (active).
+          // Hides suggestions from outside Dublin (e.g. Islamabad, London).
+          const placesOptions = {
+            componentRestrictions: { country: 'ie' },
+            bounds: new google.maps.LatLngBounds(
+              { lat: DUBLIN_REGION_BOUNDS.south, lng: DUBLIN_REGION_BOUNDS.west },
+              { lat: DUBLIN_REGION_BOUNDS.north, lng: DUBLIN_REGION_BOUNDS.east }
+            ),
+            strictBounds: true,
+          };
+          const pickupAC = new google.maps.places.Autocomplete(pickupInput, placesOptions);
+          const dropoffAC = new google.maps.places.Autocomplete(dropoffInput, placesOptions);
 
           pickupAC.addListener('place_changed', () => {
             const place = pickupAC.getPlace();
             if (place && place.geometry) {
+              const lat = place.geometry.location.lat();
+              const lng = place.geometry.location.lng();
+              if (!isWithinDublinRegion(lat, lng)) {
+                showToast('Pickup must be within Dublin, Ireland. Please choose a different address.');
+                pickupInput.value = '';
+                pickupLatLng = null;
+                return;
+              }
               pickupLatLng = place.geometry.location;
             }
             tryCalculateRoute();
@@ -1471,6 +1549,14 @@ foreach ($rideTypes as $t) {
           dropoffAC.addListener('place_changed', () => {
             const place = dropoffAC.getPlace();
             if (place && place.geometry) {
+              const lat = place.geometry.location.lat();
+              const lng = place.geometry.location.lng();
+              if (!isWithinDublinRegion(lat, lng)) {
+                showToast('Drop-off must be within Dublin, Ireland. Please choose a different address.');
+                dropoffInput.value = '';
+                dropoffLatLng = null;
+                return;
+              }
               dropoffLatLng = place.geometry.location;
             }
             tryCalculateRoute();
@@ -1508,8 +1594,29 @@ foreach ($rideTypes as $t) {
         };
         directionsService.route(req, (result, status) => {
           if (status === google.maps.DirectionsStatus.OK) {
-            directionsRenderer.setDirections(result);
             const leg = result.routes[0].legs[0];
+
+            // DUBLIN-ONLY RESTRICTION (active): reject routes where either end
+            // falls outside Dublin, so map markers and fare are never computed
+            // for out-of-region addresses.
+            if (!isWithinDublinRegion(leg.start_location.lat(), leg.start_location.lng()) ||
+                !isWithinDublinRegion(leg.end_location.lat(), leg.end_location.lng())) {
+              showToast('Pickup and drop-off must both be within Dublin, Ireland.');
+              directionsRenderer.set('directions', null);
+              currentDistance = currentDuration = currentFare = null;
+              googleDistance = googleDuration = googleFare = null;
+              pickupLatLng = null;
+              dropoffLatLng = null;
+              const fareEl = document.getElementById('estimatedFare');
+              const distEl = document.getElementById('distanceKm');
+              const timeEl = document.getElementById('travelTime');
+              if (fareEl) fareEl.value = '';
+              if (distEl) distEl.value = '';
+              if (timeEl) timeEl.value = '';
+              return;
+            }
+
+            directionsRenderer.setDirections(result);
             googleDistance = leg.distance.value / 1000;
             googleDuration = Math.round(leg.duration.value / 60);
             const pickupTimeStr = buildPickupDateTime();
@@ -1748,6 +1855,14 @@ async function createOrder() {
 
   if (!currentDistance || !currentDuration || !currentFare || !pickupLatLng || !dropoffLatLng) {
     showToast('Please wait for route/fare calculation to finish.');
+    return;
+  }
+
+  // DUBLIN-ONLY RESTRICTION (active): final guard — never confirm an order
+  // whose pickup/drop-off falls outside Dublin, Ireland.
+  if (!isWithinDublinRegion(pickupLatLng.lat(), pickupLatLng.lng()) ||
+      !isWithinDublinRegion(dropoffLatLng.lat(), dropoffLatLng.lng())) {
+    showToast('Pickup and drop-off must both be within Dublin, Ireland.');
     return;
   }
 
