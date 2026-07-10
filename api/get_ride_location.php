@@ -57,7 +57,7 @@ function pgGet($url, $key) {
 try {
     $rows = pgGet(
         $supabaseUrl . '/rest/v1/rides'
-        . '?select=id,driver_id,driver_lat,driver_lng,driver_heading,status,pickup_addr,dest_addr,pickup_lat,pickup_lng,dest_lat,dest_lng,updated_at'
+        . '?select=id,driver_id,driver_lat,driver_lng,driver_heading,status,pickup_addr,dest_addr,pickup_lat,pickup_lng,dest_lat,dest_lng,updated_at,created_at,scheduled_at,enroute_at'
         . '&id=eq.' . rawurlencode($rideId),
         $supabaseKey
     );
@@ -107,6 +107,9 @@ try {
             'heading'        => $heading,
             'status'         => $ride['status'] ?? null,
             'updated_at'     => $ride['updated_at'] ?? null,
+            'created_at'     => $ride['created_at'] ?? null,
+            'scheduled_at'   => $ride['scheduled_at'] ?? null,
+            'enroute_at'     => $ride['enroute_at'] ?? null,
             'driver_id'      => $driverId,
             'full_name'      => $name,
             'name'           => $name,

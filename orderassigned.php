@@ -294,6 +294,17 @@ require('modules/head.php');
               </div>
             </div>
           </div>
+          <!-- Order / enroute timestamps -->
+          <div style="border-top:1px solid #F4F4F5; margin-top:10px; padding-top:10px; display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+              <span style="font-size:0.67rem; text-transform:uppercase; color:#A1A1AA; letter-spacing:0.05em; font-weight:600;">Order Placed</span>
+              <span id="overlayOrderTime" style="font-size:0.76rem; color:#18181B; font-weight:600; text-align:right;">—</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+              <span style="font-size:0.67rem; text-transform:uppercase; color:#A1A1AA; letter-spacing:0.05em; font-weight:600;">Enroute Since</span>
+              <span id="overlayEnrouteTime" style="font-size:0.76rem; color:#18181B; font-weight:600; text-align:right;">Not yet</span>
+            </div>
+          </div>
           <!-- Live ride progress status -->
           <div id="rideProgressCard" style="display:none; margin-top:10px; padding:9px 12px; border-radius:8px; background:#EFF6FF; border:1px solid #DBEAFE;">
             <div style="display:flex; align-items:center; gap:7px;">
@@ -1879,11 +1890,30 @@ function maybeUpdateDriverTrack(fromLat, fromLng, driver) {
   });
 }
 
+// Formats a Supabase timestamp for the dispatcher overlay, e.g. "11 Jul, 14:32"
+function formatOverlayDateTime(value) {
+  if (!value) return null;
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return null;
+  const datePart = d.toLocaleDateString('en-IE', { day: '2-digit', month: 'short' });
+  const timePart = d.toLocaleTimeString('en-IE', { hour: '2-digit', minute: '2-digit' });
+  return `${datePart}, ${timePart}`;
+}
+
 function populateDispatcherOverlay(ride) {
   const pickupEl  = document.getElementById('overlayPickup');
   const dropoffEl = document.getElementById('overlayDropoff');
   if (pickupEl)  pickupEl.textContent  = ride.pickup_addr || ride.actual_start_addr || '—';
   if (dropoffEl) dropoffEl.textContent = ride.dest_addr || ride.actual_end_addr || '—';
+
+  const orderTimeEl = document.getElementById('overlayOrderTime');
+  if (orderTimeEl) {
+    orderTimeEl.textContent = formatOverlayDateTime(ride.scheduled_at || ride.created_at) || '—';
+  }
+  const enrouteTimeEl = document.getElementById('overlayEnrouteTime');
+  if (enrouteTimeEl) {
+    enrouteTimeEl.textContent = formatOverlayDateTime(ride.enroute_at) || 'Not yet';
+  }
 
   if (ride.pickup_lat != null && ride.pickup_lng != null) {
     currentPickupLat = parseFloat(ride.pickup_lat);
@@ -1921,6 +1951,10 @@ function updateDispatcherOverlayFromDriver(loc) {
   if (vehEl) {
     const parts = [loc.vehicle_make, loc.vehicle_number].filter(Boolean);
     if (parts.length) vehEl.textContent = parts.join(' · ');
+  }
+  if (loc.enroute_at) {
+    const enrouteTimeEl = document.getElementById('overlayEnrouteTime');
+    if (enrouteTimeEl) enrouteTimeEl.textContent = formatOverlayDateTime(loc.enroute_at) || 'Not yet';
   }
 }
 
