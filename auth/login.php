@@ -84,6 +84,10 @@ if ($httpCode === 200 && isset($data['access_token']) && isset($data['user']['em
         $_SESSION['profile_image'] = $userMetadata['avatar_url'];
     }
 
+    // Operator role — defaults to 'admin' (full access) when not set on the
+    // Supabase Auth user's user_metadata. Only 'dispatcher' is restricted.
+    $_SESSION['role'] = $userMetadata['role'] ?? 'admin';
+
     echo json_encode(['success' => true, 'message' => 'Login successful.']);
     exit;
 }

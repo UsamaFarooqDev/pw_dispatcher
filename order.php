@@ -3,6 +3,8 @@ session_start();
 
 require_once 'auth/require_login_redirect.php';
 require_once __DIR__ . '/auth/config.php';
+require_once __DIR__ . '/auth/role_guard.php';
+$isDispatcher = isDispatcherRole();
 require('modules/head.php');
 
 /**
@@ -414,9 +416,10 @@ foreach ($rideTypes as $t) {
             <div class="section-label"><span>Passenger Details</span></div>
 
             <input type="hidden" id="customerId" />
-            <input type="hidden" id="passengerMode" value="existing" />
+            <input type="hidden" id="passengerMode" value="<?php echo $isDispatcher ? 'custom' : 'existing'; ?>" />
 
             <div class="row g-2 mt-1">
+              <?php if (!$isDispatcher): ?>
               <!-- EXISTING mode: search + select from DB -->
               <div class="col-md-6 position-relative" id="paxExistingPane">
                 <div class="d-flex align-items-center justify-content-between mb-1">
@@ -443,15 +446,18 @@ foreach ($rideTypes as $t) {
                   </button>
                 </div>
               </div>
+              <?php endif; ?>
 
-              <!-- CUSTOM mode: just type a name -->
-              <div class="col-md-6" id="paxCustomPane" style="display:none;">
+              <!-- CUSTOM mode: just type a name (the only mode available to the dispatcher role) -->
+              <div class="col-md-6" id="paxCustomPane" style="<?php echo $isDispatcher ? '' : 'display:none;'; ?>">
                 <div class="d-flex align-items-center justify-content-between mb-1">
                   <label class="form-label fw-semibold mb-0" style="font-size:0.8125rem; color:#18181B;">Passenger Name</label>
+                  <?php if (!$isDispatcher): ?>
                   <div class="pax-mode-toggle">
                     <button type="button" class="pax-mode-btn" id="paxModeExisting2" onclick="switchPaxMode('existing')">Existing</button>
                     <button type="button" class="pax-mode-btn is-active" id="paxModeCustom2" onclick="switchPaxMode('custom')">New</button>
                   </div>
+                  <?php endif; ?>
                 </div>
                 <input type="text" class="form-control" placeholder="Enter passenger name"
                   id="customPassengerName" autocomplete="off"
@@ -937,6 +943,9 @@ foreach ($rideTypes as $t) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9ea0A-mjnD5iHfT9X8Dn5YYH4_KZopLI&libraries=places&callback=initGoogleMaps" async defer></script>
     <script>
+      // Dispatcher role: only "New passenger" is available (no existing-passenger
+      // search/select), so paxExistingPane and its toggle buttons aren't rendered.
+      const IS_DISPATCHER_ROLE = <?php echo json_encode($isDispatcher); ?>;
       let passengers = [];
       let drivers = [];
       let selectedPassengerId = null;
@@ -996,7 +1005,7 @@ foreach ($rideTypes as $t) {
 }
 
       document.addEventListener('DOMContentLoaded', () => {
-        fetchPassengers();
+        if (!IS_DISPATCHER_ROLE) fetchPassengers();
         fetchDrivers();
         // initGoogleMaps called by Maps API callback when ready (ensures Places autocomplete works)
         setupCustomerAutocomplete();
@@ -1118,26 +1127,36 @@ foreach ($rideTypes as $t) {
       }
 
       // ── Passenger mode switching ──
+      // (No-op for the dispatcher role — paxExistingPane/toggle buttons aren't
+      // rendered, so every element lookup here is optional-chained.)
       function switchPaxMode(mode) {
-        document.getElementById('passengerMode').value = mode;
-        document.getElementById('paxModeExisting').classList.toggle('is-active', mode === 'existing');
-        document.getElementById('paxModeCustom').classList.toggle('is-active', mode === 'custom');
-        const e2 = document.getElementById('paxModeExisting2');
-        const c2 = document.getElementById('paxModeCustom2');
-        if (e2) e2.classList.toggle('is-active', mode === 'existing');
-        if (c2) c2.classList.toggle('is-active', mode === 'custom');
-        document.getElementById('paxExistingPane').style.display = mode === 'existing' ? '' : 'none';
-        document.getElementById('paxCustomPane').style.display = mode === 'custom' ? '' : 'none';
+        const modeEl = document.getElementById('passengerMode');
+        if (modeEl) modeEl.value = mode;
+        document.getElementById('paxModeExisting')?.classList.toggle('is-active', mode === 'existing');
+        document.getElementById('paxModeCustom')?.classList.toggle('is-active', mode === 'custom');
+        document.getElementById('paxModeExisting2')?.classList.toggle('is-active', mode === 'existing');
+        document.getElementById('paxModeCustom2')?.classList.toggle('is-active', mode === 'custom');
+        const existingPane = document.getElementById('paxExistingPane');
+        const customPane = document.getElementById('paxCustomPane');
+        if (existingPane) existingPane.style.display = mode === 'existing' ? '' : 'none';
+        if (customPane) customPane.style.display = mode === 'custom' ? '' : 'none';
 
         // Reset state when switching
         selectedPassengerId = null;
-        document.getElementById('customerId').value = '';
-        document.getElementById('customerNameInput').value = '';
-        document.getElementById('customPassengerName').value = '';
-        document.getElementById('customerPhone').value = '';
-        document.getElementById('customerSuggestions').style.display = 'none';
-        document.getElementById('paxSelectedCard').style.display = 'none';
-        document.getElementById('paxSearchWrapper').style.display = '';
+        const customerIdEl = document.getElementById('customerId');
+        if (customerIdEl) customerIdEl.value = '';
+        const nameInputEl = document.getElementById('customerNameInput');
+        if (nameInputEl) nameInputEl.value = '';
+        const customNameEl = document.getElementById('customPassengerName');
+        if (customNameEl) customNameEl.value = '';
+        const phoneEl = document.getElementById('customerPhone');
+        if (phoneEl) phoneEl.value = '';
+        const suggestionsEl = document.getElementById('customerSuggestions');
+        if (suggestionsEl) suggestionsEl.style.display = 'none';
+        const selectedCardEl = document.getElementById('paxSelectedCard');
+        if (selectedCardEl) selectedCardEl.style.display = 'none';
+        const searchWrapperEl = document.getElementById('paxSearchWrapper');
+        if (searchWrapperEl) searchWrapperEl.style.display = '';
         if (typeof selectCountry === 'function') selectCountry('ie');
       }
 
@@ -1157,6 +1176,8 @@ foreach ($rideTypes as $t) {
         const phoneInput = document.getElementById('customerPhone');
         const suggestions = document.getElementById('customerSuggestions');
         const customerIdInput = document.getElementById('customerId');
+        // Dispatcher role doesn't render the existing-passenger search UI at all.
+        if (!nameInput || !suggestions || !customerIdInput) return;
 
         const render = (items) => {
           suggestions.innerHTML = '';
@@ -1973,8 +1994,8 @@ modal.show();
       });
 
       window.clearAllFields = function clearAllFields() {
-        // Reset passenger mode to Existing
-        if (typeof switchPaxMode === 'function') switchPaxMode('existing');
+        // Reset passenger mode (dispatcher role only ever has "custom" available)
+        if (typeof switchPaxMode === 'function') switchPaxMode(IS_DISPATCHER_ROLE ? 'custom' : 'existing');
 
         const textIds = [
           'customerNameInput', 'customPassengerName', 'customerPhone', 'customerId',

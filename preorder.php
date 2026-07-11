@@ -2,6 +2,8 @@
 session_start();
 
 require_once 'auth/require_login_redirect.php';
+require_once 'auth/role_guard.php';
+$isDispatcher = isDispatcherRole();
 require('modules/head.php');
 ?>
 <!DOCTYPE html>
@@ -60,11 +62,13 @@ require('modules/head.php');
           <span class="po-tab__count" id="count-finished">0</span>
         </button>
 
+        <?php if (!$isDispatcher): ?>
         <button type="button" class="po-tab tab-btn" id="tab-meet-greet" role="tab" aria-selected="false">
           <i class="bi bi-airplane po-tab__icon"></i>
           <span class="po-tab__label">Meet &amp; Greet</span>
           <span class="po-tab__count" id="count-meet-greet">0</span>
         </button>
+        <?php endif; ?>
   </nav>
 
   <!-- Table content card -->
@@ -217,6 +221,7 @@ require('modules/head.php');
         </div>
       </div>
 
+      <?php if (!$isDispatcher): ?>
       <!-- Meet & Greet -->
       <div id="pane-meetgreet" class="tab-pane-table" style="display:none;">
         <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
@@ -236,6 +241,7 @@ require('modules/head.php');
           </table>
         </div>
       </div>
+      <?php endif; ?>
 
       <div id="preorderPaginationContainer" class="mt-3"></div>
 
@@ -378,6 +384,14 @@ require('modules/head.php');
     <script src="js/pagination.js"></script>
     <script>
 
+      // Dispatcher role: only ever see Powercabs Dispatch-created orders —
+      // app/corporate rides and the Meet & Greet tab are filtered out entirely.
+      const IS_DISPATCHER_ROLE = <?php echo json_encode($isDispatcher); ?>;
+      function isDispatcherSourcedRide(ride) {
+        if (!IS_DISPATCHER_ROLE) return true;
+        return String(ride?.source || '').toLowerCase().includes('dispatch');
+      }
+
       // Configuration: Polling interval in milliseconds (default: 10 seconds)
       const POLLING_INTERVAL_MS = 10 * 1000; // 10 seconds
 
@@ -435,7 +449,7 @@ require('modules/head.php');
         loadScheduledRides(true);
         loadCancelledRides(true);
         loadCompletedRides(true);
-        loadMeetGreetRides(true);
+        if (!IS_DISPATCHER_ROLE) loadMeetGreetRides(true);
 
         // Start polling
         startPolling();
@@ -496,7 +510,7 @@ require('modules/head.php');
             throw new Error(result.error || 'Failed to fetch rides');
           }
           
-          const rides = result && result.data ? result.data : [];
+          const rides = (result && result.data ? result.data : []).filter(isDispatcherSourcedRide);
 
           const unassignedRides = rides.filter((ride) => {
             const status = (ride.status || '').toLowerCase();
@@ -773,7 +787,7 @@ require('modules/head.php');
             throw new Error(result.error || 'Failed to fetch rides');
           }
           
-          const rides = result && result.data ? result.data : [];
+          const rides = (result && result.data ? result.data : []).filter(isDispatcherSourcedRide);
 
           const unassignedRides = rides.filter((ride) => {
             const status = (ride.status || '').toLowerCase();
@@ -1161,7 +1175,7 @@ require('modules/head.php');
             throw new Error(result.error || 'Failed to fetch rides');
           }
           
-          const rides = result && result.data ? result.data : [];
+          const rides = (result && result.data ? result.data : []).filter(isDispatcherSourcedRide);
 
           const assignedRides = rides.filter(isAssignedTabRide);
 
@@ -1430,7 +1444,7 @@ require('modules/head.php');
             throw new Error(result.error || 'Failed to fetch rides');
           }
           
-          const rides = result && result.data ? result.data : [];
+          const rides = (result && result.data ? result.data : []).filter(isDispatcherSourcedRide);
 
           const scheduledRides = rides.filter(isScheduledTabRide);
 
@@ -1611,7 +1625,7 @@ require('modules/head.php');
           if (!result.success) {
             throw new Error(result.error || 'Failed to fetch rides');
           }
-          const rides = result && result.data ? result.data : [];
+          const rides = (result && result.data ? result.data : []).filter(isDispatcherSourcedRide);
           const cancelledRides = rides.filter((ride) => {
             const status = (ride.status || '').toLowerCase();
             return status === 'cancelled' || status === 'canceled';
@@ -1677,7 +1691,7 @@ require('modules/head.php');
           if (!result.success) {
             throw new Error(result.error || 'Failed to fetch rides');
           }
-          const rides = result && result.data ? result.data : [];
+          const rides = (result && result.data ? result.data : []).filter(isDispatcherSourcedRide);
           const completedRides = rides.filter((ride) => {
             const status = (ride.status || '').toLowerCase();
             return status === 'completed' || status === 'finished';
@@ -1815,7 +1829,7 @@ require('modules/head.php');
           if (!response.ok) throw new Error('Failed to fetch rides');
           const result = await response.json();
           if (!result.success) throw new Error(result.error || 'Failed');
-          const rides = result && result.data ? result.data : [];
+          const rides = (result && result.data ? result.data : []).filter(isDispatcherSourcedRide);
           const enrouteRides = rides.filter((ride) => {
             const status = (ride.status || '').toLowerCase();
             return ENROUTE_STATUSES.includes(status);
@@ -1840,7 +1854,7 @@ require('modules/head.php');
           if (!response.ok) throw new Error('Failed to fetch rides from server');
           const result = await response.json();
           if (!result.success) throw new Error(result.error || 'Failed to fetch rides');
-          const rides = result && result.data ? result.data : [];
+          const rides = (result && result.data ? result.data : []).filter(isDispatcherSourcedRide);
           const onTripRides = rides.filter((ride) => {
             const status = (ride.status || '').toLowerCase();
             return ['on_trip','ongoing','in_progress','ontrip','started','arrived_at_pickup','driver_arrived','arrived'].includes(status);

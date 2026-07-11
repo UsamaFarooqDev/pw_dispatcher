@@ -2,6 +2,11 @@
 session_start();
 
 require_once 'auth/require_login_redirect.php';
+require_once 'auth/role_guard.php';
+if (isDispatcherRole()) {
+    header('Location: order.php');
+    exit;
+}
 require('modules/head.php');
 
 ?>
