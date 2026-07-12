@@ -1612,10 +1612,36 @@ foreach ($rideTypes as $t) {
           origin: pickupLatLng || pickup,
           destination: dropoffLatLng || dropoff,
           travelMode: google.maps.TravelMode.DRIVING,
+          // Ask Google for every viable route so we can pick the cheapest one
+          // below, instead of always taking its "recommended" routes[0].
+          provideRouteAlternatives: true,
         };
         directionsService.route(req, (result, status) => {
           if (status === google.maps.DirectionsStatus.OK) {
-            const leg = result.routes[0].legs[0];
+            const pickupTimeStr = buildPickupDateTime();
+            const rideType = document.getElementById('serviceType')?.value || 'Economy';
+
+            // Pick the shortest/most economical route out of all alternatives
+            // Google returned — routes[0] is just Google's default pick and can
+            // be a longer, pricier route than another valid alternative.
+            let bestIndex = 0;
+            let bestFare = Infinity;
+            let bestDistanceKm = 0;
+            let bestDurationMin = 0;
+            result.routes.forEach((route, idx) => {
+              const routeLeg = route.legs[0];
+              const distKm = routeLeg.distance.value / 1000;
+              const durMin = Math.round(routeLeg.duration.value / 60);
+              const fare = calculateFare(distKm, durMin, pickupTimeStr, rideType);
+              if (fare < bestFare) {
+                bestFare = fare;
+                bestIndex = idx;
+                bestDistanceKm = distKm;
+                bestDurationMin = durMin;
+              }
+            });
+
+            const leg = result.routes[bestIndex].legs[0];
 
             // DUBLIN-ONLY RESTRICTION (active): reject routes where either end
             // falls outside Dublin, so map markers and fare are never computed
@@ -1638,10 +1664,10 @@ foreach ($rideTypes as $t) {
             }
 
             directionsRenderer.setDirections(result);
-            googleDistance = leg.distance.value / 1000;
-            googleDuration = Math.round(leg.duration.value / 60);
-            const pickupTimeStr = buildPickupDateTime();
-            googleFare = calculateFare(googleDistance, googleDuration, pickupTimeStr, document.getElementById('serviceType')?.value || 'Economy');
+            directionsRenderer.setRouteIndex(bestIndex);
+            googleDistance = bestDistanceKm;
+            googleDuration = bestDurationMin;
+            googleFare = bestFare;
             pickupLatLng = leg.start_location;
             dropoffLatLng = leg.end_location;
             applyFareOverrides();
