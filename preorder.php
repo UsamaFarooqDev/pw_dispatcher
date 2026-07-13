@@ -1217,6 +1217,13 @@ require('modules/head.php');
           const fare = formatFare(ride.fare_eur, ride.estimate_fare);
           const rawFare = ride.fare_eur != null ? parseFloat(ride.fare_eur) : (ride.estimate_fare != null ? parseFloat(ride.estimate_fare) : 0);
 
+          // Internal Note is only for rides booked via the "New" (not-in-DB)
+          // passenger option on Create Order — those are tagged source
+          // "Powercabs Dispatch" (existing-passenger dispatcher orders are
+          // tagged plain "dispatcher" and don't get this button).
+          const isNewPaxDispatchOrder = String(ride.source || '').trim().toLowerCase() === 'powercabs dispatch';
+          const hasNote = !!(ride.internal_note && String(ride.internal_note).trim() !== '');
+
           const row = document.createElement('tr');
           row.innerHTML = `
             <td class="ps-3">${name}</td>
@@ -1229,11 +1236,16 @@ require('modules/head.php');
             <td>${renderSourceBadge(ride.source)}</td>
             <td class="text-end pe-4">${fare}</td>
             <td class="text-end pe-4">
-              <div class="d-inline-flex align-items-center gap-2 flex-nowrap">
+              <div style="display:inline-grid; grid-template-columns:repeat(2, auto); gap:6px; justify-items:start;">
                 <button type="button" class="complete-ride-btn" onclick="completeRide('${encodeURIComponent(ride.id)}', ${rawFare})">
                   <i class="bi bi-check-circle-fill"></i>
                   <span>Complete</span>
                 </button>
+                ${isNewPaxDispatchOrder ? `
+                <button type="button" class="add-note-btn" onclick="openInternalNoteModal('${encodeURIComponent(ride.id)}')">
+                  <i class="bi bi-sticky${hasNote ? '-fill' : ''}"></i>
+                  <span>${hasNote ? 'Edit Note' : 'Add Note'}</span>
+                </button>` : ''}
                 <button type="button" class="unassign-btn" onclick="unassignRide('${encodeURIComponent(ride.id)}')">
                   <i class="bi bi-person-dash"></i>
                   <span>Unassign</span>
@@ -1368,6 +1380,89 @@ require('modules/head.php');
         document.body.appendChild(toast);
         setTimeout(() => { toast.style.transition = 'opacity 0.4s'; toast.style.opacity = '0'; }, 2600);
         setTimeout(() => toast.remove(), 3100);
+      }
+
+      // ── Internal Note (Powercabs Dispatch / new-passenger orders only) ──
+      // Same lightweight custom-overlay pattern as showConfirmDialog above,
+      // but with a text input instead of a plain yes/no choice.
+      function showInternalNoteDialog(existingNote) {
+        return new Promise((resolve) => {
+          const overlay = document.createElement('div');
+          overlay.style.cssText =
+            'position:fixed; inset:0; background:rgba(15,23,42,0.45); z-index:20000; display:flex; align-items:center; justify-content:center; padding:16px;';
+
+          const box = document.createElement('div');
+          box.style.cssText =
+            'background:#fff; border-radius:14px; max-width:460px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.25); overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;';
+          box.innerHTML = `
+            <div style="padding:20px 22px 8px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span style="width:34px; height:34px; border-radius:9px; background:#EEF2FF; color:#4F46E5; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  <i class="bi bi-sticky-fill" style="font-size:15px;"></i>
+                </span>
+                <div style="font-size:16px; font-weight:700; color:#18181B;">Internal Note</div>
+              </div>
+              <div style="margin-top:6px; font-size:12.5px; color:#A1A1AA; line-height:1.4;">Visible only to dispatch staff — not shared with the passenger or driver.</div>
+            </div>
+            <div style="padding:14px 22px 4px;">
+              <textarea data-el="note" rows="5" placeholder="Add a note for this ride..."
+                style="width:100%; border:1.5px solid #EBEBEB; border-radius:8px; padding:10px 12px; font-size:0.8125rem; color:#18181B; resize:vertical; font-family:inherit;"></textarea>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:8px; padding:16px 22px 18px;">
+              <button type="button" data-act="cancel" style="height:38px; padding:0 16px; border-radius:8px; border:1.5px solid #E4E4E7; background:#fff; color:#52525B; font-size:0.8125rem; font-weight:600; cursor:pointer;">Cancel</button>
+              <button type="button" data-act="save" style="height:38px; padding:0 16px; border-radius:8px; border:1.5px solid #4F46E5; background:#4F46E5; color:#fff; font-size:0.8125rem; font-weight:700; cursor:pointer;">Save Note</button>
+            </div>
+          `;
+          overlay.appendChild(box);
+          document.body.appendChild(overlay);
+
+          const textarea = box.querySelector('[data-el="note"]');
+          textarea.value = existingNote || '';
+
+          const cleanup = (val) => {
+            document.removeEventListener('keydown', onKey);
+            overlay.remove();
+            resolve(val);
+          };
+          const onKey = (e) => { if (e.key === 'Escape') cleanup(null); };
+          document.addEventListener('keydown', onKey);
+          overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(null); });
+          box.querySelector('[data-act="cancel"]').addEventListener('click', () => cleanup(null));
+          box.querySelector('[data-act="save"]').addEventListener('click', () => cleanup(textarea.value.trim()));
+
+          setTimeout(() => textarea.focus(), 50);
+        });
+      }
+
+      async function openInternalNoteModal(encodedRideId) {
+        const rideId = decodeURIComponent(encodedRideId);
+        const ride = (currentRidesData.assigned || []).find((r) => r.id === rideId);
+        const existingNote = (ride && ride.internal_note) || '';
+
+        const note = await showInternalNoteDialog(existingNote);
+        if (note === null) return; // cancelled
+
+        try {
+          const response = await fetch('api/update_internal_note.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ride_id: rideId, internal_note: note }),
+          });
+          if (response.status === 401) { window.location.href = '/'; return; }
+          const result = await response.json();
+          if (!response.ok || !result.success) {
+            throw new Error(result.error || 'Failed to save note');
+          }
+          if (ride) ride.internal_note = note;
+          if (currentTab === 'assigned') {
+            const currentPage = preorderPagination ? preorderPagination.getCurrentPage() : 1;
+            updateTableForCurrentTab(currentPage, ITEMS_PER_PAGE);
+          }
+          showPreorderToast('Internal note saved.', 'success');
+        } catch (err) {
+          console.error('Save internal note error:', err);
+          showPreorderToast(err.message || 'Failed to save note.', 'error');
+        }
       }
 
       function updateAssignedTabCount(count) {
