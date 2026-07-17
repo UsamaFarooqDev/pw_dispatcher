@@ -3,10 +3,7 @@ session_start();
 
 require_once 'auth/require_login_redirect.php';
 require_once 'auth/role_guard.php';
-if (isDispatcherRole()) {
-    header('Location: order.php');
-    exit;
-}
+$isDispatcher = isDispatcherRole();
 require('modules/head.php');
 
 ?>
@@ -38,7 +35,9 @@ require('modules/head.php');
             <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
             <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
             <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
+            <?php if (!$isDispatcher): ?>
             <th class="fw-semibold text-nowrap px-4 py-2 text-end" style="font-size:0.75rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Action</th>
+            <?php endif; ?>
           </tr>
         </thead>
         <tbody id="ridesTableBody"></tbody>
@@ -225,6 +224,8 @@ require('modules/head.php');
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/pagination.js"></script>
     <script>
+      // Dispatcher role: read-only here — no Edit/Delete on App Rides.
+      const IS_DISPATCHER_ROLE = <?php echo json_encode($isDispatcher); ?>;
       let ridesPagination = null;
       const ITEMS_PER_PAGE = 10;
 
@@ -301,7 +302,8 @@ require('modules/head.php');
         tbody.innerHTML = '';
 
         if (!rides || rides.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">No rides to show</td></tr>';
+          const colCount = IS_DISPATCHER_ROLE ? 7 : 8;
+          tbody.innerHTML = `<tr><td colspan="${colCount}" class="text-center py-4 text-muted">No rides to show</td></tr>`;
           return;
         }
 
@@ -343,6 +345,7 @@ require('modules/head.php');
             <td>
               ${renderStatusBadge(status)}
             </td>
+            ${IS_DISPATCHER_ROLE ? '' : `
             <td class="ride-action-cell text-end pe-4">
               <div class="d-inline-flex align-items-center gap-2 justify-content-end">
                 <button
@@ -366,6 +369,7 @@ require('modules/head.php');
                 </button>
               </div>
             </td>
+            `}
           `;
           tbody.appendChild(row);
         });

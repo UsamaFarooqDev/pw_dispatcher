@@ -2,7 +2,6 @@
 header('Content-Type: application/json');
 session_start();
 require_once '../auth/config.php';
-require_once '../auth/role_guard.php';
 
 // Security: Check if user is authenticated
 if (empty($_SESSION['user']) || empty($_SESSION['access_token'])) {
@@ -31,16 +30,6 @@ try {
 
     // Get total count
     $totalCount = $db->getCount('rides');
-
-    // Dispatcher role only ever sees Powercabs Dispatch-created orders — filter
-    // out app/corporate rides (and their embedded passenger PII) server-side,
-    // not just in the UI.
-    if (isDispatcherRole()) {
-        $rides = array_values(array_filter($rides, function ($r) {
-            return stripos((string)($r['source'] ?? ''), 'dispatch') !== false;
-        }));
-        $totalCount = count($rides);
-    }
 
     // Fetch all passengers for mapping (or optimize to fetch only needed ones)
     $passengers = [];

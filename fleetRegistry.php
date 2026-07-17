@@ -29,7 +29,6 @@ require('modules/head.php');
           >
             <i class="bi bi-person-badge" style="font-size:13px;"></i> Drivers
           </button>
-          <?php if (!$isDispatcher): ?>
           <button
             id="customerViewBtn"
             class="btn btn-sm fw-semibold d-flex align-items-center gap-2 px-3"
@@ -38,7 +37,6 @@ require('modules/head.php');
           >
             <i class="bi bi-people" style="font-size:13px;"></i> Passengers
           </button>
-          <?php endif; ?>
         </div>
 
         <div id="driverTable" class="d-block mb-3" style="min-height:362px;">
@@ -64,7 +62,6 @@ require('modules/head.php');
           </div>
         </div>
 
-        <?php if (!$isDispatcher): ?>
         <div id="customerTable" class="d-none mb-3" style="min-height:362px;">
           <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB;">
             <table class="table mb-0" style="border-collapse:collapse;">
@@ -82,12 +79,9 @@ require('modules/head.php');
             </table>
           </div>
         </div>
-        <?php endif; ?>
 
 <div id="driverPaginationContainer" class="mt-3"></div>
-<?php if (!$isDispatcher): ?>
 <div id="passengerPaginationContainer" class="mt-3" style="display:none;"></div>
-<?php endif; ?>
 
       </div>
     </div>
@@ -143,16 +137,18 @@ require('modules/head.php');
       cursor: pointer;
     }
     <?php if ($isDispatcher): ?>
-    /* Dispatcher role: driver table shows only Name + Phone (columns 1 and 3) */
-    #driverTable th:nth-child(2), #driverTable td:nth-child(2),
-    #driverTable th:nth-child(4), #driverTable td:nth-child(4),
+    /* Dispatcher role: driver table shows only Name, Email, Phone, Vehicle, Status */
     #driverTable th:nth-child(5), #driverTable td:nth-child(5),
     #driverTable th:nth-child(6), #driverTable td:nth-child(6),
     #driverTable th:nth-child(7), #driverTable td:nth-child(7),
     #driverTable th:nth-child(8), #driverTable td:nth-child(8),
     #driverTable th:nth-child(9), #driverTable td:nth-child(9),
-    #driverTable th:nth-child(10), #driverTable td:nth-child(10),
-    #driverTable th:nth-child(11), #driverTable td:nth-child(11) {
+    #driverTable th:nth-child(10), #driverTable td:nth-child(10) {
+      display: none;
+    }
+    /* Dispatcher role: passenger table shows only Name, Email, Phone, Service Type */
+    #customerTable th:nth-child(5), #customerTable td:nth-child(5),
+    #customerTable th:nth-child(6), #customerTable td:nth-child(6) {
       display: none;
     }
     <?php endif; ?>

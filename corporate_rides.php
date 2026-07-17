@@ -5,10 +5,7 @@ if (empty($_SESSION['user']) || empty($_SESSION['access_token'])) {
     exit;
 }
 require_once __DIR__ . '/auth/role_guard.php';
-if (isDispatcherRole()) {
-    header('Location: order.php');
-    exit;
-}
+$isDispatcher = isDispatcherRole();
 $user = $_SESSION['user'];
 require('modules/head.php');
 ?>
@@ -22,6 +19,7 @@ require('modules/head.php');
 
   <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 py-1">
   <div class="d-flex align-items-center gap-2 flex-wrap">
+      <?php if (!$isDispatcher): ?>
       <button class="btn d-flex align-items-center gap-2 fw-semibold px-4"
   style="height:38px; background:#f37a20; color:#fff; border:none; border-radius:8px; font-size:0.85rem; box-shadow:0 4px 14px rgba(243,122,32,0.35);"
   onmouseover="this.style.background='#d96010';"
@@ -30,6 +28,7 @@ require('modules/head.php');
   <i class="bi bi-building-add" style="font-size:15px;"></i>
   Create New Corporate
 </button>
+      <?php endif; ?>
 
       <!-- Category filter tabs -->
       <!-- <div class="d-flex align-items-center gap-1" style="border:1.5px solid #EBEBEB; border-radius:8px; padding:3px; background:#FAFAFA;">

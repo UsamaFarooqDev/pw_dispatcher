@@ -2,24 +2,12 @@
 header('Content-Type: application/json');
 session_start();
 require_once '../auth/config.php';
-require_once '../auth/role_guard.php';
 
 if (empty($_SESSION['user']) || empty($_SESSION['access_token'])) {
     http_response_code(401);
     echo json_encode([
         'success' => false,
         'error' => 'Unauthorized. Please log in.',
-        'data' => []
-    ], JSON_PRETTY_PRINT);
-    exit;
-}
-
-// Meet & Greet is corporate-only — not available to the dispatcher role.
-if (isDispatcherRole()) {
-    http_response_code(403);
-    echo json_encode([
-        'success' => false,
-        'error' => 'Not permitted for this account.',
         'data' => []
     ], JSON_PRETTY_PRINT);
     exit;

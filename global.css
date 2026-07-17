@@ -43,6 +43,21 @@ h1, h2, h3, h4, h5, h6 {
 .form-control, .form-select { font-size: var(--fs-sm); }
 .btn { font-size: var(--fs-sm); }
 .dropdown-menu { font-size: var(--fs-sm); }
+/* Replace Bootstrap's default blue focus/check color with the app's orange accent
+   everywhere a raw .form-control/.form-select/.form-check-input is used. */
+.form-control:focus, .form-select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(243, 122, 32, 0.12);
+}
+.form-check-input:checked {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.form-check-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(243, 122, 32, 0.12);
+}
+::selection { background: rgba(243, 122, 32, 0.22); }
 .password-toggle {
   position: absolute;
   right: 15px;

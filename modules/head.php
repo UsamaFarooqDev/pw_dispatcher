@@ -8,6 +8,8 @@ if (!isset($pageTitle)) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><?= htmlspecialchars($pageTitle); ?></title>
 
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://maps.googleapis.com">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -26,15 +28,21 @@ if (!isset($pageTitle)) {
           d.id='pwGlobalLoader';d.className='pw-global-loader';
           d.innerHTML='<div class="pw-loader-spinner"></div><div class="pw-loader-text">Loading...</div>';
           document.body.prepend(d);
+          // Fallback auto-hide shortly after the DOM is ready, so page
+          // navigation doesn't sit on this spinner waiting for slow external
+          // resources (Google Maps, CDN scripts, images) to fully finish via
+          // window 'load' — pages that fetch their own data still call
+          // hideGlobalLoader() explicitly as soon as that data is ready,
+          // which fires sooner than this fallback.
+          setTimeout(window.hideGlobalLoader,600);
         });
         window.hideGlobalLoader=function(){
           var el=document.getElementById('pwGlobalLoader');
           if(el){el.classList.add('is-hidden');setTimeout(function(){el.remove()},350);}
         };
-        window.addEventListener('load',function(){setTimeout(window.hideGlobalLoader,300)});
       })();
     </script>
-    <script src="js/status-badge.js"></script>
-    <script src="js/beep-monitor.js"></script>
-    <script src="js/searching-ride-beep.js"></script>
+    <script src="js/status-badge.js" defer></script>
+    <script src="js/beep-monitor.js" defer></script>
+    <script src="js/searching-ride-beep.js" defer></script>
 </head>

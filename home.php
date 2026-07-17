@@ -6,12 +6,6 @@ if (empty($_SESSION['user']) || empty($_SESSION['access_token'])) {
     exit;
 }
 
-require_once __DIR__ . '/auth/role_guard.php';
-if (isDispatcherRole()) {
-    header('Location: order.php');
-    exit;
-}
-
 $user = $_SESSION['user'];
 require('modules/head.php');
 
