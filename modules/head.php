@@ -44,5 +44,6 @@ if (!isset($pageTitle)) {
     </script>
     <script src="js/status-badge.js" defer></script>
     <script src="js/beep-monitor.js" defer></script>
+    <script src="js/rides-poller.js" defer></script>
     <script src="js/searching-ride-beep.js" defer></script>
 </head>

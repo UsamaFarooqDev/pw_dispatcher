@@ -10,6 +10,9 @@
  * choice is persisted in localStorage under 'preorderVoiceReminders'. A shared
  * "last spoken" timestamp keeps the cadence steady across page navigations so
  * the voice doesn't restart on every refresh.
+ *
+ * Ride data comes from the shared js/rides-poller.js (one poll per cycle,
+ * shared with searching-ride-beep.js) instead of polling independently.
  */
 (function () {
   'use strict';
@@ -19,13 +22,11 @@
   // Pre-order statuses that count as "scheduled" — must match preorder.php.
   var SCHEDULED_STATUSES = ['upcoming', 'scheduled', 'pending', 'awaiting_assignment'];
 
-  var REFRESH_INTERVAL_MS  = 10 * 1000; // re-fetch the count from the server
   var ANNOUNCE_INTERVAL_MS = 10 * 1000;  // re-announce roughly every 5 seconds
   var STORAGE_KEY    = 'preorderVoiceReminders';      // on/off
   var STORAGE_TS_KEY = 'preorderVoiceReminderLastAt'; // last spoken timestamp (cross-page)
 
   var cachedCount = 0;
-  var refreshTimer = null;
   var announceTimer = null;
   var stopped = false; // set true on auth failure
 
@@ -43,20 +44,9 @@
     return SCHEDULED_STATUSES.indexOf(status) !== -1 && !rideHasDriver(ride);
   }
 
-  async function refreshCount() {
+  function updateCountFromRides(rides) {
     if (stopped) return;
-    try {
-      var res = await fetch('api/get_rides.php?page=1&limit=1000');
-      if (res.status === 401) { stop(); return; } // navbar handles the redirect
-      if (!res.ok) return;
-      var json = await res.json();
-      if (!json || !json.success) return;
-      var rides = json.data || [];
-      cachedCount = rides.filter(isUnassignedPreorder).length;
-    } catch (err) {
-      // Silent — this is background polling; keep the last known count.
-      console.debug('voice-reminder: refresh failed', err);
-    }
+    cachedCount = (rides || []).filter(isUnassignedPreorder).length;
   }
 
   function flashToggle() {
@@ -111,7 +101,6 @@
 
   function stop() {
     stopped = true;
-    if (refreshTimer)  clearInterval(refreshTimer);
     if (announceTimer) clearInterval(announceTimer);
     window.speechSynthesis.cancel();
   }
@@ -140,15 +129,11 @@
       });
     }
 
-    // Prime the count immediately, then poll + announce on their intervals.
-    refreshCount();
-    refreshTimer  = setInterval(refreshCount, REFRESH_INTERVAL_MS);
+    // Count comes from the shared rides poller; announce on its own cadence.
+    if (window.RidesPoller) {
+      window.RidesPoller.subscribe(updateCountFromRides, stop);
+    }
     announceTimer = setInterval(announce, ANNOUNCE_INTERVAL_MS);
-
-    // When returning to this tab, refresh the count so it's current.
-    document.addEventListener('visibilitychange', function () {
-      if (!document.hidden) refreshCount();
-    });
   }
 
   if (document.readyState === 'loading') {

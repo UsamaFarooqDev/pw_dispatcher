@@ -8,12 +8,27 @@ class SupabaseDB {
     private $anonKey;
     private $userToken;
     private $useServiceRole;
-    
+    private $ch = null;
+
     public function __construct($userToken = null, $useServiceRole = false) {
         $this->baseUrl = SUPABASE_URL;
         $this->anonKey = SUPABASE_ANON_KEY;
         $this->userToken = $userToken;
         $this->useServiceRole = $useServiceRole;
+    }
+
+    // Reuses one cURL easy handle across every call made through this instance
+    // instead of curl_init()-ing fresh each time, so sequential Supabase calls
+    // in the same request (e.g. get_rides.php's rides+passengers+drivers
+    // fetches) reuse the same underlying TCP/TLS connection instead of each
+    // paying its own handshake.
+    private function getCurlHandle() {
+        if ($this->ch === null) {
+            $this->ch = curl_init();
+        } else {
+            curl_reset($this->ch);
+        }
+        return $this->ch;
     }
 
     // Page title configuration
@@ -52,10 +67,22 @@ function getPageTitle() {
         if (isset($params['select'])) {
             $queryParams[] = 'select=' . urlencode($params['select']);
         }
+        if (isset($params['filter']) && is_array($params['filter'])) {
+            foreach ($params['filter'] as $column => $value) {
+                if ($value === null || $value === '') {
+                    continue;
+                }
+                if (is_string($value) && preg_match('/^[a-zA-Z_]+\\..+$/', $value)) {
+                    $queryParams[] = $column . '=' . $value;
+                } else {
+                    $queryParams[] = $column . '=eq.' . urlencode($value);
+                }
+            }
+        }
         if (isset($params['order'])) {
             $queryParams[] = 'order=' . urlencode($params['order']);
         }
-        
+
         // Handle pagination: use limit/offset or page/limit
         $limit = isset($params['limit']) ? intval($params['limit']) : null;
         $offset = null;
@@ -80,7 +107,7 @@ function getPageTitle() {
         }
         
         // Initialize cURL
-        $ch = curl_init();
+        $ch = $this->getCurlHandle();
         
         if ($this->useServiceRole && defined('SUPABASE_SERVICE_ROLE_KEY') && SUPABASE_SERVICE_ROLE_KEY !== '') {
             $authToken = SUPABASE_SERVICE_ROLE_KEY;
@@ -177,7 +204,7 @@ function getPageTitle() {
         }
         
         // Initialize cURL
-        $ch = curl_init();
+        $ch = $this->getCurlHandle();
         
         if ($this->useServiceRole && defined('SUPABASE_SERVICE_ROLE_KEY') && SUPABASE_SERVICE_ROLE_KEY !== '') {
             $authToken = SUPABASE_SERVICE_ROLE_KEY;
@@ -241,7 +268,7 @@ function getPageTitle() {
         $url = $this->baseUrl . '/rest/v1/' . $tableName;
 
         // Initialize cURL
-        $ch = curl_init();
+        $ch = $this->getCurlHandle();
 
         if ($this->useServiceRole && defined('SUPABASE_SERVICE_ROLE_KEY') && SUPABASE_SERVICE_ROLE_KEY !== '') {
             $authToken = SUPABASE_SERVICE_ROLE_KEY;
@@ -317,7 +344,7 @@ function getPageTitle() {
         }
 
         // Initialize cURL
-        $ch = curl_init();
+        $ch = $this->getCurlHandle();
 
         if ($this->useServiceRole && defined('SUPABASE_SERVICE_ROLE_KEY') && SUPABASE_SERVICE_ROLE_KEY !== '') {
             $authToken = SUPABASE_SERVICE_ROLE_KEY;
@@ -376,7 +403,7 @@ function getPageTitle() {
         $url = $this->baseUrl . '/rest/v1/' . $tableName . '?id=eq.' . urlencode($id);
 
         // Initialize cURL
-        $ch = curl_init();
+        $ch = $this->getCurlHandle();
 
         if ($this->useServiceRole && defined('SUPABASE_SERVICE_ROLE_KEY') && SUPABASE_SERVICE_ROLE_KEY !== '') {
             $authToken = SUPABASE_SERVICE_ROLE_KEY;
@@ -438,7 +465,7 @@ function getPageTitle() {
         $url = $this->baseUrl . '/rest/v1/' . $tableName . '?id=eq.' . urlencode($id);
 
         // Initialize cURL
-        $ch = curl_init();
+        $ch = $this->getCurlHandle();
 
         if ($this->useServiceRole && defined('SUPABASE_SERVICE_ROLE_KEY') && SUPABASE_SERVICE_ROLE_KEY !== '') {
             $authToken = SUPABASE_SERVICE_ROLE_KEY;
