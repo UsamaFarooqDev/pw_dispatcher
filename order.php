@@ -190,9 +190,7 @@ foreach ($rideTypes as $t) {
         }
 
         /* Seat pills — compact horizontal */
-        .pill-group { display:flex; flex-wrap:wrap; gap:6px; }
-        .pill-group.pill-group-fill { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
-        .pill-group-fill .pill-btn { min-width: 0; }
+        .pill-group { display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-start; }
         .pill-btn {
           display:inline-flex; align-items:center; justify-content:center; gap:6px;
           padding:7px 12px; min-height:40px;
@@ -207,15 +205,16 @@ foreach ($rideTypes as $t) {
           box-shadow:0 0 0 3px rgba(243,122,32,0.10);
         }
         .pill-btn:focus-visible { outline:2px solid #f37a20; outline-offset:2px; }
-        .pill-seat { width:42px; height:42px; min-width:0; padding:0; margin:0 auto; border-radius:50%; font-weight:700; font-size:0.9rem; }
+        .pill-seat { width:42px; height:42px; min-width:0; padding:0; margin:0; border-radius:50%; font-weight:700; font-size:0.9rem; }
 
         /* Ride-type cards — icon on top center, label below.
            auto-fit/minmax collapses empty tracks and stretches the actual
            buttons to fill the full row width instead of leaving a gap. */
         .ride-type-group {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+          grid-template-columns: repeat(5, minmax(0, 1fr));
           gap: 8px;
+          justify-items: stretch;
         }
 
         .ride-type-btn {
@@ -573,7 +572,7 @@ foreach ($rideTypes as $t) {
               <div class="col-md-12">
                 <label class="form-label fw-semibold mb-2" style="font-size:0.8125rem; color:#18181B;">Seats</label>
                 <input type="hidden" id="seatCount" value="" />
-                <div class="pill-group pill-group-fill" data-pill-target="seatCount">
+                <div class="pill-group" data-pill-target="seatCount">
                   <button type="button" class="pill-btn pill-seat" data-value="4">4</button>
                   <button type="button" class="pill-btn pill-seat" data-value="5">5</button>
                   <button type="button" class="pill-btn pill-seat" data-value="6">6</button>
