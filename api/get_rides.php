@@ -69,7 +69,7 @@ try {
     if (!empty($passengerIds)) {
         try {
             $passengers = $db->fetchData('passengers', [
-                'select' => 'id,name,full_name,email,company',
+                'select' => 'id,name,email,business_name',
                 'filter' => ['id' => 'in.(' . implode(',', $passengerIds) . ')'],
             ]);
             foreach ($passengers as $passenger) {
@@ -85,9 +85,9 @@ try {
     foreach ($rides as &$ride) {
         if (isset($ride['user_id']) && isset($passengerMap[$ride['user_id']])) {
             $passenger = $passengerMap[$ride['user_id']];
-            $ride['passenger_name'] = $passenger['name'] ?? $passenger['full_name'] ?? 'N/A';
+            $ride['passenger_name'] = $passenger['name'] ?? 'N/A';
             $ride['passenger_email'] = $passenger['email'] ?? 'N/A';
-            $ride['company'] = $passenger['company'] ?? 'N/A';
+            $ride['company'] = $passenger['business_name'] ?? 'N/A';
         } else {
             $meta = isset($ride['meta']) ? (is_string($ride['meta']) ? json_decode($ride['meta'], true) : $ride['meta']) : [];
             $ride['passenger_name'] = $meta['customer_name'] ?? 'N/A';
@@ -102,7 +102,7 @@ try {
     if (!empty($driverIds)) {
         try {
             $drivers = $db->fetchData('drivers', [
-                'select' => 'id,full_name,name,phone,vehicle_number',
+                'select' => 'id,full_name,phone,vehicle_number',
                 'filter' => ['id' => 'in.(' . implode(',', $driverIds) . ')'],
             ]);
             foreach ($drivers as $driver) {
@@ -118,7 +118,7 @@ try {
     foreach ($rides as &$ride) {
         if (!empty($ride['driver_id']) && isset($driverMap[$ride['driver_id']])) {
             $driver = $driverMap[$ride['driver_id']];
-            $ride['driver_name'] = $driver['full_name'] ?? $driver['name'] ?? 'N/A';
+            $ride['driver_name'] = $driver['full_name'] ?? 'N/A';
             $ride['driver_phone'] = $driver['phone'] ?? null;
             $ride['driver_vehicle_number'] = $driver['vehicle_number'] ?? null;
         } else {
