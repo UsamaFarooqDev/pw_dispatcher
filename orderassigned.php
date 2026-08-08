@@ -386,6 +386,7 @@ let corporateEmployeesList = [];
 let isCorporateMode = false;
 let isCorporateViewMode = false;
 let currentCorpId = null;
+let cameFromCorporatePage = false;
 let currentPickupLat = null;
 let currentPickupLng = null;
 let currentDropLat = null;
@@ -697,6 +698,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const rideId = urlParams.get('id');
   const corpId = urlParams.get('corp_id');
   isCorporateMode = !!corpId;
+  cameFromCorporatePage = !!corpId;
   isCorporateViewMode = isCorporateMode && urlParams.get('view') === '1';
   isViewMode = !!rideId && !isCorporateMode && urlParams.get('view') === '1';
   const isNormalViewMode = isViewMode;
@@ -787,13 +789,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       const result = await response.json();
       if (result.success && result.data) {
         const ride = result.data;
-        
+
+        const rideIsCorporate = String(ride.source || '').toLowerCase().startsWith('corporate');
+        if (rideIsCorporate) {
+          isCorporateMode = true;
+          currentCorpId = rideId;
+          const passengerLabel = document.querySelector('label[for="customerNameSelect"]')
+            || document.querySelector('#customerNameSelect')?.previousElementSibling;
+          if (passengerLabel && passengerLabel.tagName === 'LABEL') {
+            passengerLabel.textContent = 'Corporate Employee';
+          }
+        }
+
         // Prefill Customer Details (passenger from dropdown)
         const customerNameSelect = document.getElementById('customerNameSelect');
         if (customerNameSelect && ride.user_id) {
-          // Ensure the ride's passenger exists as an option even if they weren't
-          // in the batch loaded by loadPassengers() (limit=500) — otherwise the
-          // selection silently fails and the name doesn't appear.
           const exists = Array.from(customerNameSelect.options)
             .some((o) => String(o.value) === String(ride.user_id));
           if (!exists) {
@@ -827,6 +837,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             phone = phone.substring(3).trim();
           }
           phoneNumber.value = phone;
+        }
+
+        if (rideIsCorporate && customerNameSelect) {
+          customerNameSelect.disabled = true;
         }
 
         const serviceType = document.getElementById('serviceType');
@@ -1668,7 +1682,7 @@ async function assignDriver() {
       const newBtn = goToPreorderBtn.cloneNode(true);
       goToPreorderBtn.parentNode.replaceChild(newBtn, goToPreorderBtn);
 
-      const redirectTo = isCorporateMode ? 'corporate_rides.php' : 'preorder.php';
+      const redirectTo = cameFromCorporatePage ? 'corporate_rides.php' : 'preorder.php';
       newBtn.addEventListener('click', () => {
         window.location.href = redirectTo;
       });
@@ -1714,7 +1728,7 @@ async function confirmCancelRide() {
   const payload = isCorporateMode
     ? { corp_id: currentCorpId, status: 'Cancelled' }
     : { ride_id: currentRideId, status: 'cancelled' };
-  const redirectTo = isCorporateMode ? 'corporate_rides.php' : 'preorder.php';
+  const redirectTo = cameFromCorporatePage ? 'corporate_rides.php' : 'preorder.php';
 
   try {
     const response = await fetch(endpoint, {

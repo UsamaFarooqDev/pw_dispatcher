@@ -47,26 +47,42 @@ try {
     
     // Fetch passenger information if user_id exists
     if (isset($ride['user_id'])) {
+        $existingEmployee = isset($ride['employee']) ? trim((string)$ride['employee']) : '';
+        $existingCompany = isset($ride['company']) ? trim((string)$ride['company']) : '';
         try {
             $passengers = $db->findData('passengers', ['id' => $ride['user_id']]);
             if (!empty($passengers)) {
                 $passenger = $passengers[0];
-                $ride['passenger_name'] = $passenger['name'] ?? $passenger['full_name'] ?? 'N/A';
+                $ride['passenger_name'] = $passenger['name'] ?? 'N/A';
                 $ride['passenger_email'] = $passenger['email'] ?? 'N/A';
-                $ride['passenger_phone'] = $passenger['phone'] ?? $passenger['phone_number'] ?? 'N/A';
-                $ride['company'] = $passenger['company'] ?? 'N/A';
+                $ride['passenger_phone'] = $passenger['phone'] ?? 'N/A';
+                $ride['company'] = $passenger['business_name'] ?? ($existingCompany !== '' ? $existingCompany : 'N/A');
             } else {
-                $ride['passenger_name'] = 'N/A';
-                $ride['passenger_email'] = 'N/A';
-                $ride['passenger_phone'] = 'N/A';
-                $ride['company'] = 'N/A';
+                $corpEmployee = null;
+                try {
+                    $corpMatches = $db->findData('corporate_employees', ['id' => $ride['user_id']]);
+                    if (!empty($corpMatches)) $corpEmployee = $corpMatches[0];
+                } catch (Exception $e) {
+                    error_log("Warning: Could not fetch corporate_employees data: " . $e->getMessage());
+                }
+                if ($corpEmployee) {
+                    $ride['passenger_name'] = $corpEmployee['name'] ?? ($existingEmployee !== '' ? $existingEmployee : 'N/A');
+                    $ride['passenger_email'] = $corpEmployee['email'] ?? 'N/A';
+                    $ride['passenger_phone'] = $corpEmployee['phone'] ?? 'N/A';
+                    $ride['company'] = $corpEmployee['company'] ?? ($existingCompany !== '' ? $existingCompany : 'N/A');
+                } else {
+                    $ride['passenger_name'] = $existingEmployee !== '' ? $existingEmployee : 'N/A';
+                    $ride['passenger_email'] = 'N/A';
+                    $ride['passenger_phone'] = 'N/A';
+                    $ride['company'] = $existingCompany !== '' ? $existingCompany : 'N/A';
+                }
             }
         } catch (Exception $e) {
             error_log("Warning: Could not fetch passenger data: " . $e->getMessage());
-            $ride['passenger_name'] = 'N/A';
+            $ride['passenger_name'] = $existingEmployee !== '' ? $existingEmployee : 'N/A';
             $ride['passenger_email'] = 'N/A';
             $ride['passenger_phone'] = 'N/A';
-            $ride['company'] = 'N/A';
+            $ride['company'] = $existingCompany !== '' ? $existingCompany : 'N/A';
         }
     } else {
         $meta = isset($ride['meta']) ? (is_string($ride['meta']) ? json_decode($ride['meta'], true) : $ride['meta']) : [];

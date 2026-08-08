@@ -1,13 +1,5 @@
 <div class="sidebar d-flex flex-column" style="z-index:1031; background:#0B1220; border-right:1px solid #1E293B; height:100vh; width:240px; color:#CBD5E1;">
 
-  <!-- <div class="d-flex align-items-center justify-content-center" style="height:64px; flex-shrink:0; border-bottom:1px solid #1E293B;">
-    <img
-      src="/assets/powercabs-logo-black.svg"
-      alt="PowerCabs"
-      class="img-fluid sidebar-logo"
-      style="max-height:60px;"
-    />
-  </div> -->
   <div class="d-flex align-items-center justify-content-center" style="flex-shrink:0; border-bottom:1px solid #1E293B; padding: 10px 0;">
   <img
     src="/assets/powercabs-logo-black.svg"
@@ -20,7 +12,6 @@
   <div class="d-flex flex-column px-2 py-3" style="flex:1; overflow-y:auto;">
 
     <div class="sidebar-section">
-      <div class="sidebar-section-label">Overview</div>
       <ul class="nav flex-column gap-1" id="sidebarMenu-overview">
         <li class="nav-item">
           <a href="home.php" class="nav-link sidebar-link">
@@ -38,7 +29,6 @@
     </div>
 
     <div class="sidebar-section">
-      <div class="sidebar-section-label">Operations</div>
       <ul class="nav flex-column gap-1" id="sidebarMenu-ops">
         <li class="nav-item">
           <a href="order.php" class="nav-link sidebar-link">
@@ -62,7 +52,6 @@
     </div>
 
     <div class="sidebar-section">
-      <div class="sidebar-section-label">Rides</div>
       <ul class="nav flex-column gap-1" id="sidebarMenu-rides">
         <li class="nav-item">
           <a href="application_rides.php" class="nav-link sidebar-link">
@@ -78,28 +67,7 @@
         </li>
       </ul>
     </div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-section-label">Account</div>
-      <ul class="nav flex-column gap-1" id="sidebarMenu-account">
-        <li class="nav-item">
-          <a href="profile.php" class="nav-link sidebar-link">
-            <span class="sidebar-icon"><i class="bi bi-gear"></i></span>
-            <span class="sidebar-label">Settings</span>
-          </a>
-        </li>
-      </ul>
-    </div>
-
   </div>
-
-  <div class="px-3 py-3" style="border-top:1px solid #1E293B; flex-shrink:0;">
-    <div class="d-flex align-items-center gap-2">
-      <span class="sidebar-status-dot"></span>
-      <span style="font-size:0.72rem; color:#94A3B8; font-weight:500; letter-spacing:0.02em;">System Online</span>
-    </div>
-  </div>
-
 </div>
 
 <script>

@@ -180,7 +180,7 @@ try {
     $employeeEmail = null;
     $employeePhone = null;
     if ($employeeId) {
-        $emps = $db->findData('corporate_employees', ['id' => $employeeId]);
+        $emps = $db->findData('corporate_employees', ['corp_id' => $employeeId]);
         if (!empty($emps)) {
             $emp = $emps[0];
             $employeeEmail = $emp['email'] ?? null;

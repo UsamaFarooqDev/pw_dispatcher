@@ -83,16 +83,23 @@ try {
     }
 
     foreach ($rides as &$ride) {
+        $existingCompany = isset($ride['company']) ? trim((string)$ride['company']) : '';
+        $existingEmployee = isset($ride['employee']) ? trim((string)$ride['employee']) : '';
+
         if (isset($ride['user_id']) && isset($passengerMap[$ride['user_id']])) {
             $passenger = $passengerMap[$ride['user_id']];
-            $ride['passenger_name'] = $passenger['name'] ?? 'N/A';
+            $ride['passenger_name'] = $passenger['name'] ?? ($existingEmployee !== '' ? $existingEmployee : 'N/A');
             $ride['passenger_email'] = $passenger['email'] ?? 'N/A';
-            $ride['company'] = $passenger['business_name'] ?? 'N/A';
+            $ride['company'] = $passenger['business_name'] ?? ($existingCompany !== '' ? $existingCompany : 'N/A');
         } else {
             $meta = isset($ride['meta']) ? (is_string($ride['meta']) ? json_decode($ride['meta'], true) : $ride['meta']) : [];
-            $ride['passenger_name'] = $meta['customer_name'] ?? 'N/A';
+            if ($existingEmployee !== '') {
+                $ride['passenger_name'] = $existingEmployee;
+            } else {
+                $ride['passenger_name'] = $meta['customer_name'] ?? 'N/A';
+            }
             $ride['passenger_email'] = 'N/A';
-            $ride['company'] = 'N/A';
+            $ride['company'] = $existingCompany !== '' ? $existingCompany : 'N/A';
         }
     }
     unset($ride);

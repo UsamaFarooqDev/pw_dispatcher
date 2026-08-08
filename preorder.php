@@ -972,14 +972,17 @@ require('modules/head.php');
         return `${day}.${month}.${year} | ${hours}:${minutes}`;
       }
 
-      function formatScheduledTime(scheduledAt, meta) {
+      function formatScheduledTime(scheduledAt, meta, createdAt) {
         let ts = scheduledAt || null;
+        let isFallbackToOrderTime = false;
         if (!ts && meta) {
           try {
             const m = typeof meta === 'string' ? JSON.parse(meta) : meta;
             ts = m.scheduled_datetime || null;
           } catch (_) {}
         }
+
+        if (!ts && createdAt) { ts = createdAt; isFallbackToOrderTime = true; }
         if (!ts) return '<span style="color:#A1A1AA;">Not set</span>';
         const d = new Date(ts);
         if (isNaN(d.getTime())) return ts;
@@ -988,7 +991,10 @@ require('modules/head.php');
         const year = d.getFullYear();
         const hours = String(d.getHours()).padStart(2, '0');
         const mins = String(d.getMinutes()).padStart(2, '0');
-        return `<div style="line-height:1.3;"><div style="font-weight:600; color:#18181B;">${day} ${mon} ${year}</div><div style="color:#f37a20; font-weight:600; font-size:0.78rem;">${hours}:${mins}</div></div>`;
+        const label = isFallbackToOrderTime
+          ? '<div style="color:#A1A1AA; font-weight:600; font-size:0.66rem; text-transform:uppercase; letter-spacing:0.03em;">Ordered</div>'
+          : '';
+        return `<div style="line-height:1.3;">${label}<div style="font-weight:600; color:#18181B;">${day} ${mon} ${year}</div><div style="color:#f37a20; font-weight:600; font-size:0.78rem;">${hours}:${mins}</div></div>`;
       }
 
       function getRideDisplayTime(ride) {
@@ -1572,7 +1578,7 @@ require('modules/head.php');
 
         rides.forEach((ride) => {
           const name = ride.passenger_name || 'N/A';
-          const pickupTime = formatScheduledTime(ride.scheduled_at, ride.meta);
+          const pickupTime = formatScheduledTime(ride.scheduled_at, ride.meta, ride.created_at);
           const pickup      = ride.pickup_addr || ride.actual_start_addr || 'N/A';
           const destination = ride.dest_addr   || ride.actual_end_addr   || 'N/A';
           const status = ride.status || 'N/A';
