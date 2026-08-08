@@ -22,9 +22,9 @@ try {
     $limit = isset($_GET['limit']) ? max(1, min(5000, intval($_GET['limit']))) : 10;
 
     // Lite mode: for background status pollers (js/rides-poller.js, which
-    // feeds searching-ride-beep.js + preorder-voice-reminder.js on every
-    // page) that only need status/driver_id, not the full enriched row,
-    // passenger/driver joins, or total count.
+    // feeds js/preorder-voice-reminder.js on every page) that only need
+    // status/driver_id, not the full enriched row, passenger/driver joins,
+    // or total count.
     $lite = isset($_GET['mode']) && $_GET['mode'] === 'lite';
 
     if ($lite) {

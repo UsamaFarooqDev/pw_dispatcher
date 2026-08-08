@@ -3,9 +3,9 @@
  *
  * Loaded on every authenticated page via modules/head.php, before the
  * global scripts that need a live view of ride statuses
- * (searching-ride-beep.js, preorder-voice-reminder.js). Those used to each
- * run their own independent 10s poll of the same endpoint; this fetches
- * once per cycle and hands the result to every subscriber instead.
+ * (preorder-voice-reminder.js). That used to run its own independent 10s
+ * poll of the same endpoint; this fetches once per cycle and hands the
+ * result to every subscriber instead.
  */
 (function () {
   'use strict';

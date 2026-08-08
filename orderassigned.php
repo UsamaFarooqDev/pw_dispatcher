@@ -6,54 +6,6 @@ require('modules/head.php');
 ?>
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-<style>
-  .btn-loading { opacity:0.7; cursor:not-allowed; pointer-events:none; }
-  .btn-loading #btnText { opacity:0.9; }
-
-  @keyframes slideInRight {
-    from { opacity: 0; transform: translateX(16px); }
-    to   { opacity: 1; transform: translateX(0); }
-  }
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  /* ── Z-index layering ────────────────────────────────────────────── */
-  #assignDriverCard { position: relative; z-index: 1020; }
-  #mapContainer { position: relative; z-index: 1; }
-
-  /* ── Back button ───────────────────────────────────────────────── */
-  .oa-back-btn {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 5px 12px; font-size: 0.78rem; font-weight: 600;
-    color: #52525B; background: #fff; border: 1.5px solid #E4E4E7;
-    border-radius: 7px; cursor: pointer; text-decoration: none;
-    transition: all 0.15s; margin-bottom: 8px;
-    width: fit-content;
-  }
-  .oa-back-btn:hover { border-color: #f37a20; color: #f37a20; }
-  .oa-back-btn i { font-size: 13px; }
-
-  /* ── View mode: assigned ride tracking ──────────────────────────────── */
-  main.view-mode-active { padding: 20px !important; background: #F4F4F5 !important; min-height: 0 !important; overflow: hidden !important; }
-  main.view-mode-active .row.g-4 { margin: 0 !important; }
-  main.view-mode-active #leftFormPanel { display: none !important; }
-  main.view-mode-active #rightMapPanel {
-    flex: 0 0 100% !important; width: 100% !important;
-    max-width: 100% !important; padding: 0 !important;
-  }
-  main.view-mode-active #assignDriverCard { display: none !important; }
-  main.view-mode-active #mapContainer {
-    border-radius: 12px !important;
-    border: 1.5px solid #EBEBEB !important;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
-    background: #fff !important;
-    overflow: hidden !important;
-    z-index: 1 !important;
-  }
-</style>
-
     <?php require_once 'modules/navbar.php'; ?>
 
     <?php @require('modules/sidebar.php'); ?>

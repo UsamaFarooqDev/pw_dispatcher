@@ -10,7 +10,6 @@ let corporateEmployeesList = [];
 let isCorporateMode = false;
 let isCorporateViewMode = false;
 let currentCorpId = null;
-let cameFromCorporatePage = false;
 let currentPickupLat = null;
 let currentPickupLng = null;
 let currentDropLat = null;
@@ -322,7 +321,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const rideId = urlParams.get('id');
   const corpId = urlParams.get('corp_id');
   isCorporateMode = !!corpId;
-  cameFromCorporatePage = !!corpId;
   isCorporateViewMode = isCorporateMode && urlParams.get('view') === '1';
   isViewMode = !!rideId && !isCorporateMode && urlParams.get('view') === '1';
   const isNormalViewMode = isViewMode;
@@ -1306,9 +1304,11 @@ async function assignDriver() {
       const newBtn = goToPreorderBtn.cloneNode(true);
       goToPreorderBtn.parentNode.replaceChild(newBtn, goToPreorderBtn);
 
-      const redirectTo = cameFromCorporatePage ? 'corporate_rides.php' : 'liveorder.php';
+      // corporate_rides.php was removed — all corporate ride management now
+      // lives in Live Orders (Pre-Order + Meet & Greet tabs), so every
+      // assignment (corporate or not) goes back there.
       newBtn.addEventListener('click', () => {
-        window.location.href = redirectTo;
+        window.location.href = 'liveorder.php';
       });
 
     } else {
@@ -1352,7 +1352,9 @@ async function confirmCancelRide() {
   const payload = isCorporateMode
     ? { corp_id: currentCorpId, status: 'Cancelled' }
     : { ride_id: currentRideId, status: 'cancelled' };
-  const redirectTo = cameFromCorporatePage ? 'corporate_rides.php' : 'liveorder.php';
+  // corporate_rides.php was removed — corporate ride management now lives in
+  // Live Orders, so cancelling (corporate or not) redirects back there.
+  const redirectTo = 'liveorder.php';
 
   try {
     const response = await fetch(endpoint, {

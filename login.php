@@ -273,9 +273,7 @@ require('modules/head.php');
 
         <div class="d-flex gap-2 flex-wrap">
           <div style="background:rgba(255,255,255,0.13); border:1px solid rgba(255,255,255,0.20); border-radius:100px; padding:4px 11px; display:inline-flex; align-items:center; gap:6px; backdrop-filter:blur(8px);">
-            <span style="width:7px; height:7px; border-radius:50%; background:#4ADE80; flex-shrink:0; box-shadow:0 0 6px #4ADE80;">
-              <style>#live1{animation:livepulse 1.8s ease-in-out infinite;}@keyframes livepulse{0%,100%{opacity:1}50%{opacity:0.4}}</style>
-            </span>
+            <span style="width:7px; height:7px; border-radius:50%; background:#4ADE80; flex-shrink:0; box-shadow:0 0 6px #4ADE80;"></span>
             <span style="color:#fff; font-size:0.72rem; font-weight:600;">Live Dispatch</span>
           </div>
           <div style="background:rgba(255,255,255,0.13); border:1px solid rgba(255,255,255,0.20); border-radius:100px; padding:4px 11px; display:inline-flex; align-items:center; gap:6px; backdrop-filter:blur(8px);">
@@ -303,114 +301,7 @@ require('modules/head.php');
   </div>
 </div>
 
-    <script>
-      function togglePasswordVisibility() {
-        const passwordInput = document.getElementById('password');
-        const toggleIcon = document.getElementById('passwordIcon');
-        if (passwordInput.type === 'password') {
-          passwordInput.type = 'text';
-          toggleIcon.classList.remove('bi-eye-slash');
-          toggleIcon.classList.add('bi-eye');
-        } else {
-          passwordInput.type = 'password';
-          toggleIcon.classList.remove('bi-eye');
-          toggleIcon.classList.add('bi-eye-slash');
-        }
-      }
-
-      function showToast(message, isSuccess = false) {
-        const toast = document.getElementById('toastMsg');
-        const toastText = document.getElementById('toastText');
-
-        toastText.innerText = message;
-
-        if (isSuccess) {
-          toast.classList.remove('bg-danger');
-          toast.classList.add('bg-success');
-        } else {
-          toast.classList.remove('bg-success');
-          toast.classList.add('bg-danger');
-        }
-
-        let bsToast = bootstrap.Toast.getInstance(toast);
-        if (!bsToast) bsToast = new bootstrap.Toast(toast);
-        bsToast.show();
-      }
-
-      // On page load: check if already logged in
-      (async function checkSession() {
-        try {
-          const res = await fetch('auth/session.php');
-          const json = await res.json();
-          if (json.loggedIn) {
-            // Already logged in — redirect to home
-            window.location.href = 'home.php';
-          }
-        } catch (err) {
-          console.error('Session check error', err);
-        }
-      })();
-
-      // AJAX submit
-      const loginBtn = document.getElementById('loginBtn');
-      const loginBtnSpinner = document.getElementById('loginBtnSpinner');
-      const loginBtnIcon = document.getElementById('loginBtnIcon');
-      const loginBtnText = document.getElementById('loginBtnText');
-
-      function setLoginBtnState(state) {
-        // state: 'idle' | 'loading' | 'success'
-        if (state === 'loading') {
-          loginBtn.disabled = true;
-          loginBtnSpinner.classList.remove('d-none');
-          loginBtnIcon.classList.add('d-none');
-          loginBtnText.textContent = 'Signing in...';
-        } else if (state === 'success') {
-          loginBtn.disabled = true;
-          loginBtnSpinner.classList.add('d-none');
-          loginBtnIcon.classList.remove('d-none');
-          loginBtnIcon.classList.remove('bi-box-arrow-in-right');
-          loginBtnIcon.classList.add('bi-check-circle');
-          loginBtnText.textContent = 'Login successful';
-        } else {
-          loginBtn.disabled = false;
-          loginBtnSpinner.classList.add('d-none');
-          loginBtnIcon.classList.remove('d-none');
-          loginBtnIcon.classList.remove('bi-check-circle');
-          loginBtnIcon.classList.add('bi-box-arrow-in-right');
-          loginBtnText.textContent = 'Sign In';
-        }
-      }
-
-      document
-        .getElementById('loginForm')
-        .addEventListener('submit', async function (e) {
-          e.preventDefault();
-
-          const formData = new FormData(this);
-          setLoginBtnState('loading');
-
-          try {
-            const resp = await fetch('auth/login.php', {
-              method: 'POST',
-              body: formData,
-            });
-            const json = await resp.json();
-
-            if (json.success) {
-              setLoginBtnState('success');
-              showToast(json.message || 'Login successful', true);
-              // Redirect after a short delay so user sees toast
-              setTimeout(() => (window.location.href = 'home.php'), 900);
-            } else {
-              setLoginBtnState('idle');
-              showToast(json.message || 'Invalid credentials', false);
-            }
-          } catch (err) {
-            setLoginBtnState('idle');
-            showToast('Network error, try again', false);
-          }
-        });
-    </script>
+    <script src="js/login.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
