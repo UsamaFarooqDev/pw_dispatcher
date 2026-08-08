@@ -83,9 +83,11 @@ require('modules/head.php');
           </thead>
           <tbody id="corporateRidesBody">
             <tr>
-              <td colspan="10" class="text-center py-5" style="border:none;">
-                <div style="font-size:1.5rem; color:#EBEBEB; margin-bottom:8px;"><i class="bi bi-building"></i></div>
-                <div style="font-size:0.845rem; color:#A1A1AA;">Loading corporate rides…</div>
+              <td colspan="10" class="pw-loading-cell">
+                <div class="pw-loading-inner">
+                  <span class="pw-spinner-sm"></span>
+                  <span class="pw-loading-text">Loading corporate rides…</span>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -322,6 +324,20 @@ require('modules/head.php');
     #corporateRidesBody tr { border-bottom:1px solid #F4F4F5; transition:background 0.12s; }
     #corporateRidesBody tr:hover { background:#FAFAFA; }
     #corporateRidesBody td { padding:14px 24px; font-size:0.845rem; color:#18181B; vertical-align:middle; border:none; }
+
+    /* Table loading state — a real spinner centered top-to-bottom in the
+       table's usual content area, instead of a static icon + text row. */
+    .pw-loading-cell { border: none !important; height: 320px; padding: 0 !important; }
+    .pw-loading-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; height: 100%; }
+    .pw-spinner-sm {
+      width: 28px; height: 28px;
+      border: 3px solid #E4E4E7;
+      border-top-color: #f37a20;
+      border-radius: 50%;
+      animation: pwSpinSm 0.7s linear infinite;
+    }
+    .pw-loading-text { font-size: 0.8125rem; font-weight: 600; color: #A1A1AA; }
+    @keyframes pwSpinSm { to { transform: rotate(360deg); } }
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -577,8 +593,7 @@ require('modules/head.php');
     async function loadCorporateRides(page = 1) {
       currentPage = page;
       const tbody = document.getElementById('corporateRidesBody');
-      tbody.innerHTML = `<tr><td colspan="10" class="text-center py-5" style="border:none; color:#A1A1AA; font-size:0.845rem;">
-        <i class="bi bi-arrow-repeat d-block mb-2" style="font-size:1.4rem; color:#EBEBEB;"></i>Loading…</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="10" class="pw-loading-cell"><div class="pw-loading-inner"><span class="pw-spinner-sm"></span><span class="pw-loading-text">Loading corporate rides…</span></div></td></tr>`;
       
       try {
         const params = new URLSearchParams({
@@ -598,10 +613,10 @@ require('modules/head.php');
         const total = Number(data.pagination?.total ?? 0);
 
         if (rows.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="10" class="text-center py-5" style="border:none;">
-            <i class="bi bi-building d-block mb-2" style="font-size:1.5rem; color:#EBEBEB;"></i>
-            <span style="font-size:0.845rem; color:#A1A1AA;">No corporate rides found${currentSearch ? ' for this search' : ''}</span>
-          </td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="10" class="pw-loading-cell"><div class="pw-loading-inner">
+            <i class="bi bi-building" style="font-size:1.7rem; color:#E4E4E7;"></i>
+            <span class="pw-loading-text">No corporate rides found${currentSearch ? ' for this search' : ''}</span>
+          </div></td></tr>`;
           if (corporatePagination) {
             corporatePagination.update(0, 1);
           } else {

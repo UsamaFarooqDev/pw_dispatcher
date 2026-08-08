@@ -19,7 +19,7 @@
 
   if (!('speechSynthesis' in window)) return; // no TTS support → nothing to do
 
-  // Pre-order statuses that count as "scheduled" — must match preorder.php.
+  // Pre-order statuses that count as "scheduled" — must match liveorder.php.
   var SCHEDULED_STATUSES = ['upcoming', 'scheduled', 'pending', 'awaiting_assignment'];
 
   var ANNOUNCE_INTERVAL_MS = 10 * 1000;  // re-announce roughly every 5 seconds

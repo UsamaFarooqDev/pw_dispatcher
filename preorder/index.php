@@ -23,7 +23,7 @@ if (!$rideId && !empty($_GET['id'])) {
 }
 
 if (!$rideId) {
-    header('Location: ../preorder.php');
+    header('Location: ../liveorder.php');
     exit;
 }
 

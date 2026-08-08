@@ -40,7 +40,7 @@ The `rides` table is central. Key fields written by the dispatcher: `user_id` (p
 ### Top-level pages
 - `home.php` — dashboard KPIs + driver/passenger tables (driven by `js/app.js`).
 - `order.php` / `orderassigned.php` — create order / assigned-order views.
-- `preorder.php` + `preorder/` — "Live Orders". `preorder/.htaccess` rewrites `preorder/{rideId}` → `preorder/index.php` (ride id is read from the path).
+- `liveorder.php` (renamed from `preorder.php`) + `preorder/` — "Live Orders". The `preorder/` subdirectory is a separate ride-detail route, left as-is: `preorder/.htaccess` rewrites `preorder/{rideId}` → `preorder/index.php` (ride id is read from the path), which falls back to `liveorder.php` when no id is present.
 - `application_rides.php`, `corporate_rides.php` — app vs. corporate ride management.
 - `map.php` — live map. `fleetRegistry.php`, `profile.php` — fleet + account.
 

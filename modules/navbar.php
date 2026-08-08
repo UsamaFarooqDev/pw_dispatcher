@@ -9,7 +9,7 @@ $page_titles = [
     'order'           => 'Create New Order',
     'map'             => 'Live Map',
     'orderassigned'   => 'Assigned Orders',
-    'preorder'        => 'Live Orders',
+    'liveorder'       => 'Live Orders',
     'profile'         => 'Profile Management',
 ];
 

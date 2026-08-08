@@ -16,59 +16,55 @@ require('modules/head.php');
 
   <?php @require('modules/bodyHeader.php'); ?>
 
-  <!-- Tab header strip -->
+  <!-- Tab header strip — moved into the sidebar's Live Orders dropdown; these
+       buttons stay in the DOM (hidden) purely as the click targets that
+       TAB_CONFIG/setupTabSwitching() already know how to drive. The visible
+       counts now live on the sidebar's #count-* badges instead. -->
   <nav class="po-tabs mt-4" role="tablist" aria-label="Live orders sections">
         <button type="button" class="po-tab is-active tab-btn active-tab" id="tab-unassigned" role="tab" aria-selected="true">
           <i class="bi bi-hourglass-split po-tab__icon"></i>
           <span class="po-tab__label">Unassigned</span>
-          <span class="po-tab__count" id="count-unassigned">0</span>
         </button>
 
         <button type="button" class="po-tab tab-btn" id="tab-assigned" role="tab" aria-selected="false">
           <i class="bi bi-person-check po-tab__icon"></i>
           <span class="po-tab__label">Assigned</span>
-          <span class="po-tab__count" id="count-assigned">0</span>
         </button>
 
         <button type="button" class="po-tab tab-btn" id="tab-enroute" role="tab" aria-selected="false">
           <i class="bi bi-geo-alt po-tab__icon"></i>
           <span class="po-tab__label">Enroute</span>
-          <span class="po-tab__count" id="count-enroute">0</span>
         </button>
 
         <button type="button" class="po-tab tab-btn" id="tab-on-trip" role="tab" aria-selected="false" style="display:none;">
           <i class="bi bi-car-front po-tab__icon"></i>
           <span class="po-tab__label">On Trip</span>
-          <span class="po-tab__count" id="count-on-trip">0</span>
         </button>
 
         <button type="button" class="po-tab tab-btn" id="tab-scheduled" role="tab" aria-selected="false">
           <i class="bi bi-calendar-check po-tab__icon"></i>
           <span class="po-tab__label">Pre-Order</span>
-          <span class="po-tab__count" id="count-scheduled">0</span>
         </button>
 
         <button type="button" class="po-tab tab-btn" id="tab-cancelled" role="tab" aria-selected="false">
           <i class="bi bi-x-circle po-tab__icon"></i>
           <span class="po-tab__label">Cancelled</span>
-          <span class="po-tab__count" id="count-cancelled">0</span>
         </button>
 
         <button type="button" class="po-tab tab-btn" id="tab-finished" role="tab" aria-selected="false">
           <i class="bi bi-check-circle po-tab__icon"></i>
           <span class="po-tab__label">Completed</span>
-          <span class="po-tab__count" id="count-finished">0</span>
         </button>
 
         <button type="button" class="po-tab tab-btn" id="tab-meet-greet" role="tab" aria-selected="false">
           <i class="bi bi-airplane po-tab__icon"></i>
           <span class="po-tab__label">Meet &amp; Greet</span>
-          <span class="po-tab__count" id="count-meet-greet">0</span>
         </button>
   </nav>
 
-  <!-- Table content card -->
-  <div class="rounded-bottom-3 border border-top-0 overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);">
+  <!-- Table content card — now standalone since the tab bar above it moved
+       into the sidebar's Live Orders dropdown. -->
+  <div class="rounded-3 border overflow-hidden mt-4" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);">
     <div class="p-4 pt-3">
 
       <!-- Unassigned -->
@@ -245,9 +241,11 @@ require('modules/head.php');
 </main>
 
 <style>
-  /* ── Live Orders — bold header tab bar ──────────────────────────────── */
+  /* ── Live Orders — tab bar now lives in the sidebar's Live Orders
+     dropdown; these buttons stay functional (TAB_CONFIG still targets them)
+     but are no longer shown on the page itself. ─────────────────────────── */
   .po-tabs {
-    display: flex;
+    display: none;
     align-items: center;
     gap: 0;
     padding: 0 4px;
@@ -319,6 +317,20 @@ require('modules/head.php');
   @media (max-width: 767.98px) {
     .po-tab { padding: 10px 12px; font-size: 0.7rem; }
   }
+
+  /* Table loading state — a real spinner centered top-to-bottom in the
+     table's usual content area, instead of a plain text row sitting at the top. */
+  .pw-loading-cell { border: none !important; height: 320px; padding: 0 !important; }
+  .pw-loading-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; height: 100%; }
+  .pw-spinner-sm {
+    width: 28px; height: 28px;
+    border: 3px solid #E4E4E7;
+    border-top-color: #f37a20;
+    border-radius: 50%;
+    animation: pwSpinSm 0.7s linear infinite;
+  }
+  .pw-loading-text { font-size: 0.8125rem; font-weight: 600; color: #A1A1AA; }
+  @keyframes pwSpinSm { to { transform: rotate(360deg); } }
   .tab-btn.active-tab { color: #f37a20; }
   #unassignedRidesBody tr, #assignedRidesBody tr, #enrouteRidesBody tr,
   #scheduledRidesBody tr, #cancelledRidesBody tr, #completedRidesBody tr,
@@ -755,7 +767,7 @@ require('modules/head.php');
 
         if (showLoading && tbody) {
           tbody.innerHTML =
-            '<tr><td colspan="10" class="text-center py-4 text-muted">Loading rides...</td></tr>';
+            '<tr><td colspan="10" class="pw-loading-cell"><div class="pw-loading-inner"><span class="pw-spinner-sm"></span><span class="pw-loading-text">Loading rides…</span></div></td></tr>';
         }
 
         try {
@@ -767,12 +779,12 @@ require('modules/head.php');
           }
 
           const result = await response.json();
-          
+
           // Check if API returned success
           if (!result.success) {
             throw new Error(result.error || 'Failed to fetch rides');
           }
-          
+
           const rides = result && result.data ? result.data : [];
 
           const unassignedRides = rides.filter((ride) => {
@@ -905,7 +917,7 @@ require('modules/head.php');
 
           if (!rides || rides.length === 0) {
             tbody.innerHTML =
-              '<tr><td colspan="10" class="text-center py-4 text-muted">No unassigned rides to show</td></tr>';
+              '<tr><td colspan="10" class="pw-loading-cell"><div class="pw-loading-inner"><i class="bi bi-inbox" style="font-size:1.7rem; color:#E4E4E7;"></i><span class="pw-loading-text">No unassigned rides to show</span></div></td></tr>';
             return;
           }
 
@@ -1015,7 +1027,7 @@ require('modules/head.php');
 
       function updateUnassignedTabCount(count) {
         const badge = document.getElementById('count-unassigned');
-        if (badge) badge.textContent = count;
+        if (badge) { badge.textContent = count; badge.classList.remove('is-loading'); }
       }
 
       function updatePaginationInfo(totalItems) {
@@ -1152,6 +1164,11 @@ require('modules/head.php');
       }
 
       async function loadAssignedRides(showLoading = false) {
+        const tbody = document.getElementById('assignedRidesBody');
+        if (showLoading && tbody) {
+          tbody.innerHTML =
+            '<tr><td colspan="10" class="pw-loading-cell"><div class="pw-loading-inner"><span class="pw-spinner-sm"></span><span class="pw-loading-text">Loading rides…</span></div></td></tr>';
+        }
         try {
           // Fetch all rides (use high limit to get all rides for client-side filtering)
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
@@ -1194,7 +1211,7 @@ require('modules/head.php');
 
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="10" class="text-center py-4 text-muted">No assigned rides to show</td></tr>';
+            '<tr><td colspan="10" class="pw-loading-cell"><div class="pw-loading-inner"><i class="bi bi-inbox" style="font-size:1.7rem; color:#E4E4E7;"></i><span class="pw-loading-text">No assigned rides to show</span></div></td></tr>';
           return;
         }
 
@@ -1459,7 +1476,7 @@ require('modules/head.php');
 
       function updateAssignedTabCount(count) {
         const badge = document.getElementById('count-assigned');
-        if (badge) badge.textContent = count;
+        if (badge) { badge.textContent = count; badge.classList.remove('is-loading'); }
       }
 
       const ENROUTE_STATUSES = ['enroute','en_route','en-route'];
@@ -1506,7 +1523,18 @@ require('modules/head.php');
           });
         });
 
-        // Restore tab from URL hash (e.g. #tab-assigned from back button)
+        // Restore tab from URL hash (e.g. #tab-assigned from back button, or
+        // a click on one of the sidebar's Live Orders sub-links).
+        restoreTabFromHash();
+
+        // Sidebar sub-links point at liveorder.php#tab-X. When we're already
+        // on this page that's a same-document navigation — the browser
+        // updates the hash but never reloads, so DOMContentLoaded (and the
+        // restore above) won't fire again. Listen for the hash itself.
+        window.addEventListener('hashchange', restoreTabFromHash);
+      }
+
+      function restoreTabFromHash() {
         const hash = window.location.hash;
         if (hash && hash.startsWith('#tab-')) {
           const target = hash.substring(1);
@@ -1516,6 +1544,11 @@ require('modules/head.php');
       }
 
       async function loadScheduledRides(showLoading = false) {
+        const tbody = document.getElementById('scheduledRidesBody');
+        if (showLoading && tbody) {
+          tbody.innerHTML =
+            '<tr><td colspan="10" class="pw-loading-cell"><div class="pw-loading-inner"><span class="pw-spinner-sm"></span><span class="pw-loading-text">Loading rides…</span></div></td></tr>';
+        }
         try {
           // Fetch all rides (use high limit to get all rides for client-side filtering)
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
@@ -1572,7 +1605,7 @@ require('modules/head.php');
 
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="10" class="text-center py-4 text-muted">No pre-orders to show</td></tr>';
+            '<tr><td colspan="10" class="pw-loading-cell"><div class="pw-loading-inner"><i class="bi bi-inbox" style="font-size:1.7rem; color:#E4E4E7;"></i><span class="pw-loading-text">No pre-orders to show</span></div></td></tr>';
           return;
         }
 
@@ -1630,7 +1663,7 @@ require('modules/head.php');
 
       function updateScheduledTabCount(count) {
         const badge = document.getElementById('count-scheduled');
-        if (badge) badge.textContent = count;
+        if (badge) { badge.textContent = count; badge.classList.remove('is-loading'); }
       }
 
       // ── Spoken assignment reminders for unassigned pre-orders ──────────
@@ -1702,6 +1735,11 @@ require('modules/head.php');
       });
 
       async function loadCancelledRides(showLoading = false) {
+        const tbody = document.getElementById('cancelledRidesBody');
+        if (showLoading && tbody) {
+          tbody.innerHTML =
+            '<tr><td colspan="7" class="pw-loading-cell"><div class="pw-loading-inner"><span class="pw-spinner-sm"></span><span class="pw-loading-text">Loading rides…</span></div></td></tr>';
+        }
         try {
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
           if (response.status === 401) { window.location.href = '/'; return; }
@@ -1736,7 +1774,7 @@ require('modules/head.php');
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="7" class="text-center py-4 text-muted">No cancelled rides to show</td></tr>';
+            '<tr><td colspan="7" class="pw-loading-cell"><div class="pw-loading-inner"><i class="bi bi-inbox" style="font-size:1.7rem; color:#E4E4E7;"></i><span class="pw-loading-text">No cancelled rides to show</span></div></td></tr>';
           return;
         }
         rides.forEach((ride) => {
@@ -1764,10 +1802,15 @@ require('modules/head.php');
 
       function updateCancelledTabCount(count) {
         const badge = document.getElementById('count-cancelled');
-        if (badge) badge.textContent = count;
+        if (badge) { badge.textContent = count; badge.classList.remove('is-loading'); }
       }
 
       async function loadCompletedRides(showLoading = false) {
+        const tbody = document.getElementById('completedRidesBody');
+        if (showLoading && tbody) {
+          tbody.innerHTML =
+            '<tr><td colspan="11" class="pw-loading-cell"><div class="pw-loading-inner"><span class="pw-spinner-sm"></span><span class="pw-loading-text">Loading rides…</span></div></td></tr>';
+        }
         try {
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
           if (response.status === 401) { window.location.href = '/'; return; }
@@ -1802,7 +1845,7 @@ require('modules/head.php');
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="11" class="text-center py-4 text-muted">No completed rides to show</td></tr>';
+            '<tr><td colspan="11" class="pw-loading-cell"><div class="pw-loading-inner"><i class="bi bi-inbox" style="font-size:1.7rem; color:#E4E4E7;"></i><span class="pw-loading-text">No completed rides to show</span></div></td></tr>';
           return;
         }
         rides.forEach((ride) => {
@@ -1906,10 +1949,15 @@ require('modules/head.php');
 
       function updateCompletedTabCount(count) {
         const badge = document.getElementById('count-finished');
-        if (badge) badge.textContent = count;
+        if (badge) { badge.textContent = count; badge.classList.remove('is-loading'); }
       }
 
       async function loadEnrouteRides(showLoading = false) {
+        const tbody = document.getElementById('enrouteRidesBody');
+        if (showLoading && tbody) {
+          tbody.innerHTML =
+            '<tr><td colspan="10" class="pw-loading-cell"><div class="pw-loading-inner"><span class="pw-spinner-sm"></span><span class="pw-loading-text">Loading rides…</span></div></td></tr>';
+        }
         try {
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
           if (response.status === 401) { window.location.href = '/'; return; }
@@ -1935,6 +1983,11 @@ require('modules/head.php');
       }
 
       async function loadOnTripRides(showLoading = false) {
+        const tbody = document.getElementById('onTripRidesBody');
+        if (showLoading && tbody) {
+          tbody.innerHTML =
+            '<tr><td colspan="11" class="pw-loading-cell"><div class="pw-loading-inner"><span class="pw-spinner-sm"></span><span class="pw-loading-text">Loading rides…</span></div></td></tr>';
+        }
         try {
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
           if (response.status === 401) { window.location.href = '/'; return; }
@@ -1964,7 +2017,7 @@ require('modules/head.php');
         if (!tbody) return;
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-muted">No enroute rides to show</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="10" class="pw-loading-cell"><div class="pw-loading-inner"><i class="bi bi-inbox" style="font-size:1.7rem; color:#E4E4E7;"></i><span class="pw-loading-text">No enroute rides to show</span></div></td></tr>';
           return;
         }
         rides.forEach((ride) => {
@@ -2001,7 +2054,7 @@ require('modules/head.php');
 
       function updateEnrouteTabCount(count) {
         const badge = document.getElementById('count-enroute');
-        if (badge) badge.textContent = count;
+        if (badge) { badge.textContent = count; badge.classList.remove('is-loading'); }
       }
 
       function populateOnTripTable(rides) {
@@ -2009,7 +2062,7 @@ require('modules/head.php');
         if (!tbody) return;
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="11" class="text-center py-4 text-muted">No on-trip rides to show</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="11" class="pw-loading-cell"><div class="pw-loading-inner"><i class="bi bi-inbox" style="font-size:1.7rem; color:#E4E4E7;"></i><span class="pw-loading-text">No on-trip rides to show</span></div></td></tr>';
           return;
         }
         rides.forEach((ride) => {
@@ -2056,7 +2109,7 @@ require('modules/head.php');
       async function loadMeetGreetRides(showLoading = false) {
         const tbody = document.getElementById('meetGreetRidesBody');
         if (showLoading && tbody) {
-          tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">Loading rides...</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" class="pw-loading-cell"><div class="pw-loading-inner"><span class="pw-spinner-sm"></span><span class="pw-loading-text">Loading rides…</span></div></td></tr>';
         }
         try {
           const response = await fetch('api/get_meet_and_greet_rides.php?page=1&limit=1000');
@@ -2092,7 +2145,7 @@ require('modules/head.php');
         if (!tbody) return;
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">No meet &amp; greet rides to show</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" class="pw-loading-cell"><div class="pw-loading-inner"><i class="bi bi-inbox" style="font-size:1.7rem; color:#E4E4E7;"></i><span class="pw-loading-text">No meet &amp; greet rides to show</span></div></td></tr>';
           return;
         }
 
@@ -2141,7 +2194,7 @@ require('modules/head.php');
 
       function updateMeetGreetTabCount(count) {
         const badge = document.getElementById('count-meet-greet');
-        if (badge) badge.textContent = count;
+        if (badge) { badge.textContent = count; badge.classList.remove('is-loading'); }
       }
 
     </script>

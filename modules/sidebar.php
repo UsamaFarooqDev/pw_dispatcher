@@ -36,11 +36,42 @@
             <span class="sidebar-label">Create Order</span>
           </a>
         </li>
-        <li class="nav-item">
-          <a href="preorder.php" class="nav-link sidebar-link">
+        <li class="nav-item sidebar-dropdown-item" id="sidebarLiveOrdersItem">
+          <button type="button" class="nav-link sidebar-link sidebar-dropdown-toggle" id="sidebarLiveOrdersToggle" aria-expanded="false" aria-controls="sidebarLiveOrdersSubmenu">
             <span class="sidebar-icon"><i class="bi bi-lightning-charge"></i></span>
             <span class="sidebar-label">Live Orders</span>
-          </a>
+            <i class="bi bi-chevron-down sidebar-dropdown-caret"></i>
+          </button>
+          <ul class="sidebar-submenu" id="sidebarLiveOrdersSubmenu">
+            <li><a href="liveorder.php#tab-unassigned" class="sidebar-sublink" data-tab="tab-unassigned">
+              <span class="sidebar-sublink-label">Unassigned</span>
+              <span class="sidebar-sublink-count is-loading" id="count-unassigned"><span class="sb-count-dots"><i></i><i></i><i></i></span></span>
+            </a></li>
+            <li><a href="liveorder.php#tab-assigned" class="sidebar-sublink" data-tab="tab-assigned">
+              <span class="sidebar-sublink-label">Assigned</span>
+              <span class="sidebar-sublink-count is-loading" id="count-assigned"><span class="sb-count-dots"><i></i><i></i><i></i></span></span>
+            </a></li>
+            <li><a href="liveorder.php#tab-enroute" class="sidebar-sublink" data-tab="tab-enroute">
+              <span class="sidebar-sublink-label">Enroute</span>
+              <span class="sidebar-sublink-count is-loading" id="count-enroute"><span class="sb-count-dots"><i></i><i></i><i></i></span></span>
+            </a></li>
+            <li><a href="liveorder.php#tab-scheduled" class="sidebar-sublink" data-tab="tab-scheduled">
+              <span class="sidebar-sublink-label">Pre-Order</span>
+              <span class="sidebar-sublink-count is-loading" id="count-scheduled"><span class="sb-count-dots"><i></i><i></i><i></i></span></span>
+            </a></li>
+            <li><a href="liveorder.php#tab-cancelled" class="sidebar-sublink" data-tab="tab-cancelled">
+              <span class="sidebar-sublink-label">Cancelled</span>
+              <span class="sidebar-sublink-count is-loading" id="count-cancelled"><span class="sb-count-dots"><i></i><i></i><i></i></span></span>
+            </a></li>
+            <li><a href="liveorder.php#tab-finished" class="sidebar-sublink" data-tab="tab-finished">
+              <span class="sidebar-sublink-label">Completed</span>
+              <span class="sidebar-sublink-count is-loading" id="count-finished"><span class="sb-count-dots"><i></i><i></i><i></i></span></span>
+            </a></li>
+            <li><a href="liveorder.php#tab-meet-greet" class="sidebar-sublink" data-tab="tab-meet-greet">
+              <span class="sidebar-sublink-label">Meet &amp; Greet</span>
+              <span class="sidebar-sublink-count is-loading" id="count-meet-greet"><span class="sb-count-dots"><i></i><i></i><i></i></span></span>
+            </a></li>
+          </ul>
         </li>
         <li class="nav-item">
           <a href="map.php" class="nav-link sidebar-link">
@@ -78,6 +109,29 @@ document.addEventListener("DOMContentLoaded", function () {
     if (linkPage === currentPage) {
       link.classList.add("active");
     }
+  });
+  // The Live Orders item is a dropdown toggle now (no href), so it needs its
+  // own active-page check.
+  if (currentPage === "liveorder.php") {
+    document.getElementById("sidebarLiveOrdersToggle")?.classList.add("active");
+  }
+
+  // Live Orders dropdown — starts collapsed on every page load; only opens
+  // on click. Sub-tab links carry their own #tab-id href (liveorder.php picks
+  // it up on load, or via the hashchange listener if already on the page).
+  const loToggle = document.getElementById("sidebarLiveOrdersToggle");
+  const loItem = document.getElementById("sidebarLiveOrdersItem");
+  if (loToggle && loItem) {
+    loToggle.addEventListener("click", function () {
+      const isOpen = loItem.classList.toggle("open");
+      loToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    });
+  }
+  document.querySelectorAll(".sidebar-sublink").forEach(link => {
+    link.addEventListener("click", function () {
+      document.querySelectorAll(".sidebar-sublink.active").forEach(a => a.classList.remove("active"));
+      link.classList.add("active");
+    });
   });
 });
 </script>
@@ -163,6 +217,101 @@ document.addEventListener("DOMContentLoaded", function () {
     background: rgba(243,122,32,0.16);
     border-color: rgba(243,122,32,0.35);
     color: #f37a20;
+  }
+
+  /* ── Live Orders dropdown ─────────────────────────────────────────── */
+  .sidebar-dropdown-toggle {
+    width: 100%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  .sidebar-dropdown-caret {
+    margin-left: auto;
+    font-size: 12px;
+    color: #64748B;
+    transition: transform 0.2s ease, color 0.15s ease;
+    flex-shrink: 0;
+  }
+  .sidebar-dropdown-toggle:hover .sidebar-dropdown-caret { color: #94A3B8; }
+  .sidebar-dropdown-item.open .sidebar-dropdown-caret { transform: rotate(180deg); }
+  .sidebar-dropdown-item.open .sidebar-dropdown-toggle .sidebar-icon {
+    color: #f37a20;
+    border-color: rgba(243,122,32,0.35);
+  }
+
+  .sidebar-submenu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.22s ease;
+  }
+  .sidebar-dropdown-item.open .sidebar-submenu {
+    max-height: 400px;
+  }
+
+  .sidebar-sublink {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 7px 12px 7px 38px;
+    margin-top: 2px;
+    border-radius: 7px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #94A3B8;
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .sidebar-sublink:hover { background: #111C2E; color: #F1F5F9; }
+  .sidebar-sublink.active {
+    background: rgba(243,122,32,0.12);
+    color: #fff;
+    font-weight: 600;
+  }
+  .sidebar-sublink-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 17px;
+    padding: 0 5px;
+    background: #111C2E;
+    border: 1px solid #1E293B;
+    color: #94A3B8;
+    font-size: 0.68rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    border-radius: 9px;
+    flex-shrink: 0;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .sidebar-sublink.active .sidebar-sublink-count {
+    background: rgba(243,122,32,0.18);
+    border-color: rgba(243,122,32,0.35);
+    color: #f37a20;
+  }
+
+  /* Tiny dotted loader shown in a count badge until its real number arrives */
+  .sidebar-sublink-count.is-loading { min-width: 22px; padding: 0 6px; }
+  .sb-count-dots { display: inline-flex; align-items: center; gap: 2px; }
+  .sb-count-dots i {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: #64748B;
+    display: inline-block;
+    animation: sbCountDotPulse 1.1s ease-in-out infinite;
+  }
+  .sb-count-dots i:nth-child(2) { animation-delay: 0.15s; }
+  .sb-count-dots i:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes sbCountDotPulse {
+    0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1); }
   }
 
   .sidebar-status-dot {

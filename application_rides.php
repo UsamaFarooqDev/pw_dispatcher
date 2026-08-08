@@ -53,6 +53,20 @@ require('modules/head.php');
 </main>
 
 <style>
+  /* Table loading state — a real spinner centered top-to-bottom in the
+     table's usual content area, instead of a plain text row at the top. */
+  .pw-loading-cell { border: none !important; height: 320px; padding: 0 !important; }
+  .pw-loading-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; height: 100%; }
+  .pw-spinner-sm {
+    width: 28px; height: 28px;
+    border: 3px solid #E4E4E7;
+    border-top-color: #f37a20;
+    border-radius: 50%;
+    animation: pwSpinSm 0.7s linear infinite;
+  }
+  .pw-loading-text { font-size: 0.8125rem; font-weight: 600; color: #A1A1AA; }
+  @keyframes pwSpinSm { to { transform: rotate(360deg); } }
+
   #ridesTableBody tr {
     border-bottom: 1px solid #F4F4F5;
     transition: background 0.12s;
@@ -252,7 +266,7 @@ require('modules/head.php');
         try {
           const tbody = document.getElementById('ridesTableBody');
           if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">Loading rides...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="pw-loading-cell"><div class="pw-loading-inner"><span class="pw-spinner-sm"></span><span class="pw-loading-text">Loading rides…</span></div></td></tr>';
           }
 
           const response = await fetch(`api/get_rides.php?page=${page}&limit=${limit}`);
@@ -274,7 +288,7 @@ require('modules/head.php');
           } else {
             console.error('Error loading rides:', data.error || 'Unknown error');
             if (tbody) {
-              tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">No rides to show</td></tr>';
+              tbody.innerHTML = '<tr><td colspan="8" class="pw-loading-cell"><div class="pw-loading-inner"><i class="bi bi-inbox" style="font-size:1.7rem; color:#E4E4E7;"></i><span class="pw-loading-text">No rides to show</span></div></td></tr>';
             }
             if (ridesPagination) {
               ridesPagination.update(0, page);
@@ -303,7 +317,7 @@ require('modules/head.php');
 
         if (!rides || rides.length === 0) {
           const colCount = IS_DISPATCHER_ROLE ? 7 : 8;
-          tbody.innerHTML = `<tr><td colspan="${colCount}" class="text-center py-4 text-muted">No rides to show</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="${colCount}" class="pw-loading-cell"><div class="pw-loading-inner"><i class="bi bi-inbox" style="font-size:1.7rem; color:#E4E4E7;"></i><span class="pw-loading-text">No rides to show</span></div></td></tr>`;
           return;
         }
 
