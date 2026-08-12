@@ -4,7 +4,7 @@ session_start();
 require_once '../auth/config.php';
 
 // Security: Check if user is authenticated
-if (empty($_SESSION['user']) || empty($_SESSION['access_token'])) {
+if (empty($_SESSION['admin_id'])) {
     http_response_code(401);
     echo json_encode([
         'success' => false,
@@ -56,9 +56,8 @@ if ($file['size'] > $maxSize) {
 }
 
 try {
-    $userId = $_SESSION['user']['id'];
-    $accessToken = $_SESSION['access_token'];
-    
+    $userId = $_SESSION['admin_id'];
+
     // Generate unique filename
     $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
     $filename = 'avatar_' . $userId . '_' . time() . '.' . $extension;
@@ -72,9 +71,9 @@ try {
     
     $headers = [
         'Content-Type: ' . $mimeType,
-        'apikey: ' . SUPABASE_ANON_KEY,
-        'Authorization: Bearer ' . $accessToken,
-        'x-upsert: true' // Allow overwriting existing files
+        'apikey: ' . SUPABASE_SERVICE_ROLE_KEY,
+        'Authorization: Bearer ' . SUPABASE_SERVICE_ROLE_KEY,
+        'x-upsert: true',
     ];
     
     $ch = curl_init($storageUrl);
@@ -103,31 +102,7 @@ try {
     
     // Store public URL in session
     $_SESSION['profile_image'] = $publicUrl;
-    
-    // Update user metadata in Supabase Auth
-    $updateUrl = SUPABASE_URL . '/auth/v1/user';
-    $updatePayload = json_encode([
-        'user_metadata' => [
-            'avatar_url' => $publicUrl
-        ]
-    ]);
-    
-    $updateHeaders = [
-        'Content-Type: application/json',
-        'apikey: ' . SUPABASE_ANON_KEY,
-        'Authorization: Bearer ' . $accessToken
-    ];
-    
-    $ch = curl_init($updateUrl);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $updatePayload);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $updateHeaders);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    
-    // Don't fail if metadata update fails - file is already uploaded
-    curl_exec($ch);
-    
+
     echo json_encode([
         'success' => true,
         'message' => 'Avatar uploaded successfully.',

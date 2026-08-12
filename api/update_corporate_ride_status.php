@@ -3,7 +3,7 @@ header('Content-Type: application/json');
 session_start();
 require_once '../auth/config.php';
 
-if (empty($_SESSION['user']) || empty($_SESSION['access_token'])) {
+if (empty($_SESSION['admin_id'])) {
     http_response_code(401);
     echo json_encode([
         'success' => false,

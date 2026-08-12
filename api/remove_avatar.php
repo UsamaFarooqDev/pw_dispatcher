@@ -4,7 +4,7 @@ session_start();
 require_once '../auth/config.php';
 
 // Security: Check if user is authenticated
-if (empty($_SESSION['user']) || empty($_SESSION['access_token'])) {
+if (empty($_SESSION['admin_id'])) {
     http_response_code(401);
     echo json_encode([
         'success' => false,
@@ -23,38 +23,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
-    $userId = $_SESSION['user']['id'];
-    $accessToken = $_SESSION['access_token'];
-    
-    // Get current profile image URL from session or user metadata
+    $userId = $_SESSION['admin_id'];
+
+    // Get current profile image URL from session
     $profileImage = $_SESSION['profile_image'] ?? null;
-    
-    // If not in session, try to get from user metadata
-    if (!$profileImage) {
-        try {
-            $userUrl = SUPABASE_URL . '/auth/v1/user';
-            $userCh = curl_init($userUrl);
-            curl_setopt_array($userCh, [
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_HTTPHEADER => [
-                    'apikey: ' . SUPABASE_ANON_KEY,
-                    'Authorization: Bearer ' . $accessToken,
-                    'Content-Type: application/json'
-                ],
-                CURLOPT_SSL_VERIFYPEER => false,
-            ]);
-            $userResponse = curl_exec($userCh);
-            $userHttpCode = curl_getinfo($userCh, CURLINFO_HTTP_CODE);
-            
-            if ($userHttpCode === 200) {
-                $userData = json_decode($userResponse, true);
-                $profileImage = $userData['user_metadata']['avatar_url'] ?? null;
-            }
-        } catch (Exception $e) {
-            // Continue even if we can't fetch user metadata
-        }
-    }
-    
+
     // Track if deletion was successful
     $deleteSuccess = false;
     $deleteHttpCode = null;
@@ -128,31 +101,7 @@ try {
     
     // Clear profile image from session
     unset($_SESSION['profile_image']);
-    
-    // Update user metadata in Supabase Auth to remove avatar_url
-    $updateUrl = SUPABASE_URL . '/auth/v1/user';
-    $updatePayload = json_encode([
-        'user_metadata' => [
-            'avatar_url' => null
-        ]
-    ]);
-    
-    $updateHeaders = [
-        'Content-Type: application/json',
-        'apikey: ' . SUPABASE_ANON_KEY,
-        'Authorization: Bearer ' . $accessToken
-    ];
-    
-    $ch = curl_init($updateUrl);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $updatePayload);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $updateHeaders);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    
-    // Don't fail if metadata update fails - file is already deleted
-    curl_exec($ch);
-    
+
     $message = 'Avatar removed successfully.';
     $responseData = [
         'success' => true,

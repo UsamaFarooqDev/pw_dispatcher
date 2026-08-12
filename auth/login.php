@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$email = trim($_POST['email'] ?? '');
+$email    = strtolower(trim($_POST['email']    ?? ''));
 $password = $_POST['password'] ?? '';
 
 if ($email === '' || $password === '') {
@@ -18,81 +18,60 @@ if ($email === '' || $password === '') {
     exit;
 }
 
-// Supabase token endpoint (email + password login)
-$authUrl = SUPABASE_URL . '/auth/v1/token?grant_type=password';
-$payload = json_encode(['email' => $email, 'password' => $password]);
+try {
+    $db   = new SupabaseDB(null, true);
+    $rows = $db->findData('admin_users', ['email' => $email]);
 
-$headers = [
-    'Content-Type: application/json',
-    'apikey: ' . SUPABASE_ANON_KEY,
-    'Authorization: Bearer ' . SUPABASE_ANON_KEY
-];
+    $user = $rows[0] ?? null;
 
-$ch = curl_init($authUrl);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-
-// For local dev only: you can set CURLOPT_SSL_VERIFYPEER to true in production.
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-
-$response = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curlErr = curl_error($ch);
- 
-
-if ($response === false) {
-    echo json_encode(['success' => false, 'message' => 'Connection error: ' . $curlErr]);
-    exit;
-}
-
-$data = json_decode($response, true);
-
-// If Supabase returns success, it includes an access_token and user object
-if ($httpCode === 200 && isset($data['access_token']) && isset($data['user']['email'])) {
-    $returnedEmail = $data['user']['email'];
-
-    // Extra safety: ensure returned email exactly matches submitted email
-    if (strtolower($returnedEmail) !== strtolower($email)) {
-        echo json_encode(['success' => false, 'message' => 'Authentication failed (email mismatch).']);
+    if (!$user) {
+        echo json_encode(['success' => false, 'message' => 'Invalid email or password.']);
         exit;
     }
 
-    // Regenerate session id for security
+    if (!(bool)$user['is_active']) {
+        echo json_encode(['success' => false, 'message' => 'Your account has been deactivated. Please contact an administrator.']);
+        exit;
+    }
+
+    if (!password_verify($password, $user['password_hash'] ?? '')) {
+        echo json_encode(['success' => false, 'message' => 'Invalid email or password.']);
+        exit;
+    }
+
+    // Check dispatcher application access
+    $accessRows = $db->findData('user_application_access', [
+        'user_id'     => $user['id'],
+        'application' => 'dispatcher',
+    ]);
+    // super_admin bypasses app-access check
+    if ($user['role'] !== 'super_admin' && empty($accessRows)) {
+        echo json_encode(['success' => false, 'message' => 'You do not have access to the Dispatcher application.']);
+        exit;
+    }
+
+    // Regenerate session for security
     session_regenerate_id(true);
 
-    // Save minimal session info
-    $_SESSION['access_token'] = $data['access_token'];
-    $_SESSION['refresh_token'] = $data['refresh_token'] ?? null;
-    $_SESSION['user'] = [
-        'id' => $data['user']['id'] ?? null,
-        'email' => $returnedEmail,
-        'aud' => $data['user']['aud'] ?? null
-    ];
+    // Set session — compatible with both Gateway and Dispatcher patterns
+    $_SESSION['admin_id']   = $user['id'];
+    $_SESSION['admin_name'] = $user['name'];
+    $_SESSION['admin_role'] = $user['role'];
+    $_SESSION['user_name']  = $user['name'];
+    $_SESSION['user_email'] = $user['email'];
 
-    // Resolve display name from user metadata so the UI doesn't flash default values
-    $userMetadata = $data['user']['user_metadata'] ?? [];
-    $displayName = $userMetadata['name'] ?? $userMetadata['full_name'] ?? '';
-    if ($displayName === '') {
-        $emailParts = explode('@', $returnedEmail);
-        $displayName = ucfirst($emailParts[0]);
-    }
-    $_SESSION['user_name']  = $displayName;
-    $_SESSION['user_email'] = $returnedEmail;
-    if (!empty($userMetadata['avatar_url'])) {
-        $_SESSION['profile_image'] = $userMetadata['avatar_url'];
+    // Update last_login timestamp
+    try {
+        $db->updateData('admin_users', $user['id'], ['last_login' => date('c')]);
+    } catch (Throwable) {
+        // Non-fatal — continue even if timestamp update fails
     }
 
     echo json_encode(['success' => true, 'message' => 'Login successful.']);
     exit;
+
+} catch (Throwable $e) {
+    error_log('Dispatcher login error: ' . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => 'A server error occurred. Please try again.']);
+    exit;
 }
-
-// Otherwise treat as invalid credentials
-// Supabase often returns HTTP 400 with an error message on wrong credentials
-$errMsg = 'Invalid email or password.';
-if (isset($data['error_description'])) $errMsg = $data['error_description'];
-elseif (isset($data['error'])) $errMsg = is_string($data['error']) ? $data['error'] : json_encode($data['error']);
-
-echo json_encode(['success' => false, 'message' => $errMsg]);
-exit;

@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-if (empty($_SESSION['user']) || empty($_SESSION['access_token'])) {
+if (empty($_SESSION['admin_id'])) {
     http_response_code(401);
     header('Content-Type: application/json');
     echo json_encode([

@@ -1,12 +1,10 @@
 <?php
 session_start();
 
-if (empty($_SESSION['user']) || empty($_SESSION['access_token'])) {
+if (empty($_SESSION['admin_id'])) {
     header('Location: /');
     exit;
 }
-
-$user = $_SESSION['user'];
 require('modules/head.php');
 
 require_once __DIR__ . '/auth/config.php';

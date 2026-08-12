@@ -16,7 +16,7 @@ $page_titles = [
 $page_title = isset($page_titles[$current_page]) ? $page_titles[$current_page] : 'Dashboard';
 
 $user_name = isset($_SESSION['user_name']) && $_SESSION['user_name'] !== '' ? $_SESSION['user_name'] : '';
-$user_email = isset($_SESSION['user_email']) && $_SESSION['user_email'] !== '' ? $_SESSION['user_email'] : (isset($_SESSION['user']['email']) ? $_SESSION['user']['email'] : '');
+$user_email = isset($_SESSION['user_email']) && $_SESSION['user_email'] !== '' ? $_SESSION['user_email'] : '';
 $profile_image = isset($_SESSION['profile_image']) ? $_SESSION['profile_image'] : '';
 
 if ($user_name === '' && $user_email !== '') {
