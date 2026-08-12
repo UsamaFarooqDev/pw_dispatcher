@@ -311,6 +311,19 @@ function initGoogleMaps() {
   }
 }
 
+// Swaps the static "Assigned Orders" navbar title for the specific ride
+// being viewed/assigned once its data is in, e.g. "Assigned Ride – Jane Doe".
+// Handles both a normal ride's `passenger_name` and a corporate ride's
+// `employee` string.
+function updateNavbarRideTitle(ride) {
+  const pageTitleEl = document.getElementById('pageTitle');
+  if (!pageTitleEl || !ride) return;
+  const name = (ride.passenger_name && ride.passenger_name !== 'N/A')
+    ? ride.passenger_name
+    : ((ride.employee && String(ride.employee).trim()) || 'Passenger');
+  pageTitleEl.textContent = `Assigned Ride – ${name}`;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
 
   // Safety fallback: remove page loader after 6s no matter what
@@ -411,6 +424,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const result = await response.json();
       if (result.success && result.data) {
         const ride = result.data;
+        updateNavbarRideTitle(ride);
 
         const rideIsCorporate = String(ride.source || '').toLowerCase().startsWith('corporate');
         if (rideIsCorporate) {
@@ -848,6 +862,7 @@ async function loadCorporateRide(corpId) {
     const employees = Array.isArray(result.data.employees) ? result.data.employees : [];
     corporateEmployeesList = employees;
     currentCorpId = corpId;
+    updateNavbarRideTitle(ride);
 
     // Populate the employees dropdown
     const select = document.getElementById('customerNameSelect');

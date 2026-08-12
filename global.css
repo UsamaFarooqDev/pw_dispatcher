@@ -231,7 +231,14 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* === modules/head.php: full-page loading overlay shown until a page's data is ready === */
-.pw-global-loader{position:fixed;inset:0;z-index:99999;background:#F4F4F5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .3s}
+.pw-global-loader{
+  position:fixed;inset:0;z-index:99999;
+  background:rgba(244,244,245,0.55);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  transition:opacity .3s
+}
 .pw-global-loader.is-hidden{opacity:0;pointer-events:none}
 .pw-loader-spinner{width:38px;height:38px;border:3.5px solid #E4E4E7;border-top-color:#f37a20;border-radius:50%;animation:pwSpin .7s linear infinite}
 @keyframes pwSpin{to{transform:rotate(360deg)}}
