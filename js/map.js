@@ -65,7 +65,7 @@
 
         // Load drivers and start polling
         loadDriverLocations();
-        startPolling();
+        mapStartPolling();
       }
 
       // Compute compass bearing (0 = north, clockwise) between two GPS points
@@ -581,7 +581,7 @@
       }
 
       // Start polling for driver location updates
-      function startPolling() {
+      function mapStartPolling() {
         if (updateIntervalId) {
           clearInterval(updateIntervalId);
         }
@@ -589,7 +589,7 @@
       }
 
       // Stop polling and clean up all animation timers
-      function stopPolling() {
+      function mapStopPolling() {
         if (updateIntervalId) {
           clearInterval(updateIntervalId);
           updateIntervalId = null;
@@ -768,7 +768,7 @@
       }
 
       // Initialize map when page loads
-      document.addEventListener('DOMContentLoaded', () => {
+      function initMapPage() {
         // Start in table view — map init deferred until user clicks "Live Map"
         loadTableDrivers();
         startTablePolling();
@@ -788,10 +788,37 @@
             if (e.key === 'Escape') { tableSearch.value = ''; tableSearchQuery = ''; loadTableDrivers(); }
           });
         }
-      });
+      }
+      document.addEventListener('DOMContentLoaded', initMapPage);
 
-      // Clean up on page unload
+      // Hard-refresh/tab-close safety net — SPA navigation cleanup goes
+      // through window.SPA_PAGES['map.php'].cleanup instead, see below.
       window.addEventListener('beforeunload', () => {
-        stopPolling();
+        mapStopPolling();
         stopTablePolling();
       });
+
+      // `mapInitialized` survives in memory across SPA navigations (this
+      // script only loads once per session) — without resetting it here, a
+      // second visit's "Live Map" click would see it already `true` from the
+      // first visit and skip initMap() entirely, leaving a blank map bound
+      // to a since-detached #map element. Also clears the per-driver marker/
+      // animation state so a revisit starts clean, same as a true page load.
+      function cleanupMapPage() {
+        mapStopPolling();
+        stopTablePolling();
+        mapInitialized = false;
+        currentView = 'table';
+        tableSearchQuery = '';
+        currentSearchQuery = '';
+        driverMarkers = {};
+        driverAnimTimers = {};
+        driverLastPositions = {};
+        driverBearings = {};
+        driverRoutes = {};
+        driverRouteMeta = {};
+        map = null;
+      }
+
+      window.SPA_PAGES = window.SPA_PAGES || {};
+      window.SPA_PAGES['map.php'] = { init: initMapPage, cleanup: cleanupMapPage };

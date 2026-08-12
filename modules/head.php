@@ -18,4 +18,9 @@ if (!isset($pageTitle)) {
     <script src="js/global-loader.js"></script>
     <script src="js/status-badge.js" defer></script>
     <script src="js/rides-poller.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9ea0A-mjnD5iHfT9X8Dn5YYH4_KZopLI&libraries=places,geometry" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+    <script src="js/pagination.js" defer></script>
+    <script src="js/spa-navigation.js" defer></script>
 </head>

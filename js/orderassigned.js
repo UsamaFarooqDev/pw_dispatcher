@@ -1,9 +1,9 @@
 // Global variables for Google Maps
-let map, directionsService, directionsRenderer;
+let oaMap, oaDirectionsService, oaDirectionsRenderer;
 let currentRideId = null;
-let currentDistance = null;
-let currentDuration = null;
-let currentFare = null;
+let oaCurrentDistance = null;
+let oaCurrentDuration = null;
+let oaCurrentFare = null;
 let hasDbFare = false;
 let passengersList = [];
 let corporateEmployeesList = [];
@@ -41,10 +41,10 @@ let driverAnimTimer = null;
 let driverLastPosition = null;          // previous lat/lng for bearing when API heading is absent
 let hasCenteredOnDriver = false;        // auto-fit map to driver on first live fix
 const DRIVER_POLL_MS = 3000;            // match Live Map poll cadence
-const MARKER_ANIM_MS = DRIVER_POLL_MS;  // animate across the whole interval so the car never freezes
-const TELEPORT_SNAP_METERS = 1000;      // snap instead of animating across huge GPS jumps
-const ROUTE_REFRESH_MS = 15000;
-const ROUTE_REDRAW_METERS = 150;
+const OA_MARKER_ANIM_MS = DRIVER_POLL_MS;  // animate across the whole interval so the car never freezes
+const OA_TELEPORT_SNAP_METERS = 1000;      // snap instead of animating across huge GPS jumps
+const OA_ROUTE_REFRESH_MS = 15000;
+const OA_ROUTE_REDRAW_METERS = 150;
 let driverTrackPolyline = null;         // road route from driver → destination (Live Map style)
 let driverTrackMeta = null;             // throttle state for route redraws
 
@@ -61,7 +61,7 @@ let currentRideStatus = null;
 let currentDriverBearing = 0;
 
 async function fetchAndUpdateDriverMarker(driverId) {
-  if (!map || !driverId) return;
+  if (!oaMap || !driverId) return;
   try {
     let lat, lng, driverName = 'Driver', vehicle = '', trackDriver = null;
 
@@ -87,7 +87,7 @@ async function fetchAndUpdateDriverMarker(driverId) {
       if (!isNaN(apiHeading) && apiHeading !== 0) {
         currentDriverBearing = apiHeading;
       } else if (driverLastPosition) {
-        const comp = computeBearing(driverLastPosition.lat, driverLastPosition.lng, lat, lng);
+        const comp = oaComputeBearing(driverLastPosition.lat, driverLastPosition.lng, lat, lng);
         if (comp !== null) currentDriverBearing = comp;
       }
 
@@ -113,21 +113,21 @@ async function fetchAndUpdateDriverMarker(driverId) {
       if (!isNaN(apiHeading) && apiHeading !== 0) {
         currentDriverBearing = apiHeading;
       } else if (driverLastPosition) {
-        const comp = computeBearing(driverLastPosition.lat, driverLastPosition.lng, lat, lng);
+        const comp = oaComputeBearing(driverLastPosition.lat, driverLastPosition.lng, lat, lng);
         if (comp !== null) currentDriverBearing = comp;
       }
     }
 
     if (isNaN(lat) || isNaN(lng)) return;
 
-    const icon = buildDriverIcon(currentDriverBearing, currentRideStatus);
+    const icon = oaBuildDriverIcon(currentDriverBearing, currentRideStatus);
 
     if (driverLiveMarker) {
       animateDriverMarker(lat, lng, icon);
     } else {
       driverLiveMarker = new google.maps.Marker({
         position: { lat, lng },
-        map,
+        map: oaMap,
         icon,
         title: driverName,
         zIndex: 20,
@@ -142,7 +142,7 @@ async function fetchAndUpdateDriverMarker(driverId) {
           </div>
         </div>`,
       });
-      driverLiveMarker.addListener('click', () => infoWin.open(map, driverLiveMarker));
+      driverLiveMarker.addListener('click', () => infoWin.open(oaMap, driverLiveMarker));
     }
 
     driverLastPosition = { lat, lng };
@@ -151,8 +151,8 @@ async function fetchAndUpdateDriverMarker(driverId) {
     if (isViewMode && !hasCenteredOnDriver) {
       hasCenteredOnDriver = true;
       hideMapLoadingSkeleton();
-      map.panTo({ lat, lng });
-      if (map.getZoom() < 14) map.setZoom(14);
+      oaMap.panTo({ lat, lng });
+      if (oaMap.getZoom() < 14) oaMap.setZoom(14);
     }
 
     // Draw the road track to pickup/destination (Live Map style)
@@ -193,14 +193,14 @@ function animateDriverMarker(toLat, toLng, icon) {
       new google.maps.LatLng(toLat, toLng)
     );
   }
-  if (jumpMeters > TELEPORT_SNAP_METERS) {
+  if (jumpMeters > OA_TELEPORT_SNAP_METERS) {
     driverLiveMarker.setPosition({ lat: toLat, lng: toLng });
     return;
   }
 
   const startTs = performance.now();
   const animate = (nowTs) => {
-    const f = Math.min((nowTs - startTs) / MARKER_ANIM_MS, 1);
+    const f = Math.min((nowTs - startTs) / OA_MARKER_ANIM_MS, 1);
     driverLiveMarker.setPosition({
       lat: fromLat + (toLat - fromLat) * f,
       lng: fromLng + (toLng - fromLng) * f,
@@ -217,7 +217,7 @@ function animateDriverMarker(toLat, toLng, icon) {
 function startDriverTracking() {
   if (!assignedDriverId || !mapReadyForTracking) return;
   if (driverTrackingInterval) return;  // already running
-  if (!isViewMode && driverRouteRenderer && map) driverRouteRenderer.setMap(map);
+  if (!isViewMode && driverRouteRenderer && oaMap) driverRouteRenderer.setMap(oaMap);
   fetchAndUpdateDriverMarker(assignedDriverId);
   driverTrackingInterval = setInterval(() => fetchAndUpdateDriverMarker(assignedDriverId), DRIVER_POLL_MS);
 }
@@ -245,27 +245,27 @@ function stopDriverTracking() {
 }
 
 // Wait for Google Maps API to load (called by script callback when API is ready)
-function initGoogleMaps() {
+function oaInitGoogleMaps() {
   if (typeof google === 'undefined' || !google.maps) {
-    setTimeout(initGoogleMaps, 200);
+    setTimeout(oaInitGoogleMaps, 200);
     return;
   }
 
   const mapElement = document.getElementById('map');
   if (!mapElement) {
-    setTimeout(initGoogleMaps, 100);
+    setTimeout(oaInitGoogleMaps, 100);
     return;
   }
 
-  map = new google.maps.Map(mapElement, {
+  oaMap = new google.maps.Map(mapElement, {
     center: { lat: 53.349805, lng: -6.26031 }, // Dublin default
     zoom: 13,
   });
 
-  directionsService = new google.maps.DirectionsService();
+  oaDirectionsService = new google.maps.DirectionsService();
   // suppressMarkers: true so our custom green/red pins don't clash with Google's A/B pins
-  directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
-  directionsRenderer.setMap(map);
+  oaDirectionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
+  oaDirectionsRenderer.setMap(oaMap);
 
   // Driver → Pickup: solid orange road route (assign mode only; view mode uses driverTrackPolyline)
   driverRouteRenderer = new google.maps.DirectionsRenderer({
@@ -276,14 +276,14 @@ function initGoogleMaps() {
       strokeWeight: 5,
     },
   });
-  if (!isViewMode) driverRouteRenderer.setMap(map);
+  if (!isViewMode) driverRouteRenderer.setMap(oaMap);
 
   // Signal that the map is ready and start driver tracking if a driver is already set
   mapReadyForTracking = true;
   startDriverTracking();
 
   // View mode: trigger resize after layout has been applied
-  if (isViewMode) google.maps.event.trigger(map, 'resize');
+  if (isViewMode) google.maps.event.trigger(oaMap, 'resize');
 
   // Calculate route if ride data loaded before map was ready
   if (pendingPickupAddr && pendingDropoffAddr) {
@@ -324,7 +324,7 @@ function updateNavbarRideTitle(ride) {
   pageTitleEl.textContent = `Assigned Ride – ${name}`;
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function initOrderAssignedCore() {
 
   // Safety fallback: remove page loader after 6s no matter what
   setTimeout(() => { const pl = document.getElementById('oaPageLoader'); if (pl) { pl.style.opacity='0'; pl.style.transition='opacity .3s'; setTimeout(()=>pl.remove(),350); } }, 6000);
@@ -538,7 +538,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Calculate route if both locations are available
         if (pickupLocation && dropoffLocation && pickupLocation.value && dropoffLocation.value) {
-          if (directionsService && directionsRenderer) {
+          if (oaDirectionsService && oaDirectionsRenderer) {
             calculateRouteAndFare(pickupLocation.value, dropoffLocation.value);
           } else {
             // Map not loaded yet — store addresses for initGoogleMaps to consume
@@ -554,7 +554,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (fare !== null) {
             const numericFare = parseFloat(fare);
             estimatedFare.value = `€${numericFare.toFixed(2)}`;
-            currentFare = numericFare;
+            oaCurrentFare = numericFare;
             hasDbFare = true;
           }
         }
@@ -563,7 +563,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const distance = document.getElementById('distance');
         if (distance && ride.distance_km) {
           distance.value = `${ride.distance_km} km`;
-          currentDistance = parseFloat(ride.distance_km);
+          oaCurrentDistance = parseFloat(ride.distance_km);
         }
 
         // Prefill Estimated Time if available
@@ -572,7 +572,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const minutes = ride.duration_min || ride.estimated_duration_minutes;
           const hours = Math.floor(minutes / 60);
           const mins = minutes % 60;
-          currentDuration = minutes;
+          oaCurrentDuration = minutes;
           if (hours > 0) {
             estimatedTime.value = `${hours}h ${mins}m`;
           } else {
@@ -638,7 +638,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const serviceTypeSelect = document.getElementById('serviceType');
   if (serviceTypeSelect) {
     serviceTypeSelect.addEventListener('change', () => {
-      if (currentDistance == null || currentDuration == null) {
+      if (oaCurrentDistance == null || oaCurrentDuration == null) {
         return;
       }
       const rideDateInput = document.getElementById('rideDate');
@@ -654,8 +654,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         serviceTypeSelect.value && serviceTypeSelect.value.trim()
           ? serviceTypeSelect.value.trim()
           : 'Economy';
-      const newFare = calculateFare(currentDistance, currentDuration, pickupTimeStr, rideType);
-      currentFare = newFare;
+      const newFare = oaCalculateFare(oaCurrentDistance, oaCurrentDuration, pickupTimeStr, rideType);
+      oaCurrentFare = newFare;
       hasDbFare = false;
       const estimatedFareElem = document.getElementById('estimatedFare');
       if (estimatedFareElem) {
@@ -670,11 +670,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     assignBtn.addEventListener('click', assignDriver);
   }
 
-});
+}
 
 // Calculate route and fare using Google Maps API
 function calculateRouteAndFare(pickup, dropoff) {
-  if (!directionsService || !directionsRenderer) {
+  if (!oaDirectionsService || !oaDirectionsRenderer) {
     console.error('Google Maps services not initialized');
     return;
   }
@@ -685,11 +685,11 @@ function calculateRouteAndFare(pickup, dropoff) {
     travelMode: google.maps.TravelMode.DRIVING,
   };
 
-  directionsService.route(request, function (result, status) {
+  oaDirectionsService.route(request, function (result, status) {
     if (status === google.maps.DirectionsStatus.OK) {
-      directionsRenderer.setDirections(result);
+      oaDirectionsRenderer.setDirections(result);
       storeRoutePolyline(result);
-      if (routeProgressActive) directionsRenderer.setOptions({ suppressPolylines: true });
+      if (routeProgressActive) oaDirectionsRenderer.setOptions({ suppressPolylines: true });
       const leg = result.routes[0].legs[0];
       const distanceInKm = leg.distance.value / 1000;
       const durationInMin = Math.round(leg.duration.value / 60);
@@ -704,7 +704,7 @@ function calculateRouteAndFare(pickup, dropoff) {
         currentDropLng = leg.end_location.lng();
       }
       // Place custom pickup/dropoff markers in view mode once coordinates are known
-      if (isViewMode && map) placeViewModeMarkers();
+      if (isViewMode && oaMap) placeViewModeMarkers();
       
       // Update fields
       const distanceElem = document.getElementById('distance');
@@ -741,7 +741,7 @@ function calculateRouteAndFare(pickup, dropoff) {
 
         const rideType =
           document.getElementById('serviceType')?.value?.trim() || 'Economy';
-        const fareAmount = calculateFare(
+        const fareAmount = oaCalculateFare(
           distanceInKm,
           durationInMin,
           pickupTimeStr,
@@ -751,12 +751,12 @@ function calculateRouteAndFare(pickup, dropoff) {
         if (estimatedFareElem) {
           estimatedFareElem.value = `€${fareAmount.toFixed(2)}`;
         }
-        currentFare = fareAmount;
+        oaCurrentFare = fareAmount;
       }
       
       // Store values for assignment
-      currentDistance = distanceInKm;
-      currentDuration = durationInMin;
+      oaCurrentDistance = distanceInKm;
+      oaCurrentDuration = durationInMin;
     } else {
       console.error('DirectionsService failed:', status);
     }
@@ -764,7 +764,7 @@ function calculateRouteAndFare(pickup, dropoff) {
 }
 
 // Calculate fare based on distance, duration and time 
-function calculateFare(distanceInKm, durationInMin, pickupTimeStr, rideType) {
+function oaCalculateFare(distanceInKm, durationInMin, pickupTimeStr, rideType) {
   const pickupDate = new Date(pickupTimeStr);
   const hour = pickupDate.getHours();
   const initialFare = 3.0;
@@ -854,7 +854,7 @@ async function loadCorporateRide(corpId) {
     if (!response.ok) throw new Error('Failed to fetch corporate ride');
     const result = await response.json();
     if (!result.success || !result.data) {
-      showToast(result.error || 'Corporate ride not found');
+      oaShowToast(result.error || 'Corporate ride not found');
       return;
     }
 
@@ -937,7 +937,7 @@ async function loadCorporateRide(corpId) {
 
     // Recalculate route on the map
     if (pickupLocation && dropoffLocation && pickupLocation.value && dropoffLocation.value) {
-      if (directionsService && directionsRenderer) {
+      if (oaDirectionsService && oaDirectionsRenderer) {
         calculateRouteAndFare(pickupLocation.value, dropoffLocation.value);
       } else {
         pendingPickupAddr = pickupLocation.value;
@@ -951,7 +951,7 @@ async function loadCorporateRide(corpId) {
       const numericFare = parseFloat(ride.fare_eur);
       if (!isNaN(numericFare)) {
         estimatedFare.value = `€${numericFare.toFixed(2)}`;
-        currentFare = numericFare;
+        oaCurrentFare = numericFare;
         hasDbFare = true;
       }
     }
@@ -960,7 +960,7 @@ async function loadCorporateRide(corpId) {
       const distKm = parseFloat(ride.distance_km);
       if (!isNaN(distKm)) {
         distance.value = `${distKm} km`;
-        currentDistance = distKm;
+        oaCurrentDistance = distKm;
       }
     }
     const estimatedTime = document.getElementById('estimatedTime');
@@ -969,7 +969,7 @@ async function loadCorporateRide(corpId) {
       if (!isNaN(mins)) {
         const hours = Math.floor(mins / 60);
         const rem = mins % 60;
-        currentDuration = mins;
+        oaCurrentDuration = mins;
         estimatedTime.value = hours > 0 ? `${hours}h ${rem}m` : `${rem}m`;
       }
     }
@@ -992,7 +992,7 @@ async function loadCorporateRide(corpId) {
     }
   } catch (err) {
     console.error('Error loading corporate ride:', err);
-    showToast('Failed to load corporate ride data');
+    oaShowToast('Failed to load corporate ride data');
   }
 }
 
@@ -1115,7 +1115,7 @@ function hideDriverDropdown() {
 }
 
 // Filter drivers as user types
-document.addEventListener('DOMContentLoaded', function() {
+function initOrderAssignedDriverFilter() {
   const searchInput = document.getElementById('driverSearchInput');
   if (searchInput) {
     searchInput.addEventListener('input', function() {
@@ -1136,9 +1136,9 @@ document.addEventListener('DOMContentLoaded', function() {
       showDriverDropdown();
     });
   }
-});
+}
 
-function setButtonLoading(isLoading, customText = null) {
+function oaSetButtonLoading(isLoading, customText = null) {
   const btn = document.getElementById('assignDriverBtn');
   const btnText = document.getElementById('btnText');
   const btnSpinner = document.getElementById('btnSpinner');
@@ -1166,33 +1166,33 @@ function validateOrderAssignedForm() {
   const dropoffInput = document.getElementById('dropoffLocation');
 
   if (!passengerSelect?.value?.trim()) {
-    showToast('Please select a passenger.');
+    oaShowToast('Please select a passenger.');
     return false;
   }
   if (!phoneInput?.value?.trim()) {
-    showToast('Please enter a phone number.');
+    oaShowToast('Please enter a phone number.');
     return false;
   }
   if (!rideDate?.value?.trim()) {
-    showToast('Please select a date.');
+    oaShowToast('Please select a date.');
     return false;
   }
   if (!rideTime?.value?.trim()) {
-    showToast('Please select a time.');
+    oaShowToast('Please select a time.');
     return false;
   }
   if (!pickupInput?.value?.trim()) {
-    showToast('Please enter a pickup location.');
+    oaShowToast('Please enter a pickup location.');
     return false;
   }
   if (!dropoffInput?.value?.trim()) {
-    showToast('Please enter a drop-off location.');
+    oaShowToast('Please enter a drop-off location.');
     return false;
   }
   return true;
 }
 
-function showToast(message, isSuccess = false) {
+function oaShowToast(message, isSuccess = false) {
   const toastEl = document.getElementById('globalToast');
   const toastMsg = document.getElementById('toastMessage');
   if (!toastEl || !toastMsg) return;
@@ -1236,7 +1236,7 @@ async function assignDriver() {
   }
 
   if (!currentRideId && !currentCorpId) {
-    showToast('No order selected. Please open this page from an order (e.g. from the orders list) to assign a driver.');
+    oaShowToast('No order selected. Please open this page from an order (e.g. from the orders list) to assign a driver.');
     return;
   }
 
@@ -1244,12 +1244,12 @@ async function assignDriver() {
   const selectedDriverId = driverSelect?.value?.trim();
 
   if (!selectedDriverId) {
-    showToast('Please select a driver');
+    oaShowToast('Please select a driver');
     return;
   }
 
-  if (!currentDistance || !currentDuration || !currentFare) {
-    showToast('Please ensure route is calculated. Make sure pickup and drop-off locations are filled.');
+  if (!oaCurrentDistance || !oaCurrentDuration || !oaCurrentFare) {
+    oaShowToast('Please ensure route is calculated. Make sure pickup and drop-off locations are filled.');
     return;
   }
   
@@ -1257,7 +1257,7 @@ async function assignDriver() {
   const serviceType = serviceTypeEl?.value?.trim() || null;
 
   // Set loading state before API call
-  setButtonLoading(true, 'Assigning Driver...');
+  oaSetButtonLoading(true, 'Assigning Driver...');
 
   const endpoint = isCorporateMode ? 'api/assign_corporate_driver.php' : 'api/assign_driver.php';
   const pickupLocationVal = document.getElementById('pickupLocation')?.value || '';
@@ -1270,9 +1270,9 @@ async function assignDriver() {
     ? {
         corp_id: currentCorpId,
         driver_id: selectedDriverId,
-        distance_km: currentDistance,
-        duration_min: currentDuration,
-        fare_eur: currentFare,
+        distance_km: oaCurrentDistance,
+        duration_min: oaCurrentDuration,
+        fare_eur: oaCurrentFare,
         service_type: serviceType,
         pickup_addr: pickupLocationVal,
         dest_addr: dropoffLocationVal,
@@ -1285,9 +1285,9 @@ async function assignDriver() {
     : {
         ride_id: currentRideId,
         driver_id: selectedDriverId,
-        distance_km: currentDistance,
-        duration_min: currentDuration,
-        fare_eur: currentFare,
+        distance_km: oaCurrentDistance,
+        duration_min: oaCurrentDuration,
+        fare_eur: oaCurrentFare,
         service_type: serviceType,
       };
 
@@ -1327,20 +1327,20 @@ async function assignDriver() {
       });
 
     } else {
-      showToast('Error assigning driver: ' + (result.error || 'Unknown error'));
+      oaShowToast('Error assigning driver: ' + (result.error || 'Unknown error'));
     }
   } catch (error) {
     console.error('Error assigning driver:', error);
-    showToast('Failed to assign driver. Please try again.');
+    oaShowToast('Failed to assign driver. Please try again.');
   } finally {
     // Reset button state after API call completes (success or error)
-    setButtonLoading(false);
+    oaSetButtonLoading(false);
   }
 }
 
 function openCancelRideModal() {
   if (!currentRideId && !currentCorpId) {
-    showToast('No ride selected to cancel.');
+    oaShowToast('No ride selected to cancel.');
     return;
   }
   const modalEl = document.getElementById('cancelRideModal');
@@ -1351,7 +1351,7 @@ function openCancelRideModal() {
 
 async function confirmCancelRide() {
   if (!currentRideId && !currentCorpId) {
-    showToast('No ride selected to cancel.');
+    oaShowToast('No ride selected to cancel.');
     return;
   }
 
@@ -1384,17 +1384,17 @@ async function confirmCancelRide() {
     if (result.success) {
       const modalEl = document.getElementById('cancelRideModal');
       if (modalEl) bootstrap.Modal.getInstance(modalEl)?.hide();
-      showToast('Ride cancelled successfully', true);
+      oaShowToast('Ride cancelled successfully', true);
       setTimeout(() => { window.location.href = redirectTo; }, 900);
     } else {
-      showToast('Error cancelling ride: ' + (result.error || 'Unknown error'));
+      oaShowToast('Error cancelling ride: ' + (result.error || 'Unknown error'));
       if (confirmBtn) confirmBtn.disabled = false;
       if (confirmText) confirmText.textContent = 'Yes, Cancel Ride';
       if (confirmSpinner) confirmSpinner.style.display = 'none';
     }
   } catch (error) {
     console.error('Error cancelling ride:', error);
-    showToast('Failed to cancel ride. Please try again.');
+    oaShowToast('Failed to cancel ride. Please try again.');
     if (confirmBtn) confirmBtn.disabled = false;
     if (confirmText) confirmText.textContent = 'Yes, Cancel Ride';
     if (confirmSpinner) confirmSpinner.style.display = 'none';
@@ -1423,7 +1423,7 @@ function applyViewModeLayout() {
     const mapEl = document.getElementById('map');
     if (container) { container.style.height = availH + 'px'; container.style.minHeight = availH + 'px'; }
     if (mapEl)      { mapEl.style.height = availH + 'px'; mapEl.style.minHeight = availH + 'px'; }
-    if (map && typeof google !== 'undefined') google.maps.event.trigger(map, 'resize');
+    if (oaMap && typeof google !== 'undefined') google.maps.event.trigger(oaMap, 'resize');
   };
   setMapHeight();
   window.addEventListener('resize', setMapHeight);
@@ -1454,9 +1454,9 @@ function geoDistanceMeters(lat1, lng1, lat2, lng2) {
 }
 
 function updateDriverToPickupRoute(driverLat, driverLng) {
-  if (!directionsService || !driverRouteRenderer) return;
+  if (!oaDirectionsService || !driverRouteRenderer) return;
   if (!currentPickupLat || !currentPickupLng) return;
-  directionsService.route({
+  oaDirectionsService.route({
     origin: { lat: driverLat, lng: driverLng },
     destination: { lat: currentPickupLat, lng: currentPickupLng },
     travelMode: google.maps.TravelMode.DRIVING,
@@ -1470,7 +1470,7 @@ function updateDriverToPickupRoute(driverLat, driverLng) {
 }
 
 // Where is the driver headed? Same logic as Live Map.
-function tripDestinationFor(driver) {
+function oaTripDestinationFor(driver) {
   const s = (driver.status || '').toLowerCase();
   const onTrip    = ['on_trip', 'started', 'in_progress', 'trip_started'].includes(s);
   const prePickup = ['assigned', 'accepted', 'driver_accepted', 'arrived_at_pickup', 'driver_arrived', 'arrived'].includes(s);
@@ -1501,29 +1501,29 @@ function clearDriverTrack() {
 
 // Throttled road route from driver → pickup/destination (Live Map style polyline)
 function maybeUpdateDriverTrack(fromLat, fromLng, driver) {
-  const target = tripDestinationFor(driver);
+  const target = oaTripDestinationFor(driver);
   if (!target) { clearDriverTrack(); return; }
-  if (!directionsService) return;
+  if (!oaDirectionsService) return;
 
   const targetKey = target.lat.toFixed(5) + ',' + target.lng.toFixed(5);
   const now = Date.now();
   let needs = false;
   if (!driverTrackMeta || driverTrackMeta.targetKey !== targetKey) {
     needs = true;
-  } else if (now - driverTrackMeta.ts > ROUTE_REFRESH_MS) {
+  } else if (now - driverTrackMeta.ts > OA_ROUTE_REFRESH_MS) {
     needs = true;
   } else if (google.maps.geometry && google.maps.geometry.spherical) {
     const moved = google.maps.geometry.spherical.computeDistanceBetween(
       new google.maps.LatLng(driverTrackMeta.fromLat, driverTrackMeta.fromLng),
       new google.maps.LatLng(fromLat, fromLng)
     );
-    if (moved > ROUTE_REDRAW_METERS) needs = true;
+    if (moved > OA_ROUTE_REDRAW_METERS) needs = true;
   }
   if (!needs) return;
 
   driverTrackMeta = { targetKey, ts: now, fromLat, fromLng };
 
-  directionsService.route({
+  oaDirectionsService.route({
     origin: { lat: fromLat, lng: fromLng },
     destination: { lat: target.lat, lng: target.lng },
     travelMode: google.maps.TravelMode.DRIVING,
@@ -1535,7 +1535,7 @@ function maybeUpdateDriverTrack(fromLat, fromLng, driver) {
     } else {
       driverTrackPolyline = new google.maps.Polyline({
         path,
-        map,
+        map: oaMap,
         strokeColor: '#f37a20',
         strokeOpacity: 0.85,
         strokeWeight: 4,
@@ -1614,13 +1614,13 @@ function updateDispatcherOverlayFromDriver(loc) {
 }
 
 function placeViewModeMarkers() {
-  if (!map || !currentPickupLat || !currentPickupLng || !currentDropLat || !currentDropLng) return;
+  if (!oaMap || !currentPickupLat || !currentPickupLng || !currentDropLat || !currentDropLng) return;
   hideMapLoadingSkeleton();
 
   if (!viewModePickupMarker) {
     viewModePickupMarker = new google.maps.Marker({
       position: { lat: currentPickupLat, lng: currentPickupLng },
-      map,
+      map: oaMap,
       icon: createPinIcon('#22C55E'),
       title: 'Pickup',
       zIndex: 10,
@@ -1630,13 +1630,13 @@ function placeViewModeMarkers() {
                '<div style="font-size:12px;color:#52525B;margin-top:2px;">' +
                (document.getElementById('pickupLocation')?.value || '') + '</div>',
     });
-    viewModePickupMarker.addListener('click', () => iw.open(map, viewModePickupMarker));
+    viewModePickupMarker.addListener('click', () => iw.open(oaMap, viewModePickupMarker));
   }
 
   if (!viewModeDropoffMarker) {
     viewModeDropoffMarker = new google.maps.Marker({
       position: { lat: currentDropLat, lng: currentDropLng },
-      map,
+      map: oaMap,
       icon: createPinIcon('#E11D48'),
       title: 'Dropoff',
       zIndex: 10,
@@ -1646,14 +1646,14 @@ function placeViewModeMarkers() {
                '<div style="font-size:12px;color:#52525B;margin-top:2px;">' +
                (document.getElementById('dropoffLocation')?.value || '') + '</div>',
     });
-    viewModeDropoffMarker.addListener('click', () => iw.open(map, viewModeDropoffMarker));
+    viewModeDropoffMarker.addListener('click', () => iw.open(oaMap, viewModeDropoffMarker));
   }
 }
 
 
 // ── Bearing & icon helpers ─────────────────────────────────────────────────
 
-function computeBearing(fromLat, fromLng, toLat, toLng) {
+function oaComputeBearing(fromLat, fromLng, toLat, toLng) {
   if (fromLat === toLat && fromLng === toLng) return null;
   const φ1 = fromLat * Math.PI / 180;
   const φ2 = toLat   * Math.PI / 180;
@@ -1663,7 +1663,7 @@ function computeBearing(fromLat, fromLng, toLat, toLng) {
   return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
 }
 
-function buildDriverIcon(bearingDeg, rideStatus) {
+function oaBuildDriverIcon(bearingDeg, rideStatus) {
   const s   = (rideStatus || '').toLowerCase();
   const col = ['on_trip','started','in_progress','trip_started'].includes(s)          ? '#3B82F6'
             : ['arrived_at_pickup','driver_arrived','arrived'].includes(s)             ? '#22C55E'
@@ -1710,7 +1710,7 @@ function findNearestRouteIndex(driverLat, driverLng) {
 }
 
 function updateRouteProgress(driverLat, driverLng) {
-  if (!currentRoutePath.length || !map) return;
+  if (!currentRoutePath.length || !oaMap) return;
   const idx = findNearestRouteIndex(driverLat, driverLng);
   const completedPath = currentRoutePath.slice(0, Math.max(1, idx + 1));
   const remainingPath = currentRoutePath.slice(idx);
@@ -1721,13 +1721,13 @@ function updateRouteProgress(driverLat, driverLng) {
   if (completedPath.length >= 2) {
     completedPolyline = new google.maps.Polyline({
       path: completedPath, strokeColor: '#A1A1AA',
-      strokeOpacity: 0.45, strokeWeight: 5, zIndex: 1, map,
+      strokeOpacity: 0.45, strokeWeight: 5, zIndex: 1, map: oaMap,
     });
   }
   if (remainingPath.length >= 2) {
     remainingPolyline = new google.maps.Polyline({
       path: remainingPath, strokeColor: '#3B82F6',
-      strokeOpacity: 0.9, strokeWeight: 5, zIndex: 2, map,
+      strokeOpacity: 0.9, strokeWeight: 5, zIndex: 2, map: oaMap,
     });
   }
 }
@@ -1836,7 +1836,7 @@ function handleRideStatusChange(oldStatus, newStatus) {
     if (driverRouteRenderer) driverRouteRenderer.setMap(null);
     clearDriverTrack();
     routeProgressActive = true;
-    if (directionsRenderer) directionsRenderer.setOptions({ suppressPolylines: true });
+    if (oaDirectionsRenderer) oaDirectionsRenderer.setOptions({ suppressPolylines: true });
     showRideStatusNotification('Trip in progress', 'on_trip');
     updateDispatcherOverlayStatus('On Trip', '#3B82F6');
   }
@@ -1844,7 +1844,7 @@ function handleRideStatusChange(oldStatus, newStatus) {
   if (isCompleted) {
     showRideStatusNotification('Trip completed', 'completed');
     stopDriverTracking();
-    if (directionsRenderer) directionsRenderer.setMap(null);
+    if (oaDirectionsRenderer) oaDirectionsRenderer.setMap(null);
     showCompletionOverlay();
     return;
   }
@@ -1902,10 +1902,12 @@ function showCompletionOverlay() {
   container.appendChild(overlay);
 }
 
+// Hard-refresh/tab-close safety net — SPA navigation cleanup goes through
+// window.SPA_PAGES['orderassigned.php'].cleanup instead, see below.
 window.addEventListener('beforeunload', () => stopDriverTracking());
 
 // Initialize event listener when document is ready
-document.addEventListener('DOMContentLoaded', function() {
+function initOrderAssignedButtons() {
   const assignBtn = document.getElementById('assignDriverBtn');
   if (assignBtn) {
     // Remove any existing listeners and add new one
@@ -1922,5 +1924,20 @@ document.addEventListener('DOMContentLoaded', function() {
   if (confirmCancelBtn) {
     confirmCancelBtn.addEventListener('click', confirmCancelRide);
   }
-});
+}
+
+// Runs all three of this page's former DOMContentLoaded blocks in sequence,
+// plus an explicit Google Maps init (the shell now loads the Maps script
+// once, without a callback= param, so each page that needs it calls its own
+// initGoogleMaps() directly — see js/spa-navigation.js).
+async function initOrderAssignedPage() {
+  await initOrderAssignedCore();
+  initOrderAssignedDriverFilter();
+  initOrderAssignedButtons();
+  oaInitGoogleMaps();
+}
+document.addEventListener('DOMContentLoaded', initOrderAssignedPage);
+
+window.SPA_PAGES = window.SPA_PAGES || {};
+window.SPA_PAGES['orderassigned.php'] = { init: initOrderAssignedPage, cleanup: stopDriverTracking };
 

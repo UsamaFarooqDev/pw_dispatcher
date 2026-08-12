@@ -2,6 +2,7 @@
 session_start();
 
 require_once 'auth/require_login_redirect.php';
+$pageTitle = 'Live Map | Powercabs Dispatcher';
 require('modules/head.php');
 ?>
 <!DOCTYPE html>
@@ -12,7 +13,7 @@ require('modules/head.php');
 
     <?php @require('modules/sidebar.php'); ?>
 
-    <main class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
+    <main id="app-content" class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
 
   <?php @require('modules/bodyHeader.php'); ?>
 
@@ -133,8 +134,6 @@ require('modules/head.php');
 
 </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9ea0A-mjnD5iHfT9X8Dn5YYH4_KZopLI&libraries=geometry" async defer></script>
     <script src="js/map.js"></script>
   </body>
 </html>

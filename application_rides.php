@@ -4,6 +4,7 @@ session_start();
 require_once 'auth/require_login_redirect.php';
 require_once 'auth/role_guard.php';
 $isDispatcher = isDispatcherRole();
+$pageTitle = 'Application Rides | Powercabs Dispatcher';
 require('modules/head.php');
 
 ?>
@@ -14,7 +15,7 @@ require('modules/head.php');
 
     <?php @require('modules/sidebar.php'); ?>
 
-    <main class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
+    <main id="app-content" class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
 
   <?php @require('modules/bodyHeader.php'); ?>
 
@@ -49,8 +50,6 @@ require('modules/head.php');
     </div>
 
   </div>
-
-</main>
 
 <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
   <div class="modal-dialog modal-dialog-centered">
@@ -158,12 +157,15 @@ require('modules/head.php');
   </div>
 </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/pagination.js"></script>
-    <script>
+    <script data-spa-inline>
       // Dispatcher role: read-only here — no Edit/Delete on App Rides.
-      const IS_DISPATCHER_ROLE = <?php echo json_encode($isDispatcher); ?>;
+      // Assigned onto window (not `const`) so this is safe to re-run: spa-navigation.js
+      // re-executes any <script data-spa-inline> found in swapped-in content, since a
+      // top-level `const` would throw "already declared" on a second visit to this page.
+      window.IS_DISPATCHER_ROLE = <?php echo json_encode($isDispatcher); ?>;
     </script>
+</main>
+
     <script src="js/application_rides.js"></script>
   </body>
 </html>

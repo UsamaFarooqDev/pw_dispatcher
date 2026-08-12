@@ -2,6 +2,7 @@
 session_start();
 
 require_once 'auth/require_login_redirect.php';
+$pageTitle = 'Profile Management | Powercabs Dispatcher';
 require('modules/head.php');
 ?>
 <!DOCTYPE html>
@@ -12,7 +13,7 @@ require('modules/head.php');
 
     <?php @require('modules/sidebar.php'); ?>
 
-    <main class="main-content p-4" style="background:#F4F4F5; min-height:90vh;">
+    <main id="app-content" class="main-content p-4" style="background:#F4F4F5; min-height:90vh;">
 
   <div class="row g-4">
 
@@ -190,8 +191,6 @@ require('modules/head.php');
     </div>
   </div>
 
-</main>
-
 <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:1050;">
   <div id="toastMsg" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
     <div class="d-flex">
@@ -200,8 +199,7 @@ require('modules/head.php');
     </div>
   </div>
 </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</main>
 
     <!-- Profile Script -->
     <script src="js/profile.js"></script>

@@ -7,10 +7,17 @@ let currentData = {
 // Pagination managers
 let driverPagination = null;
 let passengerPagination = null;
-const ITEMS_PER_PAGE = 10;
+const FLEET_ITEMS_PER_PAGE = 10;
 
 // Initialize when page loads
-document.addEventListener('DOMContentLoaded', function () {
+function initFleetRegistryPage() {
+  // fleetRegistry.js's `passengersLoaded` flag only resets naturally on a
+  // real page reload (that script now only ever executes once per SPA
+  // session, via js/spa-navigation.js's per-page script registry) — reset
+  // it explicitly here so a revisit re-fetches passenger data instead of
+  // skipping the load because the flag is stale-true from a prior visit.
+  if (typeof passengersLoaded !== 'undefined') passengersLoaded = false;
+
   // Set default view to Driver
   const driverTable = document.getElementById('driverTable');
   const customerTable = document.getElementById('customerTable');
@@ -26,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function () {
     driverPagination = new PaginationManager({
       containerId: 'driverPaginationContainer',
       page: 1,
-      limit: ITEMS_PER_PAGE,
+      limit: FLEET_ITEMS_PER_PAGE,
       total: 0,
       onPageChange: (page, limit) => {
         loadDriversData(page, limit);
@@ -38,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
     passengerPagination = new PaginationManager({
       containerId: 'passengerPaginationContainer',
       page: 1,
-      limit: ITEMS_PER_PAGE,
+      limit: FLEET_ITEMS_PER_PAGE,
       total: 0,
       onPageChange: (page, limit) => {
         loadPassengersData(page, limit);
@@ -54,18 +61,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Setup global search (Dashboard page)
   setupDashboardSearch();
-});
+}
+document.addEventListener('DOMContentLoaded', initFleetRegistryPage);
+
+// NOTE: registered under 'fleetRegistry.php' (not a filename tied to this
+// file) since fleetRegistry.php loads app.js + fleetRegistry.js as one
+// bundle — js/spa-navigation.js injects both, in order, on first visit.
+window.SPA_PAGES = window.SPA_PAGES || {};
+window.SPA_PAGES['fleetRegistry.php'] = { init: initFleetRegistryPage, cleanup: null };
 
 // Setup document preview modal
+// Tracks its two document-level delegated listeners across re-invocations
+// (this is called fresh on every SPA revisit to fleetRegistry.php) so
+// repeat visits don't accumulate duplicate handlers on `document` itself.
+let _documentPreviewClickHandler = null;
+let _documentPreviewKeydownHandler = null;
 function setupDocumentPreview() {
   // Use event delegation for dynamically added images
-  document.addEventListener('click', function (e) {
+  if (_documentPreviewClickHandler) document.removeEventListener('click', _documentPreviewClickHandler);
+  _documentPreviewClickHandler = function (e) {
     if (e.target.classList.contains('document-preview')) {
       const imageUrl = e.target.getAttribute('data-image-url');
       const title = e.target.getAttribute('data-title') || 'Document Preview';
       showImageModal(imageUrl, title);
     }
-  });
+  };
+  document.addEventListener('click', _documentPreviewClickHandler);
 
   // Close modal when clicking close button or backdrop
   const modal = document.getElementById('imageModal');
@@ -86,11 +107,13 @@ function setupDocumentPreview() {
     }
 
     // Close on Escape key
-    document.addEventListener('keydown', function (e) {
+    if (_documentPreviewKeydownHandler) document.removeEventListener('keydown', _documentPreviewKeydownHandler);
+    _documentPreviewKeydownHandler = function (e) {
       if (e.key === 'Escape' && !modal.classList.contains('d-none')) {
         closeImageModal();
       }
-    });
+    };
+    document.addEventListener('keydown', _documentPreviewKeydownHandler);
   }
 }
 
@@ -124,16 +147,16 @@ async function loadAllData() {
   const customerTable = document.getElementById('customerTable');
 
   if (driverTable && !driverTable.classList.contains('d-none')) {
-    await loadDriversData(1, ITEMS_PER_PAGE);
+    await loadDriversData(1, FLEET_ITEMS_PER_PAGE);
   } else if (customerTable && !customerTable.classList.contains('d-none')) {
-    await loadPassengersData(1, ITEMS_PER_PAGE);
+    await loadPassengersData(1, FLEET_ITEMS_PER_PAGE);
   } else {
     // Default to drivers
-    await loadDriversData(1, ITEMS_PER_PAGE);
+    await loadDriversData(1, FLEET_ITEMS_PER_PAGE);
   }
 }
 
-async function loadDriversData(page = 1, limit = ITEMS_PER_PAGE) {
+async function loadDriversData(page = 1, limit = FLEET_ITEMS_PER_PAGE) {
   try {
     const driverTbody = document.getElementById('driverTableBody');
     if (driverTbody) {
@@ -191,7 +214,7 @@ async function loadDriversData(page = 1, limit = ITEMS_PER_PAGE) {
   }
 }
 
-async function loadPassengersData(page = 1, limit = ITEMS_PER_PAGE) {
+async function loadPassengersData(page = 1, limit = FLEET_ITEMS_PER_PAGE) {
   try {
     const passengerTbody = document.getElementById('customerTableBody');
     if (passengerTbody) {
@@ -277,7 +300,7 @@ function populateDriverTable(drivers) {
             ${
               driver.profile_pic_url
                 ? `<img src="${driver.profile_pic_url}" alt="${driverName}" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;" />`
-                : `<span class="fw-semibold">${getInitials(driverName)}</span>`
+                : `<span class="fw-semibold">${fleetGetInitials(driverName)}</span>`
             }
           </div>
 
@@ -356,7 +379,7 @@ function populateCustomerTable(passengers) {
                             ? `<img src="${
                                 passenger.photo_url || passenger.profile_pic_url
                               }" alt="${passengerName}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;" />`
-                            : `<span class="fw-semibold">${getInitials(
+                            : `<span class="fw-semibold">${fleetGetInitials(
                                 passengerName,
                               )}</span>`
                         }
@@ -412,7 +435,7 @@ function updateTabCounts() {
 }
 
 // Helper functions
-function getInitials(name) {
+function fleetGetInitials(name) {
   if (!name || typeof name !== 'string') return 'N/A';
   return name
     .split(' ')

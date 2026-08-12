@@ -1,26 +1,26 @@
       let ridesPagination = null;
-      const ITEMS_PER_PAGE = 10;
+      const APP_RIDES_ITEMS_PER_PAGE = 10;
 
-      document.addEventListener('DOMContentLoaded', function() {
+      function initApplicationRidesCore() {
         // Initialize pagination
         const paginationContainer = document.getElementById('corporatePaginationContainer');
         if (paginationContainer) {
           ridesPagination = new PaginationManager({
             containerId: 'corporatePaginationContainer',
             page: 1,
-            limit: ITEMS_PER_PAGE,
+            limit: APP_RIDES_ITEMS_PER_PAGE,
             total: 0,
             onPageChange: (page, limit) => {
               loadRidesData(page, limit);
             }
           });
         }
-        
-        loadRidesData(1, ITEMS_PER_PAGE);
-        setupCorporateSearch();
-      });
 
-      async function loadRidesData(page = 1, limit = ITEMS_PER_PAGE) {
+        loadRidesData(1, APP_RIDES_ITEMS_PER_PAGE);
+        setupCorporateSearch();
+      }
+
+      async function loadRidesData(page = 1, limit = APP_RIDES_ITEMS_PER_PAGE) {
         try {
           const tbody = document.getElementById('ridesTableBody');
           if (tbody) {
@@ -209,93 +209,120 @@
         document.getElementById('rideStatusSelect').value = btn.dataset.value;
       }
 
-      // Edit modal - when opened, set the current ride ID and status
-      document.getElementById('editModal').addEventListener('show.bs.modal', function(e) {
-        const btn = e.relatedTarget;
-        selectedRideId = btn.getAttribute('data-ride-id');
-        const currentStatus = (btn.getAttribute('data-ride-status') || '').toLowerCase();
+      // Wires the edit/delete modals and their action buttons. Guarded with
+      // `if (el)` (unlike the original code) since this now runs again on
+      // every SPA revisit — cheap insurance if it's ever called before this
+      // page's markup exists.
+      function initApplicationRidesModals() {
+        // Edit modal - when opened, set the current ride ID and status
+        const editModal = document.getElementById('editModal');
+        if (editModal) {
+          editModal.addEventListener('show.bs.modal', function(e) {
+            const btn = e.relatedTarget;
+            selectedRideId = btn.getAttribute('data-ride-id');
+            const currentStatus = (btn.getAttribute('data-ride-status') || '').toLowerCase();
 
-        const allowedStatuses = ['searching', 'assigned', 'enroute', 'scheduled', 'completed', 'cancelled'];
-        const statusToSelect = allowedStatuses.includes(currentStatus) ? currentStatus : 'searching';
-        document.getElementById('rideStatusSelect').value = statusToSelect;
-        document.querySelectorAll('.status-option').forEach(el => {
-          el.classList.toggle('is-selected', el.dataset.value === statusToSelect);
-        });
-      });
-
-      // Save ride status button
-      document.getElementById('saveRideStatusBtn').addEventListener('click', async function() {
-        if (!selectedRideId) {
-          alert('Error: No ride selected');
-          return;
-        }
-
-        const statusSelect = document.getElementById('rideStatusSelect');
-        const status = statusSelect ? statusSelect.value : null;
-
-        if (!status) {
-          alert('Error: Please select a status');
-          return;
-        }
-
-        try {
-          const res = await fetch('api/update_ride_status.php', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-              ride_id: selectedRideId,
-              status: status
-            })
+            const allowedStatuses = ['searching', 'assigned', 'enroute', 'scheduled', 'completed', 'cancelled'];
+            const statusToSelect = allowedStatuses.includes(currentStatus) ? currentStatus : 'searching';
+            document.getElementById('rideStatusSelect').value = statusToSelect;
+            document.querySelectorAll('.status-option').forEach(el => {
+              el.classList.toggle('is-selected', el.dataset.value === statusToSelect);
+            });
           });
-
-          if (res.status === 401) { window.location.href = '/'; return; }
-          const data = await res.json();
-          
-          if (data.success) {
-            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-            const currentPage = ridesPagination ? ridesPagination.getCurrentPage() : 1;
-            loadRidesData(currentPage, ITEMS_PER_PAGE);
-          } else {
-            alert('Error updating ride status: ' + (data.error || 'Unknown error'));
-          }
-        } catch (error) {
-          console.error('Error updating ride status:', error);
-          alert('Error updating ride status. Please try again.');
-        }
-      });
-
-      // Delete modal - when opened, set the current ride ID
-      document.getElementById('deleteModal').addEventListener('show.bs.modal', function(e) {
-        const btn = e.relatedTarget;
-        selectedRideId = btn.getAttribute('data-ride-id');
-      });
-
-      // Confirm delete button
-      document.getElementById('confirmDeleteRideBtn').addEventListener('click', async function() {
-        if (!selectedRideId) {
-          alert('Error: No ride selected');
-          return;
         }
 
-        try {
-          const res = await fetch('api/delete_ride.php', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ ride_id: selectedRideId })
+        // Save ride status button
+        const saveRideStatusBtn = document.getElementById('saveRideStatusBtn');
+        if (saveRideStatusBtn) {
+          saveRideStatusBtn.addEventListener('click', async function() {
+            if (!selectedRideId) {
+              alert('Error: No ride selected');
+              return;
+            }
+
+            const statusSelect = document.getElementById('rideStatusSelect');
+            const status = statusSelect ? statusSelect.value : null;
+
+            if (!status) {
+              alert('Error: Please select a status');
+              return;
+            }
+
+            try {
+              const res = await fetch('api/update_ride_status.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                  ride_id: selectedRideId,
+                  status: status
+                })
+              });
+
+              if (res.status === 401) { window.location.href = '/'; return; }
+              const data = await res.json();
+
+              if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                const currentPage = ridesPagination ? ridesPagination.getCurrentPage() : 1;
+                loadRidesData(currentPage, APP_RIDES_ITEMS_PER_PAGE);
+              } else {
+                alert('Error updating ride status: ' + (data.error || 'Unknown error'));
+              }
+            } catch (error) {
+              console.error('Error updating ride status:', error);
+              alert('Error updating ride status. Please try again.');
+            }
           });
-
-          if (res.status === 401) { window.location.href = '/'; return; }
-          const data = await res.json();
-          
-          if (data.success) {
-            bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
-            const currentPage = ridesPagination ? ridesPagination.getCurrentPage() : 1;
-            loadRidesData(currentPage, ITEMS_PER_PAGE);
-          } else {
-            alert('Error deleting ride: ' + (data.error || 'Unknown error'));
-          }
-        } catch (error) {
-          console.error('Error deleting ride:', error);
-          alert('Error deleting ride. Please try again.');
         }
-      });
+
+        // Delete modal - when opened, set the current ride ID
+        const deleteModal = document.getElementById('deleteModal');
+        if (deleteModal) {
+          deleteModal.addEventListener('show.bs.modal', function(e) {
+            const btn = e.relatedTarget;
+            selectedRideId = btn.getAttribute('data-ride-id');
+          });
+        }
+
+        // Confirm delete button
+        const confirmDeleteRideBtn = document.getElementById('confirmDeleteRideBtn');
+        if (confirmDeleteRideBtn) {
+          confirmDeleteRideBtn.addEventListener('click', async function() {
+            if (!selectedRideId) {
+              alert('Error: No ride selected');
+              return;
+            }
+
+            try {
+              const res = await fetch('api/delete_ride.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ ride_id: selectedRideId })
+              });
+
+              if (res.status === 401) { window.location.href = '/'; return; }
+              const data = await res.json();
+
+              if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+                const currentPage = ridesPagination ? ridesPagination.getCurrentPage() : 1;
+                loadRidesData(currentPage, APP_RIDES_ITEMS_PER_PAGE);
+              } else {
+                alert('Error deleting ride: ' + (data.error || 'Unknown error'));
+              }
+            } catch (error) {
+              console.error('Error deleting ride:', error);
+              alert('Error deleting ride. Please try again.');
+            }
+          });
+        }
+      }
+
+      function initApplicationRidesPage() {
+        initApplicationRidesCore();
+        initApplicationRidesModals();
+      }
+      document.addEventListener('DOMContentLoaded', initApplicationRidesPage);
+
+      window.SPA_PAGES = window.SPA_PAGES || {};
+      window.SPA_PAGES['application_rides.php'] = { init: initApplicationRidesPage, cleanup: null };

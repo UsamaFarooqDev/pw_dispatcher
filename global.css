@@ -1162,3 +1162,28 @@ main.view-mode-active #mapContainer {
   overflow: hidden !important;
   z-index: 1 !important;
 }
+
+/* === js/spa-navigation.js: subtle in-page navigation feedback ===
+   A thin bar at the very top of the navbar (not a full-screen loader —
+   sidebar/navbar/content all stay visible and interactive during a swap). */
+#spaProgressBar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2.5px;
+  background: var(--color-primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  opacity: 0;
+  transition: transform 0.25s ease, opacity 0.15s ease;
+  pointer-events: none;
+}
+#spaProgressBar.is-active {
+  transform: scaleX(0.7);
+  opacity: 1;
+  transition: transform 4s cubic-bezier(0.1, 0.6, 0.2, 1), opacity 0.15s ease;
+}
+#app-content.spa-loading {
+  opacity: 0.65;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}

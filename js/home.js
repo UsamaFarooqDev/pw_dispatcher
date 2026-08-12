@@ -318,3 +318,6 @@
   }
 
   document.addEventListener('DOMContentLoaded', loadDashboardStats);
+
+  window.SPA_PAGES = window.SPA_PAGES || {};
+  window.SPA_PAGES['home.php'] = { init: loadDashboardStats, cleanup: null };

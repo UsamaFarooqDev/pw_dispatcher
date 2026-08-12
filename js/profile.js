@@ -58,11 +58,11 @@
               if (cameraDropdown) cameraDropdown.style.display = 'none';
             }
           } else {
-            showToast('Failed to load profile data', false);
+            profileShowToast('Failed to load profile data', false);
           }
         } catch (err) {
           console.error('Error loading profile:', err);
-          showToast('Error loading profile data', false);
+          profileShowToast('Error loading profile data', false);
         } finally {
           if (typeof hideGlobalLoader === 'function') hideGlobalLoader();
         }
@@ -114,7 +114,8 @@
       }
 
       // Image preview and upload
-      document.getElementById('profileImage').addEventListener('change', async function (e) {
+      function wireProfileImageInput() {
+      document.getElementById('profileImage')?.addEventListener('change', async function (e) {
         const file = e.target.files[0];
         const img = document.getElementById('profilePreview');
         const initialsContainer = document.getElementById('profileInitials');
@@ -145,7 +146,7 @@
           const json = await res.json();
           
           if (json.success) {
-            showToast('Avatar uploaded successfully', true);
+            profileShowToast('Avatar uploaded successfully', true);
             // Update profile image URL
             if (userProfile) {
               userProfile.profile_image = json.image_url;
@@ -160,7 +161,7 @@
             // Update navbar without reload
             updateNavbarAvatar();
           } else {
-            showToast(json.message || 'Failed to upload avatar', false);
+            profileShowToast(json.message || 'Failed to upload avatar', false);
             // Revert preview
             if (userProfile && userProfile.profile_image) {
               img.src = userProfile.profile_image;
@@ -175,32 +176,34 @@
           }
         } catch (err) {
           console.error('Error uploading avatar:', err);
-          showToast('Error uploading avatar', false);
+          profileShowToast('Error uploading avatar', false);
         }
         
         // Reset file input
         e.target.value = '';
       });
+      }
 
       // Password update
-      document.getElementById('savePasswordBtn').addEventListener('click', async function() {
+      function wireSavePasswordBtn() {
+      document.getElementById('savePasswordBtn')?.addEventListener('click', async function() {
         const currentPassword = document.getElementById('currentPassword').value;
         const newPassword = document.getElementById('newPassword').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
         
         // Validation
         if (!currentPassword || !newPassword || !confirmPassword) {
-          showToast('Please fill in all password fields', false);
+          profileShowToast('Please fill in all password fields', false);
           return;
         }
         
         if (newPassword.length < 6) {
-          showToast('New password must be at least 6 characters long', false);
+          profileShowToast('New password must be at least 6 characters long', false);
           return;
         }
         
         if (newPassword !== confirmPassword) {
-          showToast('New password and confirm password do not match', false);
+          profileShowToast('New password and confirm password do not match', false);
           return;
         }
         
@@ -222,32 +225,36 @@
           const json = await res.json();
           
           if (json.success) {
-            showToast('Password updated successfully', true);
+            profileShowToast('Password updated successfully', true);
             // Clear password fields
             document.getElementById('currentPassword').value = '';
             document.getElementById('newPassword').value = '';
             document.getElementById('confirmPassword').value = '';
           } else {
-            showToast(json.message || 'Failed to update password', false);
+            profileShowToast(json.message || 'Failed to update password', false);
           }
         } catch (err) {
           console.error('Error updating password:', err);
-          showToast('Error updating password', false);
+          profileShowToast('Error updating password', false);
         } finally {
           btn.disabled = false;
           btn.textContent = 'Save Changes';
         }
       });
+      }
 
       // Cancel button
-      document.getElementById('cancelBtn').addEventListener('click', function() {
+      function wireCancelBtn() {
+      document.getElementById('cancelBtn')?.addEventListener('click', function() {
         document.getElementById('currentPassword').value = '';
         document.getElementById('newPassword').value = '';
         document.getElementById('confirmPassword').value = '';
       });
+      }
 
       // Remove avatar button
-      document.getElementById('removeAvatarBtn').addEventListener('click', async function(e) {
+      function wireRemoveAvatarBtn() {
+      document.getElementById('removeAvatarBtn')?.addEventListener('click', async function(e) {
         e.preventDefault();
         
         // Close dropdown
@@ -275,7 +282,7 @@
           const json = await res.json();
           
           if (json.success) {
-            showToast('Avatar removed successfully', true);
+            profileShowToast('Avatar removed successfully', true);
             
             // Update UI
             const profilePreview = document.getElementById('profilePreview');
@@ -307,20 +314,22 @@
             // Update navbar without reload
             updateNavbarAvatar();
           } else {
-            showToast(json.message || 'Failed to remove avatar', false);
+            profileShowToast(json.message || 'Failed to remove avatar', false);
             btn.disabled = false;
             btn.innerHTML = originalText;
           }
         } catch (err) {
           console.error('Error removing avatar:', err);
-          showToast('Error removing avatar', false);
+          profileShowToast('Error removing avatar', false);
           btn.disabled = false;
           btn.innerHTML = originalText;
         }
       });
+      }
 
       // Logout button
-      document.getElementById('logoutBtnProfile').addEventListener('click', async function(e) {
+      function wireLogoutBtnProfile() {
+      document.getElementById('logoutBtnProfile')?.addEventListener('click', async function(e) {
         e.preventDefault();
         try {
           const res = await fetch('auth/logout.php', { method: 'POST' });
@@ -328,12 +337,13 @@
           if (json.success) {
             window.location.href = 'login.php';
           } else {
-            showToast(json.message || 'Logout failed', false);
+            profileShowToast(json.message || 'Logout failed', false);
           }
         } catch (err) {
-          showToast('Network error', false);
+          profileShowToast('Network error', false);
         }
       });
+      }
 
       function togglePassword(inputId) {
         const input = document.getElementById(inputId);
@@ -349,7 +359,7 @@
         }
       }
 
-      function showToast(message, isSuccess = false) {
+      function profileShowToast(message, isSuccess = false) {
         const toast = document.getElementById('toastMsg');
         const toastText = document.getElementById('toastText');
         
@@ -369,5 +379,18 @@
         bsToast.show();
       }
 
-      // Load profile on page load
-      loadUserProfile();
+      // Runs all of this page's former top-level listener registrations in
+      // sequence, so a revisit under SPA navigation re-wires everything
+      // against the freshly-swapped-in markup exactly like a true page load did.
+      function initProfilePage() {
+        loadUserProfile();
+        wireProfileImageInput();
+        wireSavePasswordBtn();
+        wireCancelBtn();
+        wireRemoveAvatarBtn();
+        wireLogoutBtnProfile();
+      }
+      initProfilePage();
+
+      window.SPA_PAGES = window.SPA_PAGES || {};
+      window.SPA_PAGES['profile.php'] = { init: initProfilePage, cleanup: null };

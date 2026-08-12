@@ -2,10 +2,12 @@
 session_start();
 
 require_once 'auth/require_login_redirect.php';
+$pageTitle = 'Assigned Orders | Powercabs Dispatcher';
 require('modules/head.php');
 ?>
 <!DOCTYPE html>
 <html lang="en">
+  <body>
     <?php require_once 'modules/navbar.php'; ?>
 
     <?php @require('modules/sidebar.php'); ?>
@@ -16,7 +18,7 @@ require('modules/head.php');
   $_backUrl = 'liveorder.php';
   if ($_fromTab !== '') $_backUrl .= '#tab-' . htmlspecialchars($_fromTab, ENT_QUOTES);
 ?>
-<main class="main-content p-4<?php echo $_vmActive ? ' view-mode-active' : ''; ?>" style="background:#F4F4F5; min-height:100vh;">
+<main id="app-content" class="main-content p-4<?php echo $_vmActive ? ' view-mode-active' : ''; ?>" style="background:#F4F4F5; min-height:100vh;">
 
   <!-- Page-level loading overlay (covers form + map until data is ready) -->
   <div id="oaPageLoader" style="position:fixed; inset:0; z-index:9999; background:#F4F4F5; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;">
@@ -269,7 +271,6 @@ require('modules/head.php');
 
     </div>
   </div>
-</main>
 
 <div class="modal fade" id="cancelRideModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
   <div class="modal-dialog modal-dialog-centered">
@@ -323,9 +324,6 @@ require('modules/head.php');
   </div>
 </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9ea0A-mjnD5iHfT9X8Dn5YYH4_KZopLI&libraries=places,geometry&callback=initGoogleMaps" async defer></script>
-    <script src="js/orderassigned.js"></script>
 
 <!-- Global Toast -->
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;">
@@ -336,5 +334,8 @@ require('modules/head.php');
     </div>
   </div>
 </div>
+</main>
+
+    <script src="js/orderassigned.js"></script>
   </body>
 </html>

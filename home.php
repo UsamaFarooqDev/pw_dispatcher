@@ -5,6 +5,7 @@ if (empty($_SESSION['admin_id'])) {
     header('Location: /');
     exit;
 }
+$pageTitle = 'Dashboard | Powercabs Dispatcher';
 require('modules/head.php');
 
 require_once __DIR__ . '/auth/config.php';
@@ -17,7 +18,7 @@ require_once __DIR__ . '/auth/config.php';
   <?php @require('modules/sidebar.php'); ?>
   <?php require_once 'modules/navbar.php'; ?>
 
-  <main class="main-content p-4" style="background:#F4F4F5; min-height:92vh;">
+  <main id="app-content" class="main-content p-4" style="background:#F4F4F5; min-height:92vh;">
 
     <!-- KPI CARDS -->
     <div class="row g-3 mb-3">
@@ -254,10 +255,6 @@ require_once __DIR__ . '/auth/config.php';
 
   </main>
 
-
+<script src="js/home.js"></script>
 </body>
 </html>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="js/home.js"></script>

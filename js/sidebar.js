@@ -1,14 +1,29 @@
-document.addEventListener("DOMContentLoaded", function () {
+// Highlights whichever sidebar link matches the current page. The sidebar
+// itself is part of the persistent shell (never replaced by SPA
+// navigation, see js/spa-navigation.js), so this has to both set the new
+// active link AND clear any previous one — on a real page load there's
+// only ever one to begin with, but called again after an in-page
+// navigation it would otherwise leave every visited page's link stuck
+// "active" at once. Exposed on window so the router can call it again
+// after every swap, since location.pathname only reflects the new page
+// once history.pushState() has run.
+function highlightActiveSidebarLink() {
   const currentPage = window.location.pathname.split("/").pop();
+  document.querySelectorAll(".sidebar .sidebar-link.active").forEach((link) => {
+    link.classList.remove("active");
+  });
   document.querySelectorAll(".sidebar .sidebar-link").forEach((link) => {
     const linkPage = link.getAttribute("href");
     if (linkPage === currentPage) {
       link.classList.add("active");
     }
   });
-  if (currentPage === "liveorder.php") {
-    document.getElementById("sidebarLiveOrdersToggle")?.classList.add("active");
-  }
+  document.getElementById("sidebarLiveOrdersToggle")?.classList.toggle("active", currentPage === "liveorder.php");
+}
+window.highlightActiveSidebarLink = highlightActiveSidebarLink;
+
+document.addEventListener("DOMContentLoaded", function () {
+  highlightActiveSidebarLink();
 
   const LO_OPEN_KEY = "sidebarLiveOrdersOpen";
   const loToggle = document.getElementById("sidebarLiveOrdersToggle");

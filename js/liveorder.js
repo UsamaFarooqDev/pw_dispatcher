@@ -17,7 +17,7 @@ let preorderPagination = null;
 const ITEMS_PER_PAGE = 10;
 let currentTab = "unassigned"; // Track current active tab
 
-document.addEventListener("DOMContentLoaded", function () {
+function initLiveOrderPage() {
   // Setup tab switching first — must always run regardless of other errors
   setupTabSwitching();
   setupPreorderSearch();
@@ -52,9 +52,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Start polling
   startPolling();
-});
+}
+document.addEventListener("DOMContentLoaded", initLiveOrderPage);
 
-// Cleanup on page unload
+// Cleanup on page unload (hard refresh/tab close — SPA navigation cleanup
+// goes through window.SPA_PAGES['liveorder.php'].cleanup instead, see below).
 window.addEventListener("beforeunload", function () {
   stopPolling();
 });
@@ -75,6 +77,13 @@ function stopPolling() {
     pollingInterval = null;
   }
 }
+
+// Registers this page with the SPA router (js/spa-navigation.js) so
+// revisits just call initLiveOrderPage()/stopPolling() again instead of
+// re-injecting this <script> (which would throw on the top-level let/const
+// above being redeclared).
+window.SPA_PAGES = window.SPA_PAGES || {};
+window.SPA_PAGES['liveorder.php'] = { init: initLiveOrderPage, cleanup: stopPolling };
 
 function toggleActionColumn(show) {
   // Toggle header

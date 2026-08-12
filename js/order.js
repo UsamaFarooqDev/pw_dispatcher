@@ -3,7 +3,7 @@
       let selectedPassengerId = null;
       let selectedDriverId = null;
       let selectedVehicleNumber = null;
-      let map, directionsService, directionsRenderer;
+      let orderMap, orderDirectionsService, orderDirectionsRenderer;
       let pickupLatLng = null;
       let dropoffLatLng = null;
       let currentDistance = null;
@@ -56,10 +56,9 @@
   bsToast.show();
 }
 
-      document.addEventListener('DOMContentLoaded', () => {
+      function initOrderPageCore() {
         fetchPassengers();
         fetchDrivers();
-        // initGoogleMaps called by Maps API callback when ready (ensures Places autocomplete works)
         setupCustomerAutocomplete();
         setupDriverModal();
         setupRouteListeners();
@@ -68,7 +67,12 @@
         setupPillGroups();
         setupSpecialCostListeners();
         loadRideTypes();
-      });
+        // The shell loads the Maps script once, without a callback= param, so
+        // each page that needs it calls its own initGoogleMaps() directly —
+        // it self-polls if google.maps isn't ready yet (ensures Places
+        // autocomplete works either way).
+        initGoogleMaps();
+      }
 
       /* ---------------------- Pill button groups (service type, seats) ---------------------- */
       function wirePillGroup(group) {
@@ -214,6 +218,11 @@
         document.getElementById('customerNameInput').focus();
       }
 
+      // Tracks the outside-click handler across re-invocations of
+      // setupCustomerAutocomplete() (called fresh on every SPA revisit) so
+      // it doesn't accumulate duplicate document-level listeners.
+      let _customerAutocompleteOutsideClick = null;
+
       function setupCustomerAutocomplete() {
         const nameInput = document.getElementById('customerNameInput');
         const phoneInput = document.getElementById('customerPhone');
@@ -270,11 +279,13 @@
           }, 200);
         });
 
-        document.addEventListener('click', (e) => {
+        if (_customerAutocompleteOutsideClick) document.removeEventListener('click', _customerAutocompleteOutsideClick);
+        _customerAutocompleteOutsideClick = (e) => {
           if (!suggestions.contains(e.target) && e.target !== nameInput) {
             suggestions.style.display = 'none';
           }
-        });
+        };
+        document.addEventListener('click', _customerAutocompleteOutsideClick);
       }
 
       /* ---------------------- Drivers ---------------------- */
@@ -569,12 +580,12 @@
           setTimeout(initGoogleMaps, 100);
           return;
         }
-        map = new google.maps.Map(mapEl, {
+        orderMap = new google.maps.Map(mapEl, {
           center: { lat: 53.349805, lng: -6.26031 },
           zoom: 12,
         });
-        directionsService = new google.maps.DirectionsService();
-        directionsRenderer = new google.maps.DirectionsRenderer({ map });
+        orderDirectionsService = new google.maps.DirectionsService();
+        orderDirectionsRenderer = new google.maps.DirectionsRenderer({ map: orderMap });
 
         const pickupInput = document.getElementById('pickupInput');
         const dropoffInput = document.getElementById('dropoffInput');
@@ -647,7 +658,7 @@
       function tryCalculateRoute() {
         const pickup = document.getElementById('pickupInput')?.value;
         const dropoff = document.getElementById('dropoffInput')?.value;
-        if (!pickup || !dropoff || !directionsService) return;
+        if (!pickup || !dropoff || !orderDirectionsService) return;
 
         const req = {
           origin: pickupLatLng || pickup,
@@ -657,7 +668,7 @@
           // below, instead of always taking its "recommended" routes[0].
           provideRouteAlternatives: true,
         };
-        directionsService.route(req, (result, status) => {
+        orderDirectionsService.route(req, (result, status) => {
           if (status === google.maps.DirectionsStatus.OK) {
             const pickupTimeStr = buildPickupDateTime();
             const rideType = document.getElementById('serviceType')?.value || 'Economy';
@@ -690,7 +701,7 @@
             if (!isWithinDublinRegion(leg.start_location.lat(), leg.start_location.lng()) ||
                 !isWithinDublinRegion(leg.end_location.lat(), leg.end_location.lng())) {
               showToast('Pickup and drop-off must both be within Dublin, Ireland.');
-              directionsRenderer.set('directions', null);
+              orderDirectionsRenderer.set('directions', null);
               currentDistance = currentDuration = currentFare = null;
               googleDistance = googleDuration = googleFare = null;
               pickupLatLng = null;
@@ -704,8 +715,8 @@
               return;
             }
 
-            directionsRenderer.setDirections(result);
-            directionsRenderer.setRouteIndex(bestIndex);
+            orderDirectionsRenderer.setDirections(result);
+            orderDirectionsRenderer.setRouteIndex(bestIndex);
             googleDistance = bestDistanceKm;
             googleDuration = bestDurationMin;
             googleFare = bestFare;
@@ -1034,7 +1045,7 @@ modal.show();
   }
       }
 
-      document.addEventListener('DOMContentLoaded', function () {
+      function initOrderPageClearFields() {
         const yesBtn = document.getElementById('clearFieldsYesBtn');
         if (yesBtn) {
           yesBtn.addEventListener('click', function (ev) {
@@ -1058,7 +1069,7 @@ modal.show();
           r.addEventListener('change', syncStripeLink);
         });
         syncStripeLink();
-      });
+      }
 
       window.clearAllFields = function clearAllFields() {
         // Reset passenger mode to Existing
@@ -1121,8 +1132,8 @@ modal.show();
         }
 
         try {
-          if (typeof directionsRenderer !== 'undefined' && directionsRenderer) {
-            directionsRenderer.set('directions', null);
+          if (typeof orderDirectionsRenderer !== 'undefined' && orderDirectionsRenderer) {
+            orderDirectionsRenderer.set('directions', null);
           }
         } catch (e) { /* ignore map cleanup errors */ }
 
@@ -1210,11 +1221,20 @@ modal.show();
         phoneInput.value = fullPhone.replace(/^\+/, '');
       }
 
-      (function initCountrySelector() {
+      // Both country selectors bind a document-level outside-click handler,
+      // which — unlike element-specific listeners — survives on `document`
+      // itself across SPA revisits. Track and remove the previous one before
+      // adding a new one each time these run, so repeat visits to order.php
+      // don't accumulate duplicate handlers.
+      let _countrySelectorOutsideClick = null;
+      let _driverCountrySelectorOutsideClick = null;
+
+      function initCountrySelector() {
         const btn = document.getElementById('countryCodeBtn');
         const dropdown = document.getElementById('countryDropdown');
         const search = document.getElementById('countrySearch');
         const optionsContainer = document.getElementById('countryOptions');
+        if (!btn || !dropdown) return;
 
         function renderOptions(filter) {
           const q = (filter || '').toLowerCase();
@@ -1254,17 +1274,20 @@ modal.show();
         });
         search.addEventListener('click', (e) => e.stopPropagation());
 
-        document.addEventListener('click', (e) => {
-          if (!document.getElementById('countryCodeWrapper').contains(e.target)) {
+        if (_countrySelectorOutsideClick) document.removeEventListener('click', _countrySelectorOutsideClick);
+        _countrySelectorOutsideClick = (e) => {
+          const wrapper = document.getElementById('countryCodeWrapper');
+          if (wrapper && !wrapper.contains(e.target)) {
             dropdown.style.display = 'none';
           }
-        });
+        };
+        document.addEventListener('click', _countrySelectorOutsideClick);
 
         renderOptions('');
-      })();
+      }
 
       // ── Driver country-code selector (modal) ──
-      (function initDriverCountrySelector() {
+      function initDriverCountrySelector() {
         const btn = document.getElementById('driverCountryCodeBtn');
         const dropdown = document.getElementById('driverCountryDropdown');
         const search = document.getElementById('driverCountrySearch');
@@ -1300,11 +1323,28 @@ modal.show();
         search.addEventListener('input', (e) => { renderOptions(e.target.value); });
         search.addEventListener('click', (e) => e.stopPropagation());
 
-        document.addEventListener('click', (e) => {
-          if (!document.getElementById('driverCountryCodeWrapper').contains(e.target)) {
+        if (_driverCountrySelectorOutsideClick) document.removeEventListener('click', _driverCountrySelectorOutsideClick);
+        _driverCountrySelectorOutsideClick = (e) => {
+          const wrapper = document.getElementById('driverCountryCodeWrapper');
+          if (wrapper && !wrapper.contains(e.target)) {
             dropdown.style.display = 'none';
           }
-        });
+        };
+        document.addEventListener('click', _driverCountrySelectorOutsideClick);
 
         renderOptions('');
-      })();
+      }
+
+      // Runs all of this page's former DOMContentLoaded/IIFE blocks in
+      // sequence, so a revisit under SPA navigation re-wires everything
+      // against the freshly-swapped-in markup exactly like a true page load did.
+      function initOrderPage() {
+        initOrderPageCore();
+        initOrderPageClearFields();
+        initCountrySelector();
+        initDriverCountrySelector();
+      }
+      document.addEventListener('DOMContentLoaded', initOrderPage);
+
+      window.SPA_PAGES = window.SPA_PAGES || {};
+      window.SPA_PAGES['order.php'] = { init: initOrderPage, cleanup: null };

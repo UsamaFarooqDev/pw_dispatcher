@@ -3,6 +3,7 @@ session_start();
 
 require_once 'auth/require_login_redirect.php';
 require_once __DIR__ . '/auth/config.php';
+$pageTitle = 'Create New Order | Powercabs Dispatcher';
 require('modules/head.php');
 
 $rideTypes = [];
@@ -37,7 +38,7 @@ foreach ($rideTypes as $t) {
 
     <?php @require('modules/sidebar.php'); ?>
 
-<main class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
+<main id="app-content" class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
   <div class="rounded-3 border overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
     <div class="p-3 p-lg-4">
 
@@ -558,23 +559,25 @@ foreach ($rideTypes as $t) {
       </div>
     </div>
   </div>
-</main>
 
-<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1090;">
-  <div id="toastMsg" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
-    <div class="d-flex">
-      <div class="toast-body" id="toastText"></div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+  <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1090;">
+    <div id="toastMsg" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body" id="toastText"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
     </div>
   </div>
-</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9ea0A-mjnD5iHfT9X8Dn5YYH4_KZopLI&libraries=places&callback=initGoogleMaps" async defer></script>
-    <script>
+    <script data-spa-inline>
       // Bootstrapped from PHP so calculateFare has multipliers on first paint — no fetch needed.
-      let rideTypeMultipliers = <?php echo json_encode((object)$rideTypeMultiplierMap, JSON_UNESCAPED_SLASHES); ?>;
+      // Assigned onto window (not `let`) so this is safe to re-run: spa-navigation.js
+      // re-executes any <script data-spa-inline> found in swapped-in content, since a
+      // top-level `let` would throw "already declared" on a second visit to this page.
+      window.rideTypeMultipliers = <?php echo json_encode((object)$rideTypeMultiplierMap, JSON_UNESCAPED_SLASHES); ?>;
     </script>
+</main>
+
     <script src="js/order.js"></script>
   </body>
 </html>
