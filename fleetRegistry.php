@@ -2,12 +2,14 @@
 session_start();
 
 require_once 'auth/require_login_redirect.php';
+require_once 'auth/role_guard.php';
+$isDispatcher = isDispatcherRole();
 require('modules/head.php');
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
-  <body>
+  <body class="<?php echo $isDispatcher ? 'is-dispatcher-role' : ''; ?>">
    <?php require_once 'modules/navbar.php'; ?>
 
     <?php @require('modules/sidebar.php'); ?>
@@ -111,103 +113,8 @@ require('modules/head.php');
     </div>
   </div>
 
-  <style>
-    @keyframes modalFadeIn {
-      from { opacity:0; transform:scale(0.96); }
-      to   { opacity:1; transform:scale(1); }
-    }
-    #driverTable tbody tr, #customerTable tbody tr {
-      border-bottom: 1px solid #F4F4F5;
-      transition: background 0.12s;
-    }
-    #driverTable tbody tr:hover, #customerTable tbody tr:hover {
-      background: #FAFAFA;
-    }
-    #driverTable tbody td, #customerTable tbody td {
-      padding: 14px 24px;
-      font-size: 0.845rem;
-      color: #18181B;
-      vertical-align: middle;
-      border: none;
-    }
-    .document-preview {
-      transition: transform 0.15s, box-shadow 0.15s;
-      cursor: pointer;
-    }
-    .document-preview:hover {
-      transform: scale(1.08);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-      position: relative;
-      z-index: 10;
-    }
-  </style>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/pagination.js"></script>
 <script src="js/app.js"></script>
-<script>
-  document.getElementById('sidebarToggle')?.addEventListener('click', function () {
-    document.querySelector('.sidebar')?.classList.toggle('active');
-  });
-
-  document.addEventListener('click', function (event) {
-    const sidebar = document.querySelector('.sidebar');
-    if (
-      window.innerWidth < 768 &&
-      sidebar &&
-      !event.target.closest('.sidebar') &&
-      !event.target.closest('#sidebarToggle')
-    ) {
-      sidebar.classList.remove('active');
-    }
-  });
-
-  let passengersLoaded = false;
-
-  function switchTableView(view) {
-    const driverTable   = document.getElementById('driverTable');
-    const customerTable = document.getElementById('customerTable');
-    const driverBtn     = document.getElementById('driverViewBtn');
-    const customerBtn   = document.getElementById('customerViewBtn');
-      const driverPagination = document.getElementById('driverPaginationContainer');
-  const passengerPagination = document.getElementById('passengerPaginationContainer');
-
-    if (!driverTable || !customerTable || !driverBtn || !customerBtn) return;
-
-    if (view === 'driver') {
-
-      driverTable.classList.remove('d-none');
-      driverTable.classList.add('d-block');
-      customerTable.classList.remove('d-block');
-      customerTable.classList.add('d-none');
-
-      if (driverPagination)    driverPagination.style.display    = 'block';
-      if (passengerPagination) passengerPagination.style.display = 'none';
-
-      driverBtn.style.cssText  = 'border-radius:6px; height:32px; font-size:0.9125rem; background:#f37a20; color:#fff; border:none; box-shadow:0 1px 3px rgba(0,0,0,0.08);';
-      customerBtn.style.cssText = 'border-radius:6px; height:32px; font-size:0.9125rem; background:transparent; color:#71717A; border:none; box-shadow:none;';
-
-    } else {
-
-      customerTable.classList.remove('d-none');
-      customerTable.classList.add('d-block');
-      driverTable.classList.remove('d-block');
-      driverTable.classList.add('d-none');
-
-      if (passengerPagination) passengerPagination.style.display = 'block';
-      if (driverPagination)    driverPagination.style.display    = 'none';
-
-      customerBtn.style.cssText = 'border-radius:6px; height:32px; font-size:0.9125rem; background:#f37a20; color:#fff; border:none; box-shadow:0 1px 3px rgba(0,0,0,0.08);';
-      driverBtn.style.cssText   = 'border-radius:6px; height:32px; font-size:0.9125rem; background:transparent; color:#71717A; border:none; box-shadow:none;';
-
-      if (!passengersLoaded) {
-        if (typeof loadPassengersData === 'function') {
-          loadPassengersData(1);
-          passengersLoaded = true;
-        } else {
-          console.error('loadPassengersData is not defined — check app.js is loaded correctly');
-        }
-      }
-    }
-  }
-</script>
+<script src="js/fleetRegistry.js"></script>

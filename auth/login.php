@@ -67,6 +67,10 @@ try {
         // Non-fatal — continue even if timestamp update fails
     }
 
+    // Operator role — defaults to 'admin' (full access) when not set on the
+    // Supabase Auth user's user_metadata. Only 'dispatcher' is restricted.
+    $_SESSION['role'] = $userMetadata['role'] ?? 'admin';
+
     echo json_encode(['success' => true, 'message' => 'Login successful.']);
     exit;
 

@@ -19,7 +19,11 @@ try {
     // RLS is handled via application-level auth check above.
     $db = new SupabaseDB(null, true);
 
-    $drivers = $db->getCount('drivers');
+    // One fetch of every driver's status covers both the total driver count
+    // and the approved/pending/rejected breakdown below — replaces 4 separate
+    // sequential round-trips with a single lightweight one.
+    $allDriverStatuses = $db->fetchData('drivers', ['select' => 'status', 'limit' => 5000]);
+    $drivers = count($allDriverStatuses);
     $passengers = $db->getCount('passengers');
     $rides = $db->getCount('rides');
     $corporate = $db->getCount('rides', [
@@ -36,25 +40,20 @@ try {
         'filter' => ['status' => 'ilike.assigned'],
     ]);
 
-    // Scheduled: upcoming or scheduled
+    // Scheduled: upcoming or scheduled — one round-trip via an IN filter
+    // instead of two separate ilike calls added together.
     $scheduled = $db->getCount('rides', [
-        'filter' => ['status' => 'ilike.upcoming'],
-    ]) + $db->getCount('rides', [
-        'filter' => ['status' => 'ilike.scheduled'],
+        'filter' => ['status' => 'in.(upcoming,scheduled)'],
     ]);
 
     // Completed: completed or finished
     $completed = $db->getCount('rides', [
-        'filter' => ['status' => 'ilike.completed'],
-    ]) + $db->getCount('rides', [
-        'filter' => ['status' => 'ilike.finished'],
+        'filter' => ['status' => 'in.(completed,finished)'],
     ]);
 
     // Cancelled: cancelled or canceled
     $cancelled = $db->getCount('rides', [
-        'filter' => ['status' => 'ilike.cancelled'],
-    ]) + $db->getCount('rides', [
-        'filter' => ['status' => 'ilike.canceled'],
+        'filter' => ['status' => 'in.(cancelled,canceled)'],
     ]);
 
     // Per your request, show On Trip as 0.
@@ -105,12 +104,13 @@ try {
         $ridesLast7[] = array_merge(['date' => $date], $counts);
     }
 
-    // ---- Analytics: driver verification breakdown ----
-    $driversStatus = [
-        'approved' => $db->getCount('drivers', ['filter' => ['status' => 'ilike.approved']]),
-        'pending'  => $db->getCount('drivers', ['filter' => ['status' => 'ilike.pending']]),
-        'rejected' => $db->getCount('drivers', ['filter' => ['status' => 'ilike.rejected']]),
-    ];
+    // ---- Analytics: driver verification breakdown (derived from the single
+    // driver-status fetch above instead of 3 more sequential count calls) ----
+    $driversStatus = ['approved' => 0, 'pending' => 0, 'rejected' => 0];
+    foreach ($allDriverStatuses as $d) {
+        $s = strtolower($d['status'] ?? '');
+        if (isset($driversStatus[$s])) $driversStatus[$s]++;
+    }
 
     echo json_encode([
         'success' => true,

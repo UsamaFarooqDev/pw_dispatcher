@@ -115,10 +115,12 @@ function getUserByEmail($email) {
  * @param string|null $scheduledDateTime Optional 'Y-m-d H:i:s' for day/night rate; if null uses current time
  * @return float Fare in EUR, rounded to 2 decimals
  */
-function calcFareFromPassengerFormula($distanceKm, $durationMin, $rideType, $scheduledDateTime = null) {
+function calcFareFromPassengerFormula($distanceKm, $durationMin, $rideType, $scheduledDateTime = null, $tzOffsetMin = 0) {
     $initialFare = 3.0;
-    $ts = $scheduledDateTime ? strtotime($scheduledDateTime) : time();
-    $hour = (int) date('G', $ts);
+    $ts = $scheduledDateTime ? strtotime($scheduledDateTime . ' UTC') : time();
+    // Convert UTC hour back to dispatcher's local hour for day/night rate
+    $localTs = $ts - ($tzOffsetMin * 60);
+    $hour = (int) gmdate('G', $localTs);
     if ($hour >= 8 && $hour < 20) {
         $baseFare = 4.4;
         $ratePerKm = 1.32;
@@ -436,7 +438,8 @@ try {
                 $distanceKm,
                 $durationMin,
                 isset($input['service_type']) ? trim((string) $input['service_type']) : 'Economy',
-                $scheduledDateTime
+                $scheduledDateTime,
+                $tzOffsetMin
             );
         } else {
             $fareEur = 20.00; // fallback when distance/duration unknown

@@ -40,12 +40,12 @@ The `rides` table is central. Key fields written by the dispatcher: `user_id` (p
 ### Top-level pages
 - `home.php` — dashboard KPIs + driver/passenger tables (driven by `js/app.js`).
 - `order.php` / `orderassigned.php` — create order / assigned-order views.
-- `preorder.php` + `preorder/` — "Live Orders". `preorder/.htaccess` rewrites `preorder/{rideId}` → `preorder/index.php` (ride id is read from the path).
-- `application_rides.php`, `corporate_rides.php` — app vs. corporate ride management.
+- `liveorder.php` (renamed from `preorder.php`) — "Live Orders". (The old `preorder/{rideId}` ride-detail route and its subdirectory were removed — nothing in the app linked to it.)
+- `application_rides.php` — app ride management. There is no separate corporate-rides page; corporate rides (`rides.source` starting with `corporate`) are managed entirely through `liveorder.php` (Pre-Order tab for unassigned, Meet & Greet tab for that ride type) and `orderassigned.php`, which still branches on a `?corp_id=` URL param (`isCorporateMode`) to call `api/assign_corporate_driver.php` / `api/update_corporate_ride_status.php` and resolve the employee via `api/get_corporate_ride.php` — keep that branch working when touching orderassigned.php.
 - `map.php` — live map. `fleetRegistry.php`, `profile.php` — fleet + account.
 
 ### Frontend (no bundler)
-Plain ES, loaded via `<script>` tags. `js/app.js` (dashboard tables + client-side search + pagination), `js/pagination.js` (`PaginationManager`), `js/status-badge.js`, `js/beep-monitor.js` (audible alert that loops while rides sit in `searching`, persisted across pages via `localStorage`; audio asset `assets/ride_alert.mpeg`). Data loads happen client-side: `fetch('api/...php')`, and any `401` redirects to `/`.
+Plain ES, loaded via `<script>` tags. `js/app.js` (dashboard tables + client-side search + pagination), `js/pagination.js` (`PaginationManager`), `js/status-badge.js`. `js/rides-poller.js` (shared background poll of `api/get_rides.php`, one cycle feeding every subscriber) + `js/preorder-voice-reminder.js` (spoken, not audible-tone, reminders — see below) replaced the old audible beep system entirely. Data loads happen client-side: `fetch('api/...php')`, and any `401` redirects to `/`.
 
 ### Email — `lib/mail_helper.php`
 PHPMailer over SMTP (`mail.powercabs.ie`). HTML templates in `templates/`. `sendRideAssignedEmail` is called from order creation; it deliberately skips placeholder `@temp.passenger` addresses.

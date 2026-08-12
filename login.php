@@ -57,11 +57,13 @@ require('modules/head.php');
             </div>
           </div>
 
-          <button type="submit" class="btn w-100 fw-semibold d-flex align-items-center justify-content-center gap-2"
+          <button type="submit" id="loginBtn" class="btn w-100 fw-semibold d-flex align-items-center justify-content-center gap-2"
             style="height:42px; background:#f37a20; color:#fff; border:none; border-radius:8px; font-size:0.9rem; box-shadow:0 4px 14px rgba(243,122,32,0.35); letter-spacing:0.01em;"
-            onmouseover="this.style.background='#d96010'; this.style.boxShadow='0 4px 18px rgba(243,122,32,0.50)';"
-            onmouseout="this.style.background='#f37a20'; this.style.boxShadow='0 4px 14px rgba(243,122,32,0.35)';">
-            <i class="bi bi-box-arrow-in-right" style="font-size:16px;"></i> Sign In
+            onmouseover="if(!this.disabled){this.style.background='#d96010'; this.style.boxShadow='0 4px 18px rgba(243,122,32,0.50)';}"
+            onmouseout="if(!this.disabled){this.style.background='#f37a20'; this.style.boxShadow='0 4px 14px rgba(243,122,32,0.35)';}">
+            <span id="loginBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+            <i class="bi bi-box-arrow-in-right" id="loginBtnIcon" style="font-size:16px;"></i>
+            <span id="loginBtnText">Sign In</span>
           </button>
         </form>
 
@@ -271,9 +273,7 @@ require('modules/head.php');
 
         <div class="d-flex gap-2 flex-wrap">
           <div style="background:rgba(255,255,255,0.13); border:1px solid rgba(255,255,255,0.20); border-radius:100px; padding:4px 11px; display:inline-flex; align-items:center; gap:6px; backdrop-filter:blur(8px);">
-            <span style="width:7px; height:7px; border-radius:50%; background:#4ADE80; flex-shrink:0; box-shadow:0 0 6px #4ADE80;">
-              <style>#live1{animation:livepulse 1.8s ease-in-out infinite;}@keyframes livepulse{0%,100%{opacity:1}50%{opacity:0.4}}</style>
-            </span>
+            <span style="width:7px; height:7px; border-radius:50%; background:#4ADE80; flex-shrink:0; box-shadow:0 0 6px #4ADE80;"></span>
             <span style="color:#fff; font-size:0.72rem; font-weight:600;">Live Dispatch</span>
           </div>
           <div style="background:rgba(255,255,255,0.13); border:1px solid rgba(255,255,255,0.20); border-radius:100px; padding:4px 11px; display:inline-flex; align-items:center; gap:6px; backdrop-filter:blur(8px);">
@@ -301,81 +301,7 @@ require('modules/head.php');
   </div>
 </div>
 
-    <script>
-      function togglePasswordVisibility() {
-        const passwordInput = document.getElementById('password');
-        const toggleIcon = document.getElementById('passwordIcon');
-        if (passwordInput.type === 'password') {
-          passwordInput.type = 'text';
-          toggleIcon.classList.remove('bi-eye-slash');
-          toggleIcon.classList.add('bi-eye');
-        } else {
-          passwordInput.type = 'password';
-          toggleIcon.classList.remove('bi-eye');
-          toggleIcon.classList.add('bi-eye-slash');
-        }
-      }
-
-      function showToast(message, isSuccess = false) {
-        const toast = document.getElementById('toastMsg');
-        const toastText = document.getElementById('toastText');
-
-        toastText.innerText = message;
-
-        if (isSuccess) {
-          toast.classList.remove('bg-danger');
-          toast.classList.add('bg-success');
-        } else {
-          toast.classList.remove('bg-success');
-          toast.classList.add('bg-danger');
-        }
-
-        let bsToast = bootstrap.Toast.getInstance(toast);
-        if (!bsToast) bsToast = new bootstrap.Toast(toast);
-        bsToast.show();
-      }
-
-      // On page load: check if already logged in
-      (async function checkSession() {
-        try {
-          const res = await fetch('auth/session.php');
-          const json = await res.json();
-          if (json.loggedIn) {
-            // Already logged in — redirect to home
-            window.location.href = 'home.php';
-          }
-        } catch (err) {
-          console.error('Session check error', err);
-        }
-      })();
-
-      // AJAX submit
-      document
-        .getElementById('loginForm')
-        .addEventListener('submit', async function (e) {
-          e.preventDefault();
-
-          const formData = new FormData(this);
-
-          try {
-            const resp = await fetch('auth/login.php', {
-              method: 'POST',
-              body: formData,
-            });
-            const json = await resp.json();
-
-            if (json.success) {
-              showToast(json.message || 'Login successful', true);
-              // Redirect after a short delay so user sees toast
-              setTimeout(() => (window.location.href = 'home.php'), 900);
-            } else {
-              showToast(json.message || 'Invalid credentials', false);
-            }
-          } catch (err) {
-            showToast('Network error, try again', false);
-          }
-        });
-    </script>
+    <script src="js/login.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>

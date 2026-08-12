@@ -1,387 +1,8 @@
-<?php
-session_start();
-
-require_once 'auth/require_login_redirect.php';
-require('modules/head.php');
-?>
-<!DOCTYPE html>
-<html lang="en">
-  <body>
-
-   <?php require_once 'modules/navbar.php'; ?>
-
-    <?php @require('modules/sidebar.php'); ?>
-
-    <main class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
-
-  <?php @require('modules/bodyHeader.php'); ?>
-
-  <!-- Tab header strip -->
-  <nav class="po-tabs mt-4" role="tablist" aria-label="Live orders sections">
-        <button type="button" class="po-tab is-active tab-btn active-tab" id="tab-unassigned" role="tab" aria-selected="true">
-          <i class="bi bi-hourglass-split po-tab__icon"></i>
-          <span class="po-tab__label">Unassigned</span>
-          <span class="po-tab__count" id="count-unassigned">0</span>
-        </button>
-
-        <button type="button" class="po-tab tab-btn" id="tab-assigned" role="tab" aria-selected="false">
-          <i class="bi bi-person-check po-tab__icon"></i>
-          <span class="po-tab__label">Assigned</span>
-          <span class="po-tab__count" id="count-assigned">0</span>
-        </button>
-
-        <button type="button" class="po-tab tab-btn" id="tab-enroute" role="tab" aria-selected="false">
-          <i class="bi bi-geo-alt po-tab__icon"></i>
-          <span class="po-tab__label">Enroute</span>
-          <span class="po-tab__count" id="count-enroute">0</span>
-        </button>
-
-        <button type="button" class="po-tab tab-btn" id="tab-on-trip" role="tab" aria-selected="false" style="display:none;">
-          <i class="bi bi-car-front po-tab__icon"></i>
-          <span class="po-tab__label">On Trip</span>
-          <span class="po-tab__count" id="count-on-trip">0</span>
-        </button>
-
-        <button type="button" class="po-tab tab-btn" id="tab-scheduled" role="tab" aria-selected="false">
-          <i class="bi bi-calendar-check po-tab__icon"></i>
-          <span class="po-tab__label">Pre-Order</span>
-          <span class="po-tab__count" id="count-scheduled">0</span>
-        </button>
-
-        <button type="button" class="po-tab tab-btn" id="tab-cancelled" role="tab" aria-selected="false">
-          <i class="bi bi-x-circle po-tab__icon"></i>
-          <span class="po-tab__label">Cancelled</span>
-          <span class="po-tab__count" id="count-cancelled">0</span>
-        </button>
-
-        <button type="button" class="po-tab tab-btn" id="tab-finished" role="tab" aria-selected="false">
-          <i class="bi bi-check-circle po-tab__icon"></i>
-          <span class="po-tab__label">Completed</span>
-          <span class="po-tab__count" id="count-finished">0</span>
-        </button>
-
-        <button type="button" class="po-tab tab-btn" id="tab-meet-greet" role="tab" aria-selected="false">
-          <i class="bi bi-airplane po-tab__icon"></i>
-          <span class="po-tab__label">Meet &amp; Greet</span>
-          <span class="po-tab__count" id="count-meet-greet">0</span>
-        </button>
-  </nav>
-
-  <!-- Table content card -->
-  <div class="rounded-bottom-3 border border-top-0 overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);">
-    <div class="p-4 pt-3">
-
-      <!-- Unassigned -->
-      <div id="pane-unassigned" class="tab-pane-table">
-        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
-          <table class="table mb-0" style="border-collapse:collapse;">
-            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Prebook</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Source</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;" id="actionHeader">Action</th>
-            </tr></thead>
-            <tbody id="unassignedRidesBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Assigned -->
-      <div id="pane-assigned" class="tab-pane-table" style="display:none;">
-        <div class="table-responsive rounded-2" style="border:1px solid #EBEBEB; min-height:362px; overflow-x:auto; overflow-y:hidden;">
-          <table class="table mb-0" style="border-collapse:collapse; min-width:1100px;">
-            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:120px;">Name</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:110px;">Order Time</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:200px;">Pickup</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:200px;">Destination</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Prebook</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Source</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
-              <th class="fw-semibold text-nowrap px-4 py-2 text-end" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:300px;">Action</th>
-            </tr></thead>
-            <tbody id="assignedRidesBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Enroute -->
-      <div id="pane-enroute" class="tab-pane-table" style="display:none;">
-        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
-          <table class="table mb-0" style="border-collapse:collapse;">
-            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Source</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Driver</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
-              <th class="fw-semibold text-nowrap px-3 py-2 text-end" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:130px;">Action</th>
-            </tr></thead>
-            <tbody id="enrouteRidesBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- On Trip -->
-      <div id="pane-ontrip" class="tab-pane-table" style="display:none;">
-        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
-          <table class="table mb-0" style="border-collapse:collapse;">
-            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Prebook</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Source</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Driver</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
-              <th class="fw-semibold text-nowrap px-3 py-2 text-end" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:130px;">Action</th>
-            </tr></thead>
-            <tbody id="onTripRidesBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Scheduled -->
-      <div id="pane-scheduled" class="tab-pane-table" style="display:none;">
-        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
-          <table class="table mb-0" style="border-collapse:collapse;">
-            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup Time</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Category</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">AI Suggestion</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Action</th>
-            </tr></thead>
-            <tbody id="scheduledRidesBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Cancelled -->
-      <div id="pane-cancelled" class="tab-pane-table" style="display:none;">
-        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
-          <table class="table mb-0" style="border-collapse:collapse;">
-            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
-            </tr></thead>
-            <tbody id="cancelledRidesBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Completed -->
-      <div id="pane-completed" class="tab-pane-table" style="display:none;">
-        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
-          <table class="table mb-0" style="border-collapse:collapse;">
-            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Prebook</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Source</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
-            </tr></thead>
-            <tbody id="completedRidesBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Meet & Greet -->
-      <div id="pane-meetgreet" class="tab-pane-table" style="display:none;">
-        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
-          <table class="table mb-0" style="border-collapse:collapse;">
-            <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Company</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Employee</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Order Time</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Pickup</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Destination</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Payment</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Fare</th>
-              <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Status</th>
-              <th class="fw-semibold text-nowrap px-3 py-2 text-end" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none; min-width:130px;">Action</th>
-            </tr></thead>
-            <tbody id="meetGreetRidesBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="preorderPaginationContainer" class="mt-3"></div>
-
-    </div>
-  </div>
-
-</main>
-
-<style>
-  /* ── Live Orders — bold header tab bar ──────────────────────────────── */
-  .po-tabs {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    padding: 0 4px;
-    background: #E4E4E7;
-    border-radius: 10px 10px 0 0;
-    border: 1px solid #D4D4D8;
-    border-bottom: none;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .po-tabs::-webkit-scrollbar { display: none; }
-  .po-tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 12px 18px;
-    background: none;
-    border: none;
-    border-bottom: 2.5px solid transparent;
-    color: #71717A;
-    font-family: inherit;
-    font-size: 0.74rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    line-height: 1;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: color 0.15s, border-color 0.15s, background 0.15s;
-  }
-  .po-tab:hover { color: #18181B; }
-  .po-tab:focus-visible { outline: none; color: #18181B; }
-  .po-tab__icon {
-    font-size: 13px;
-    color: #A1A1AA;
-    line-height: 1;
-    transition: color 0.15s;
-  }
-  .po-tab__label { white-space: nowrap; }
-  .po-tab__count {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 18px;
-    height: 17px;
-    padding: 0 5px;
-    background: #E4E4E7;
-    color: #71717A;
-    font-size: 0.65rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-    border-radius: 9px;
-    transition: background 0.15s, color 0.15s;
-  }
-  .po-tab.is-active,
-  .po-tab.active-tab {
-    color: #f37a20;
-    border-bottom-color: #f37a20;
-    background: rgba(255,255,255,0.6);
-  }
-  .po-tab.is-active .po-tab__icon,
-  .po-tab.active-tab .po-tab__icon { color: #f37a20; }
-  .po-tab.is-active .po-tab__count,
-  .po-tab.active-tab .po-tab__count {
-    background: #FFF3E8;
-    color: #f37a20;
-  }
-  @media (max-width: 767.98px) {
-    .po-tab { padding: 10px 12px; font-size: 0.7rem; }
-  }
-  .tab-btn.active-tab { color: #f37a20; }
-  #unassignedRidesBody tr, #assignedRidesBody tr, #enrouteRidesBody tr,
-  #scheduledRidesBody tr, #cancelledRidesBody tr, #completedRidesBody tr,
-  #meetGreetRidesBody tr {
-    border-bottom: 1px solid #F4F4F5;
-    transition: background 0.12s;
-  }
-  #unassignedRidesBody tr:hover, #assignedRidesBody tr:hover, #enrouteRidesBody tr:hover,
-  #scheduledRidesBody tr:hover, #cancelledRidesBody tr:hover,
-  #completedRidesBody tr:hover, #meetGreetRidesBody tr:hover { background: #FAFAFA; }
-  #unassignedRidesBody td, #assignedRidesBody td, #enrouteRidesBody td,
-  #scheduledRidesBody td, #cancelledRidesBody td, #completedRidesBody td,
-  #meetGreetRidesBody td {
-    padding: 14px 16px;
-    font-size: 0.845rem;
-    color: #18181B;
-    vertical-align: middle;
-    border: none;
-  }
-  /* Keep the M&G action cell from being squeezed into invisibility */
-  #meetGreetRidesBody td:last-child { white-space: nowrap; min-width: 130px; }
-  /* ── AI dispatch-suggestion button (Pre-Order tab, unassigned rows) ── */
-  .ai-suggest-btn {
-    display: inline-flex; align-items: center; gap: 5px;
-    border: 1px solid #DDD6FE; background: #F5F3FF; color: #7C3AED;
-    border-radius: 999px; padding: 4px 11px; font-size: 0.75rem; font-weight: 600;
-    cursor: pointer; transition: background 0.12s, border-color 0.12s;
-  }
-  .ai-suggest-btn:hover { background: #EDE9FE; border-color: #C4B5FD; }
-  .ai-suggest-btn:disabled { opacity: 0.6; cursor: default; }
-  .ai-suggest-btn.is-playing { background: #7C3AED; color: #fff; border-color: #7C3AED; }
-  /* Anchor for the floating popover */
-  .ai-suggest-wrap { position: relative; display: inline-block; }
-  /* Floating popover — overlays instead of expanding the table row */
-  .ai-suggest-text {
-    position: absolute; top: calc(100% + 6px); right: 0; z-index: 1080;
-    width: 260px; white-space: normal; text-align: left;
-    font-size: 0.78rem; line-height: 1.35; color: #4C1D95;
-    background: #FAF5FF; border: 1px solid #EDE9FE; border-radius: 8px; padding: 8px 10px;
-    box-shadow: 0 8px 24px rgba(76, 29, 149, 0.18);
-  }
-  /* Little caret pointing back at the button */
-  .ai-suggest-text::before {
-    content: ''; position: absolute; top: -5px; right: 16px;
-    width: 9px; height: 9px; background: #FAF5FF;
-    border-left: 1px solid #EDE9FE; border-top: 1px solid #EDE9FE;
-    transform: rotate(45deg);
-  }
-  /* Let the popover escape the Pre-Order table's clipped container */
-  #pane-scheduled .table-responsive { overflow: visible; }
-  .ai-suggest-text .ai-replay {
-    margin-left: 6px; color: #7C3AED; cursor: pointer; border: none; background: none; padding: 0;
-  }
-  .ai-suggest-text.is-error { color: #B91C1C; background: #FEF2F2; border-color: #FEE2E2; }
-</style>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/pagination.js"></script>
-    <script>
 
       // Configuration: Polling interval in milliseconds (default: 10 seconds)
       const POLLING_INTERVAL_MS = 10 * 1000; // 10 seconds
 
       let pollingInterval = null;
-      let beepingRideIds = new Set(); // Track which rides are currently beeping
-       let previousRideStatuses = new Map(); // Track previous status of each ride to detect transitions
       let currentRidesData = {
         unassigned: [],
         assigned: [],
@@ -418,11 +39,6 @@ require('modules/head.php');
           }
         } catch (e) {
           console.warn('Pagination init error:', e);
-        }
-
-        // Sync beeping state
-        if (window.BeepMonitor) {
-          beepingRideIds = new Set(window.BeepMonitor.getBeepingRideIds());
         }
 
         // Load all tab data
@@ -529,21 +145,9 @@ require('modules/head.php');
             return status === 'completed' || status === 'finished';
           });
 
-             // Initialize previous statuses on first check if empty
-          if (previousRideStatuses.size === 0) {
-            rides.forEach((ride) => {
-              if (ride.id) {
-                previousRideStatuses.set(ride.id, (ride.status || '').toLowerCase());
-              }
-            });
-          }
-
           // Auto-transition scheduled rides based on time proximity (include
           // driver-assigned scheduled rides so they still activate at the 40-min mark).
           await processScheduledRideTransitions(allScheduledRides);
-
-          // Check for beeping rides (always check, regardless of UI updates)
-          checkForBeepingRides(unassignedRides, rides);
 
           // Only update UI if there are actual changes
           const unassignedChanged = hasRidesChanged(currentRidesData.unassigned, unassignedRides);
@@ -753,7 +357,7 @@ require('modules/head.php');
 
         if (showLoading && tbody) {
           tbody.innerHTML =
-            '<tr><td colspan="10" class="text-center py-4 text-muted">Loading rides...</td></tr>';
+            '<tr><td colspan="10" class="pw-loading-cell"><div class="pw-loading-inner"><span class="pw-spinner-sm"></span><span class="pw-loading-text">Loading rides…</span></div></td></tr>';
         }
 
         try {
@@ -765,30 +369,18 @@ require('modules/head.php');
           }
 
           const result = await response.json();
-          
+
           // Check if API returned success
           if (!result.success) {
             throw new Error(result.error || 'Failed to fetch rides');
           }
-          
+
           const rides = result && result.data ? result.data : [];
 
           const unassignedRides = rides.filter((ride) => {
             const status = (ride.status || '').toLowerCase();
             return status === 'searching';
           });
-
-             // Initialize previous statuses on first load if empty
-          if (previousRideStatuses.size === 0) {
-            rides.forEach((ride) => {
-              if (ride.id) {
-                previousRideStatuses.set(ride.id, (ride.status || '').toLowerCase());
-              }
-            });
-          }
-
-          // Check for rides that need beeping
-          checkForBeepingRides(unassignedRides, rides);
 
           // Update cache
           currentRidesData.unassigned = unassignedRides;
@@ -829,68 +421,6 @@ require('modules/head.php');
         }
       }
 
-      function checkForBeepingRides(unassignedRides, allRides) {
-        const currentBeepingIds = new Set();
-            const newSearchingRides = []; // Rides that just entered searching status
-
-          // Track current status of all rides
-        const currentRideStatuses = new Map();
-        allRides.forEach((ride) => {
-          if (ride.id) {
-              const status = (ride.status || '').toLowerCase();
-            currentRideStatuses.set(ride.id, status);
-          }
-        });
-
-        // Check for rides that just transitioned to 'searching' status
-        currentRideStatuses.forEach((status, rideId) => {
-          if (status === 'searching') {
-            currentBeepingIds.add(rideId);
-
-            // Check if this ride just entered searching status
-            const previousStatus = previousRideStatuses.get(rideId);
-            if (previousStatus !== 'searching') {
-              // This ride just entered searching status - record timestamp
-              // If ride has updated_at, use that; otherwise use current time
-              const ride = allRides.find(r => r.id === rideId);
-              const timestamp = ride && ride.updated_at 
-                ? new Date(ride.updated_at).getTime() 
-                : Date.now();
-
-              newSearchingRides.push({
-                rideId: rideId,
-                timestamp: timestamp
-              });
-            }
-                }
-        });
-
-        // Update previous statuses for next check
-        previousRideStatuses = currentRideStatuses;
-
-        // Remove rides that are no longer searching from beeping set
-        beepingRideIds.forEach((rideId) => {
-          if (!currentBeepingIds.has(rideId)) {
-            // Ride is no longer searching, remove from beeping set
-          }
-        });
-
-        // Update beeping set
-        beepingRideIds = currentBeepingIds;
-
-        // Control beep based on whether we should be beeping
-        // Use global BeepMonitor to ensure beep works across all pages
-        if (window.BeepMonitor) {
-          if (beepingRideIds.size > 0) {
-                // Pass ride IDs and timestamps for newly searching rides
-            window.BeepMonitor.setBeepingRideIds(Array.from(beepingRideIds), newSearchingRides);
-          } else {
-             window.BeepMonitor.setBeepingRideIds([], []);
-            window.BeepMonitor.stopBeep();
-          }
-        }
-      }
-
       function populateUnassignedTable(rides) {
         try {
           const tbody = document.getElementById('unassignedRidesBody');
@@ -903,7 +433,7 @@ require('modules/head.php');
 
           if (!rides || rides.length === 0) {
             tbody.innerHTML =
-              '<tr><td colspan="10" class="text-center py-4 text-muted">No unassigned rides to show</td></tr>';
+              '<tr><td colspan="10" class="pw-loading-cell"><div class="pw-loading-inner"><i class="bi bi-inbox" style="font-size:1.7rem; color:#E4E4E7;"></i><span class="pw-loading-text">No unassigned rides to show</span></div></td></tr>';
             return;
           }
 
@@ -970,14 +500,17 @@ require('modules/head.php');
         return `${day}.${month}.${year} | ${hours}:${minutes}`;
       }
 
-      function formatScheduledTime(scheduledAt, meta) {
+      function formatScheduledTime(scheduledAt, meta, createdAt) {
         let ts = scheduledAt || null;
+        let isFallbackToOrderTime = false;
         if (!ts && meta) {
           try {
             const m = typeof meta === 'string' ? JSON.parse(meta) : meta;
             ts = m.scheduled_datetime || null;
           } catch (_) {}
         }
+
+        if (!ts && createdAt) { ts = createdAt; isFallbackToOrderTime = true; }
         if (!ts) return '<span style="color:#A1A1AA;">Not set</span>';
         const d = new Date(ts);
         if (isNaN(d.getTime())) return ts;
@@ -986,7 +519,10 @@ require('modules/head.php');
         const year = d.getFullYear();
         const hours = String(d.getHours()).padStart(2, '0');
         const mins = String(d.getMinutes()).padStart(2, '0');
-        return `<div style="line-height:1.3;"><div style="font-weight:600; color:#18181B;">${day} ${mon} ${year}</div><div style="color:#f37a20; font-weight:600; font-size:0.78rem;">${hours}:${mins}</div></div>`;
+        const label = isFallbackToOrderTime
+          ? '<div style="color:#A1A1AA; font-weight:600; font-size:0.66rem; text-transform:uppercase; letter-spacing:0.03em;">Ordered</div>'
+          : '';
+        return `<div style="line-height:1.3;">${label}<div style="font-weight:600; color:#18181B;">${day} ${mon} ${year}</div><div style="color:#f37a20; font-weight:600; font-size:0.78rem;">${hours}:${mins}</div></div>`;
       }
 
       function getRideDisplayTime(ride) {
@@ -1007,7 +543,7 @@ require('modules/head.php');
 
       function updateUnassignedTabCount(count) {
         const badge = document.getElementById('count-unassigned');
-        if (badge) badge.textContent = count;
+        if (badge) { badge.textContent = count; badge.classList.remove('is-loading'); }
       }
 
       function updatePaginationInfo(totalItems) {
@@ -1144,6 +680,11 @@ require('modules/head.php');
       }
 
       async function loadAssignedRides(showLoading = false) {
+        const tbody = document.getElementById('assignedRidesBody');
+        if (showLoading && tbody) {
+          tbody.innerHTML =
+            '<tr><td colspan="10" class="pw-loading-cell"><div class="pw-loading-inner"><span class="pw-spinner-sm"></span><span class="pw-loading-text">Loading rides…</span></div></td></tr>';
+        }
         try {
           // Fetch all rides (use high limit to get all rides for client-side filtering)
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
@@ -1186,7 +727,7 @@ require('modules/head.php');
 
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="10" class="text-center py-4 text-muted">No assigned rides to show</td></tr>';
+            '<tr><td colspan="10" class="pw-loading-cell"><div class="pw-loading-inner"><i class="bi bi-inbox" style="font-size:1.7rem; color:#E4E4E7;"></i><span class="pw-loading-text">No assigned rides to show</span></div></td></tr>';
           return;
         }
 
@@ -1201,6 +742,13 @@ require('modules/head.php');
           const fare = formatFare(ride.fare_eur, ride.estimate_fare);
           const rawFare = ride.fare_eur != null ? parseFloat(ride.fare_eur) : (ride.estimate_fare != null ? parseFloat(ride.estimate_fare) : 0);
 
+          // Internal Note is only for rides booked via the "New" (not-in-DB)
+          // passenger option on Create Order — those are tagged source
+          // "Powercabs Dispatch" (existing-passenger dispatcher orders are
+          // tagged plain "dispatcher" and don't get this button).
+          const isNewPaxDispatchOrder = String(ride.source || '').trim().toLowerCase() === 'powercabs dispatch';
+          const hasNote = !!(ride.internal_note && String(ride.internal_note).trim() !== '');
+
           const row = document.createElement('tr');
           row.innerHTML = `
             <td class="ps-3">${name}</td>
@@ -1213,11 +761,16 @@ require('modules/head.php');
             <td>${renderSourceBadge(ride.source)}</td>
             <td class="text-end pe-4">${fare}</td>
             <td class="text-end pe-4">
-              <div class="d-inline-flex align-items-center gap-2 flex-nowrap">
+              <div style="display:inline-grid; grid-template-columns:repeat(2, auto); gap:6px; justify-items:start;">
                 <button type="button" class="complete-ride-btn" onclick="completeRide('${encodeURIComponent(ride.id)}', ${rawFare})">
                   <i class="bi bi-check-circle-fill"></i>
                   <span>Complete</span>
                 </button>
+                ${isNewPaxDispatchOrder ? `
+                <button type="button" class="add-note-btn" onclick="openInternalNoteModal('${encodeURIComponent(ride.id)}')">
+                  <i class="bi bi-sticky${hasNote ? '-fill' : ''}"></i>
+                  <span>${hasNote ? 'Edit Note' : 'Add Note'}</span>
+                </button>` : ''}
                 <button type="button" class="unassign-btn" onclick="unassignRide('${encodeURIComponent(ride.id)}')">
                   <i class="bi bi-person-dash"></i>
                   <span>Unassign</span>
@@ -1354,9 +907,92 @@ require('modules/head.php');
         setTimeout(() => toast.remove(), 3100);
       }
 
+      // ── Internal Note (Powercabs Dispatch / new-passenger orders only) ──
+      // Same lightweight custom-overlay pattern as showConfirmDialog above,
+      // but with a text input instead of a plain yes/no choice.
+      function showInternalNoteDialog(existingNote) {
+        return new Promise((resolve) => {
+          const overlay = document.createElement('div');
+          overlay.style.cssText =
+            'position:fixed; inset:0; background:rgba(15,23,42,0.45); z-index:20000; display:flex; align-items:center; justify-content:center; padding:16px;';
+
+          const box = document.createElement('div');
+          box.style.cssText =
+            'background:#fff; border-radius:14px; max-width:460px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.25); overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;';
+          box.innerHTML = `
+            <div style="padding:20px 22px 8px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span style="width:34px; height:34px; border-radius:9px; background:#EEF2FF; color:#4F46E5; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  <i class="bi bi-sticky-fill" style="font-size:15px;"></i>
+                </span>
+                <div style="font-size:16px; font-weight:700; color:#18181B;">Internal Note</div>
+              </div>
+              <div style="margin-top:6px; font-size:12.5px; color:#A1A1AA; line-height:1.4;">Visible only to dispatch staff — not shared with the passenger or driver.</div>
+            </div>
+            <div style="padding:14px 22px 4px;">
+              <textarea data-el="note" rows="5" placeholder="Add a note for this ride..."
+                style="width:100%; border:1.5px solid #EBEBEB; border-radius:8px; padding:10px 12px; font-size:0.8125rem; color:#18181B; resize:vertical; font-family:inherit;"></textarea>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:8px; padding:16px 22px 18px;">
+              <button type="button" data-act="cancel" style="height:38px; padding:0 16px; border-radius:8px; border:1.5px solid #E4E4E7; background:#fff; color:#52525B; font-size:0.8125rem; font-weight:600; cursor:pointer;">Cancel</button>
+              <button type="button" data-act="save" style="height:38px; padding:0 16px; border-radius:8px; border:1.5px solid #4F46E5; background:#4F46E5; color:#fff; font-size:0.8125rem; font-weight:700; cursor:pointer;">Save Note</button>
+            </div>
+          `;
+          overlay.appendChild(box);
+          document.body.appendChild(overlay);
+
+          const textarea = box.querySelector('[data-el="note"]');
+          textarea.value = existingNote || '';
+
+          const cleanup = (val) => {
+            document.removeEventListener('keydown', onKey);
+            overlay.remove();
+            resolve(val);
+          };
+          const onKey = (e) => { if (e.key === 'Escape') cleanup(null); };
+          document.addEventListener('keydown', onKey);
+          overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(null); });
+          box.querySelector('[data-act="cancel"]').addEventListener('click', () => cleanup(null));
+          box.querySelector('[data-act="save"]').addEventListener('click', () => cleanup(textarea.value.trim()));
+
+          setTimeout(() => textarea.focus(), 50);
+        });
+      }
+
+      async function openInternalNoteModal(encodedRideId) {
+        const rideId = decodeURIComponent(encodedRideId);
+        const ride = (currentRidesData.assigned || []).find((r) => r.id === rideId);
+        const existingNote = (ride && ride.internal_note) || '';
+
+        const note = await showInternalNoteDialog(existingNote);
+        if (note === null) return; // cancelled
+
+        try {
+          const response = await fetch('api/update_internal_note.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ride_id: rideId, internal_note: note }),
+          });
+          if (response.status === 401) { window.location.href = '/'; return; }
+          const result = await response.json();
+          if (!response.ok || !result.success) {
+            throw new Error(result.error || 'Failed to save note');
+          }
+          if (ride) ride.internal_note = note;
+          if (currentTab === 'assigned') {
+            const currentPage = preorderPagination ? preorderPagination.getCurrentPage() : 1;
+            updateTableForCurrentTab(currentPage, ITEMS_PER_PAGE);
+          }
+          showPreorderToast('Internal note saved.', 'success');
+        } catch (err) {
+          console.error('Save internal note error:', err);
+          showPreorderToast(err.message || 'Failed to save note.', 'error');
+        }
+      }
+
       function updateAssignedTabCount(count) {
         const badge = document.getElementById('count-assigned');
-        if (badge) badge.textContent = count;
+        if (badge) { badge.textContent = count; badge.classList.remove('is-loading'); }
       }
 
       const ENROUTE_STATUSES = ['enroute','en_route','en-route'];
@@ -1403,7 +1039,18 @@ require('modules/head.php');
           });
         });
 
-        // Restore tab from URL hash (e.g. #tab-assigned from back button)
+        // Restore tab from URL hash (e.g. #tab-assigned from back button, or
+        // a click on one of the sidebar's Live Orders sub-links).
+        restoreTabFromHash();
+
+        // Sidebar sub-links point at liveorder.php#tab-X. When we're already
+        // on this page that's a same-document navigation — the browser
+        // updates the hash but never reloads, so DOMContentLoaded (and the
+        // restore above) won't fire again. Listen for the hash itself.
+        window.addEventListener('hashchange', restoreTabFromHash);
+      }
+
+      function restoreTabFromHash() {
         const hash = window.location.hash;
         if (hash && hash.startsWith('#tab-')) {
           const target = hash.substring(1);
@@ -1413,6 +1060,11 @@ require('modules/head.php');
       }
 
       async function loadScheduledRides(showLoading = false) {
+        const tbody = document.getElementById('scheduledRidesBody');
+        if (showLoading && tbody) {
+          tbody.innerHTML =
+            '<tr><td colspan="10" class="pw-loading-cell"><div class="pw-loading-inner"><span class="pw-spinner-sm"></span><span class="pw-loading-text">Loading rides…</span></div></td></tr>';
+        }
         try {
           // Fetch all rides (use high limit to get all rides for client-side filtering)
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
@@ -1469,13 +1121,13 @@ require('modules/head.php');
 
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="10" class="text-center py-4 text-muted">No pre-orders to show</td></tr>';
+            '<tr><td colspan="10" class="pw-loading-cell"><div class="pw-loading-inner"><i class="bi bi-inbox" style="font-size:1.7rem; color:#E4E4E7;"></i><span class="pw-loading-text">No pre-orders to show</span></div></td></tr>';
           return;
         }
 
         rides.forEach((ride) => {
           const name = ride.passenger_name || 'N/A';
-          const pickupTime = formatScheduledTime(ride.scheduled_at, ride.meta);
+          const pickupTime = formatScheduledTime(ride.scheduled_at, ride.meta, ride.created_at);
           const pickup      = ride.pickup_addr || ride.actual_start_addr || 'N/A';
           const destination = ride.dest_addr   || ride.actual_end_addr   || 'N/A';
           const status = ride.status || 'N/A';
@@ -1527,7 +1179,7 @@ require('modules/head.php');
 
       function updateScheduledTabCount(count) {
         const badge = document.getElementById('count-scheduled');
-        if (badge) badge.textContent = count;
+        if (badge) { badge.textContent = count; badge.classList.remove('is-loading'); }
       }
 
       // ── Spoken assignment reminders for unassigned pre-orders ──────────
@@ -1599,6 +1251,11 @@ require('modules/head.php');
       });
 
       async function loadCancelledRides(showLoading = false) {
+        const tbody = document.getElementById('cancelledRidesBody');
+        if (showLoading && tbody) {
+          tbody.innerHTML =
+            '<tr><td colspan="7" class="pw-loading-cell"><div class="pw-loading-inner"><span class="pw-spinner-sm"></span><span class="pw-loading-text">Loading rides…</span></div></td></tr>';
+        }
         try {
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
           if (response.status === 401) { window.location.href = '/'; return; }
@@ -1633,7 +1290,7 @@ require('modules/head.php');
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="7" class="text-center py-4 text-muted">No cancelled rides to show</td></tr>';
+            '<tr><td colspan="7" class="pw-loading-cell"><div class="pw-loading-inner"><i class="bi bi-inbox" style="font-size:1.7rem; color:#E4E4E7;"></i><span class="pw-loading-text">No cancelled rides to show</span></div></td></tr>';
           return;
         }
         rides.forEach((ride) => {
@@ -1661,10 +1318,15 @@ require('modules/head.php');
 
       function updateCancelledTabCount(count) {
         const badge = document.getElementById('count-cancelled');
-        if (badge) badge.textContent = count;
+        if (badge) { badge.textContent = count; badge.classList.remove('is-loading'); }
       }
 
       async function loadCompletedRides(showLoading = false) {
+        const tbody = document.getElementById('completedRidesBody');
+        if (showLoading && tbody) {
+          tbody.innerHTML =
+            '<tr><td colspan="11" class="pw-loading-cell"><div class="pw-loading-inner"><span class="pw-spinner-sm"></span><span class="pw-loading-text">Loading rides…</span></div></td></tr>';
+        }
         try {
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
           if (response.status === 401) { window.location.href = '/'; return; }
@@ -1699,7 +1361,7 @@ require('modules/head.php');
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="9" class="text-center py-4 text-muted">No completed rides to show</td></tr>';
+            '<tr><td colspan="11" class="pw-loading-cell"><div class="pw-loading-inner"><i class="bi bi-inbox" style="font-size:1.7rem; color:#E4E4E7;"></i><span class="pw-loading-text">No completed rides to show</span></div></td></tr>';
           return;
         }
         rides.forEach((ride) => {
@@ -1708,7 +1370,9 @@ require('modules/head.php');
           const pickup = ride.pickup_addr || ride.actual_start_addr || 'N/A';
           const destination = ride.dest_addr || ride.actual_end_addr || 'N/A';
           const status = ride.status || 'N/A';
-          const fare = formatFare(ride.fare_eur, ride.estimate_fare);
+          const finalFare = formatFare(ride.final_fare, null);
+          const tollAmount = formatFare(ride.toll_amount, null);
+          const totalCharged = formatFare(ride.total_charged, null);
           const row = document.createElement('tr');
           row.innerHTML = `
             <td class="ps-3">${name}</td>
@@ -1719,7 +1383,9 @@ require('modules/head.php');
             <td>${renderPaymentBadge(ride.payment_method)}</td>
             <td>${renderPrebookBadge(ride)}</td>
             <td>${renderSourceBadge(ride.source)}</td>
-            <td class="text-end pe-4">${fare}</td>
+            <td class="text-end pe-4">${finalFare}</td>
+            <td class="text-end pe-4">${tollAmount}</td>
+            <td class="text-end pe-4">${totalCharged}</td>
           `;
           tbody.appendChild(row);
         });
@@ -1799,10 +1465,15 @@ require('modules/head.php');
 
       function updateCompletedTabCount(count) {
         const badge = document.getElementById('count-finished');
-        if (badge) badge.textContent = count;
+        if (badge) { badge.textContent = count; badge.classList.remove('is-loading'); }
       }
 
       async function loadEnrouteRides(showLoading = false) {
+        const tbody = document.getElementById('enrouteRidesBody');
+        if (showLoading && tbody) {
+          tbody.innerHTML =
+            '<tr><td colspan="10" class="pw-loading-cell"><div class="pw-loading-inner"><span class="pw-spinner-sm"></span><span class="pw-loading-text">Loading rides…</span></div></td></tr>';
+        }
         try {
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
           if (response.status === 401) { window.location.href = '/'; return; }
@@ -1828,6 +1499,11 @@ require('modules/head.php');
       }
 
       async function loadOnTripRides(showLoading = false) {
+        const tbody = document.getElementById('onTripRidesBody');
+        if (showLoading && tbody) {
+          tbody.innerHTML =
+            '<tr><td colspan="11" class="pw-loading-cell"><div class="pw-loading-inner"><span class="pw-spinner-sm"></span><span class="pw-loading-text">Loading rides…</span></div></td></tr>';
+        }
         try {
           const response = await fetch('api/get_rides.php?page=1&limit=1000');
           if (response.status === 401) { window.location.href = '/'; return; }
@@ -1857,7 +1533,7 @@ require('modules/head.php');
         if (!tbody) return;
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-muted">No enroute rides to show</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="10" class="pw-loading-cell"><div class="pw-loading-inner"><i class="bi bi-inbox" style="font-size:1.7rem; color:#E4E4E7;"></i><span class="pw-loading-text">No enroute rides to show</span></div></td></tr>';
           return;
         }
         rides.forEach((ride) => {
@@ -1894,7 +1570,7 @@ require('modules/head.php');
 
       function updateEnrouteTabCount(count) {
         const badge = document.getElementById('count-enroute');
-        if (badge) badge.textContent = count;
+        if (badge) { badge.textContent = count; badge.classList.remove('is-loading'); }
       }
 
       function populateOnTripTable(rides) {
@@ -1902,7 +1578,7 @@ require('modules/head.php');
         if (!tbody) return;
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="11" class="text-center py-4 text-muted">No on-trip rides to show</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="11" class="pw-loading-cell"><div class="pw-loading-inner"><i class="bi bi-inbox" style="font-size:1.7rem; color:#E4E4E7;"></i><span class="pw-loading-text">No on-trip rides to show</span></div></td></tr>';
           return;
         }
         rides.forEach((ride) => {
@@ -1949,7 +1625,7 @@ require('modules/head.php');
       async function loadMeetGreetRides(showLoading = false) {
         const tbody = document.getElementById('meetGreetRidesBody');
         if (showLoading && tbody) {
-          tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">Loading rides...</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" class="pw-loading-cell"><div class="pw-loading-inner"><span class="pw-spinner-sm"></span><span class="pw-loading-text">Loading rides…</span></div></td></tr>';
         }
         try {
           const response = await fetch('api/get_meet_and_greet_rides.php?page=1&limit=1000');
@@ -1985,7 +1661,7 @@ require('modules/head.php');
         if (!tbody) return;
         tbody.innerHTML = '';
         if (!rides || rides.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">No meet &amp; greet rides to show</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" class="pw-loading-cell"><div class="pw-loading-inner"><i class="bi bi-inbox" style="font-size:1.7rem; color:#E4E4E7;"></i><span class="pw-loading-text">No meet &amp; greet rides to show</span></div></td></tr>';
           return;
         }
 
@@ -2034,9 +1710,6 @@ require('modules/head.php');
 
       function updateMeetGreetTabCount(count) {
         const badge = document.getElementById('count-meet-greet');
-        if (badge) badge.textContent = count;
+        if (badge) { badge.textContent = count; badge.classList.remove('is-loading'); }
       }
 
-    </script>
-  </body>
-</html>
