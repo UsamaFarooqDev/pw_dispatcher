@@ -2,6 +2,7 @@
 session_start();
 
 require_once 'auth/require_login_redirect.php';
+Permission::requireCan('app_rides', 'view');
 require_once 'auth/role_guard.php';
 $isDispatcher = isDispatcherRole();
 $pageTitle = 'Application Rides | Powercabs Dispatcher';

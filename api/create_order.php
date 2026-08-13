@@ -157,6 +157,8 @@ if (empty($_SESSION['admin_id'])) {
     exit;
 }
 
+Permission::requireCan('orders', 'create');
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode([

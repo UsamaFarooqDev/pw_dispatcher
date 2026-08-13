@@ -2,6 +2,7 @@
 session_start();
 
 require_once 'auth/require_login_redirect.php';
+Permission::requireCan('fleet', 'view');
 require_once 'auth/role_guard.php';
 $isDispatcher = isDispatcherRole();
 $pageTitle = 'Fleet Registry | Powercabs Dispatcher';

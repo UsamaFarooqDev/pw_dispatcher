@@ -9,6 +9,8 @@ if (empty($_SESSION['admin_id'])) {
     exit;
 }
 
+Permission::requireCan('live_orders', 'edit');
+
 $input = json_decode(file_get_contents('php://input'), true);
 if (!$input || empty($input['ride_id'])) {
     http_response_code(400);

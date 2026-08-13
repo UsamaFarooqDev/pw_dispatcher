@@ -5,10 +5,11 @@ if (empty($_SESSION['admin_id'])) {
     header('Location: /');
     exit;
 }
+require_once __DIR__ . '/auth/config.php';
+Permission::requireCan('home', 'view');
+
 $pageTitle = 'Dashboard | Powercabs Dispatcher';
 require('modules/head.php');
-
-require_once __DIR__ . '/auth/config.php';
 ?>
 
 <!DOCTYPE html>

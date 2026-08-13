@@ -3,6 +3,7 @@ session_start();
 
 require_once 'auth/require_login_redirect.php';
 require_once __DIR__ . '/auth/config.php';
+Permission::requireCan('orders', 'view');
 $pageTitle = 'Create New Order | Powercabs Dispatcher';
 require('modules/head.php');
 

@@ -509,3 +509,6 @@ function getPageTitle() {
         return true;
     }
 }
+
+require_once __DIR__ . '/permission.php';
+Permission::init();

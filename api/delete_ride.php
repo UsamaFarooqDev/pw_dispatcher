@@ -14,6 +14,8 @@ if (empty($_SESSION['admin_id'])) {
     exit;
 }
 
+Permission::requireCan('live_orders', 'delete');
+
 // Get JSON input
 $input = json_decode(file_get_contents('php://input'), true);
 

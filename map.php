@@ -2,6 +2,7 @@
 session_start();
 
 require_once 'auth/require_login_redirect.php';
+Permission::requireCan('map', 'view');
 $pageTitle = 'Live Map | Powercabs Dispatcher';
 require('modules/head.php');
 ?>

@@ -3,8 +3,7 @@ header('Content-Type: application/json');
 session_start();
 require_once '../auth/config.php';
 
-// Security: Check if user is authenticated
-if (empty($_SESSION['user']) || empty($_SESSION['access_token'])) {
+if (empty($_SESSION['admin_id'])) {
     http_response_code(401);
     echo json_encode([
         'success' => false,
@@ -13,6 +12,8 @@ if (empty($_SESSION['user']) || empty($_SESSION['access_token'])) {
     ], JSON_PRETTY_PRINT);
     exit;
 }
+
+Permission::requireCan('live_orders', 'edit');
 
 // Get JSON input
 $input = json_decode(file_get_contents('php://input'), true);
