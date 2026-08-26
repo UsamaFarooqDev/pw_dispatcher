@@ -19,7 +19,7 @@ require('modules/head.php');
   $_backUrl = 'liveorder.php';
   if ($_fromTab !== '') $_backUrl .= '#tab-' . htmlspecialchars($_fromTab, ENT_QUOTES);
 ?>
-<main id="app-content" class="main-content p-4<?php echo $_vmActive ? ' view-mode-active' : ''; ?>" style="background:#F4F4F5; min-height:100vh;">
+<main id="app-content" class="main-content p-1 p-lg-4<?php echo $_vmActive ? ' view-mode-active' : ''; ?>" style="background:#F4F4F5; min-height:100vh;">
 
   <!-- Page-level loading overlay (covers form + map until data is ready) -->
   <div id="oaPageLoader" style="position:fixed; inset:0; z-index:9999; background:#F4F4F5; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;">
@@ -35,7 +35,7 @@ require('modules/head.php');
 
     <div id="leftFormPanel" class="col-md-6 d-flex flex-column gap-4">
       <div class="rounded-3 border overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-        <div class="p-4">
+        <div class="p-2 p-lg-4">
 
           <div class="mb-3 pb-2" style="border-bottom:1px solid #EBEBEB;">
             <span class="fw-bold" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Customer Details</span>

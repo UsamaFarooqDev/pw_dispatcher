@@ -1,5 +1,11 @@
-<div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 py-1">
-  <div class="d-flex align-items-center gap-2">
+<?php
+  // map.php never shows the "Open Map" button (see below), so it's the
+  // only page where just one button sits next to the search bar — narrow
+  // enough to stay on one row even on mobile instead of stacking.
+  $isMapPage = basename($_SERVER['PHP_SELF']) === 'map.php';
+?>
+<div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 py-1 body-header-row<?php echo $isMapPage ? ' body-header-row--inline' : ''; ?>">
+  <div class="d-flex align-items-center gap-2 body-header-buttons">
     <a href="order.php"
       class="btn d-flex align-items-center gap-2 fw-semibold px-4"
       style="background:#f37a20; color:#fff; border:none; border-radius:8px; height:38px; font-size:0.85rem; box-shadow:0 4px 14px rgba(243,122,32,0.35); letter-spacing:0.01em;"
@@ -8,7 +14,7 @@
       <i class="bi bi-plus-circle" style="font-size:15px;"></i>
       New Order
     </a>
-    <?php if (basename($_SERVER['PHP_SELF']) !== 'map.php'): ?>
+    <?php if (!$isMapPage): ?>
     <a href="map.php"
       class="btn d-flex align-items-center gap-2 fw-semibold px-4"
       style="background:#fff; color:#18181B; border:1.5px solid #18181b; border-radius:8px; height:38px; font-size:0.85rem; letter-spacing:0.01em;"
@@ -20,7 +26,7 @@
     <?php endif; ?>
   </div>
 
-  <div class="position-relative" style="width:100%; max-width:280px;">
+  <div class="position-relative body-header-search" style="width:100%; max-width:280px;">
     <i class="bi bi-search position-absolute top-50 translate-middle-y" style="left:13px; font-size:13px; color:#A1A1AA; pointer-events:none;"></i>
     <input
       type="text"

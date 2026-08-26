@@ -14,7 +14,7 @@ require('modules/head.php');
 
     <?php @require('modules/sidebar.php'); ?>
 
-    <main id="app-content" class="main-content p-4" style="background:#F4F4F5; min-height:90vh;">
+    <main id="app-content" class="main-content p-2 p-lg-4" style="background:#F4F4F5; min-height:90vh;">
 
   <div class="row g-4">
 
@@ -162,17 +162,14 @@ require('modules/head.php');
               Cancel
             </button>
           </div>
-
         </div>
       </div>
 
       <div class="rounded-3 border overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
         <div class="p-4">
-
           <div class="mb-3 pb-2" style="border-bottom:1px solid #EBEBEB;">
             <span class="fw-bold" style="font-size:0.8rem; letter-spacing:0.05em; text-transform:uppercase; color:#A1A1AA;">Security</span>
           </div>
-
           <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
             <div>
               <div class="fw-semibold mb-1" style="font-size:0.875rem; color:#18181B;">Active Sessions</div>
@@ -185,10 +182,8 @@ require('modules/head.php');
               <i class="bi bi-box-arrow-right" style="font-size:15px;"></i> Sign Out All
             </button>
           </div>
-
         </div>
       </div>
-
     </div>
   </div>
 

@@ -460,6 +460,63 @@ h1, h2, h3, h4, h5, h6 {
 .sidebar > div::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 3px; }
 .sidebar > div::-webkit-scrollbar-thumb:hover { background: #334155; }
 
+/* === modules/bodyHeader.php: New Order/Open Map + search bar strip, used
+   by fleetRegistry.php, liveorder.php, application_rides.php, map.php ===
+   Mobile-only (≤767.98px, matching the row/column breakpoint it already
+   switches on): tighten the gap between the stacked button row and
+   search row, and let the search input use the full row width instead of
+   staying capped at the 280px meant for sitting beside the buttons on
+   desktop. Desktop/tablet layout above this breakpoint is untouched. */
+@media (max-width: 767.98px) {
+  .body-header-row {
+    gap: 0.5rem !important;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  .body-header-search {
+    max-width: 100% !important;
+  }
+
+  /* New Order / Open Map: on pages that stack (not the inline map.php
+     variant), stretch the button row to the full row width — same width
+     as the search bar below it — with each button sharing it equally,
+     instead of a small clump of natural-width buttons on the left. */
+  .body-header-row:not(.body-header-row--inline) .body-header-buttons {
+    width: 100%;
+  }
+  .body-header-row:not(.body-header-row--inline) .body-header-buttons > a {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+
+  /* map.php only ever shows the single "New Order" button (no "Open
+     Map"), so it comfortably fits beside the search bar on one row —
+     keep it inline (button left, search filling the rest on the right)
+     instead of stacking like the other pages. Its label was getting
+     compressed by the icon competing for space, so drop the icon here
+     (text alone) — the other pages keep it since they have full row
+     width per the rule above. */
+  .body-header-row--inline {
+    flex-direction: row !important;
+  }
+  .body-header-row--inline .body-header-search {
+    max-width: none !important;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .body-header-row--inline .body-header-buttons .bi-plus-circle {
+    display: none;
+  }
+  .body-header-row--inline .body-header-buttons {
+    flex-shrink: 0;
+  }
+  .body-header-row--inline .body-header-buttons a {
+    white-space: nowrap;
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+  }
+}
+
 /* === fleetRegistry.php === */
 @keyframes modalFadeIn {
   from { opacity:0; transform:scale(0.96); }
@@ -645,6 +702,26 @@ body.is-dispatcher-role #customerTable th:nth-child(6), body.is-dispatcher-role 
     padding: 8px 10px;
     font-size: 0.72rem;
     min-height: 40px;
+  }
+
+  /* View-toggle row: grid instead of flex-wrap for a deterministic
+     layout — 2 equal columns for the toggle buttons (was left-clumped
+     with empty space on the right), with the "X active drivers" badge
+     spanning both columns on its own row below, right-aligned. */
+  .map-toggle-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .map-toggle-row #btnTableView,
+  .map-toggle-row #btnMapView {
+    width: 100%;
+    justify-content: center;
+  }
+  .map-toggle-row #tableOnlineCount {
+    grid-column: 1 / -1;
+    justify-self: end;
+    margin-left: 0 !important;
   }
 
   /* Map view: the driver-list sidebar (flex-shrink:0, fixed 300px) left

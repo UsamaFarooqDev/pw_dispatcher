@@ -16,12 +16,12 @@ require('modules/head.php');
 
     <?php @require('modules/sidebar.php'); ?>
 
-    <main id="app-content" class="main-content p-4" style="background: #f4f4f5; min-height: 100vh;">
+    <main id="app-content" class="main-content p-2 p-lg-4" style="background: #f4f4f5; min-height: 100vh;">
 
     <?php @require('modules/bodyHeader.php'); ?>    
 
-    <div class="rounded-3 border mt-4 overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);">
-      <div class="p-4">
+    <div class="rounded-3 border mt-2 mt-lg-4 overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);">
+      <div class="p-2 p-lg-4">
         <div class="d-flex align-items-center gap-2 mb-4 p-1 rounded-2 d-inline-flex" style="background:#F4F4F5;">
           <button
             id="driverViewBtn"
@@ -103,7 +103,7 @@ require('modules/head.php');
           </button>
         </div>
 
-        <div class="d-flex align-items-center justify-content-center p-4 overflow-auto" style="background:#F4F4F5; flex:1;">
+        <div class="d-flex align-items-center justify-content-center p-2 p-lg-4 overflow-auto" style="background:#F4F4F5; flex:1;">
           <img id="modalImage" src="" alt="Document"
             class="rounded-2"
             style="max-width:100%; max-height:calc(90vh - 120px); object-fit:contain; box-shadow:0 4px 16px rgba(0,0,0,0.12);" />

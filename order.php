@@ -39,11 +39,9 @@ foreach ($rideTypes as $t) {
 
     <?php @require('modules/sidebar.php'); ?>
 
-<main id="app-content" class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
+<main id="app-content" class="main-content p-2 p-lg-4" style="background:#F4F4F5; min-height:100vh;">
   <div class="rounded-3 border overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-    <div class="p-3 p-lg-4">
-
-
+    <div class="p-2 p-lg-4">
       <div class="row g-3">
         <div class="col-12 col-xl-7">
 

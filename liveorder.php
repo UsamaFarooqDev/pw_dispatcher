@@ -14,7 +14,7 @@ require('modules/head.php');
 
     <?php @require('modules/sidebar.php'); ?>
 
-    <main id="app-content" class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
+    <main id="app-content" class="main-content p-2 p-lg-4" style="background:#F4F4F5; min-height:100vh;">
 
   <?php @require('modules/bodyHeader.php'); ?>
 
@@ -66,8 +66,8 @@ require('modules/head.php');
 
   <!-- Table content card — now standalone since the tab bar above it moved
        into the sidebar's Live Orders dropdown. -->
-  <div class="rounded-3 border overflow-hidden mt-4" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);">
-    <div class="p-4 pt-3">
+  <div class="rounded-3 border overflow-hidden mt-2 mt-lg-4" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);">
+    <div class="p-2 p-lg-4 pt-3">
 
       <!-- Unassigned -->
       <div id="pane-unassigned" class="tab-pane-table">

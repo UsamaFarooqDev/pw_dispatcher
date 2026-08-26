@@ -19,7 +19,7 @@ require('modules/head.php');
   <?php @require('modules/sidebar.php'); ?>
   <?php require_once 'modules/navbar.php'; ?>
 
-  <main id="app-content" class="main-content p-4" style="background:#F4F4F5; min-height:92vh;">
+  <main id="app-content" class="main-content p-2 p-lg-4" style="background:#F4F4F5; min-height:92vh;">
 
     <!-- KPI CARDS -->
     <div class="row g-3 mb-3">

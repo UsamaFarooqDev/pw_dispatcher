@@ -16,11 +16,11 @@ require('modules/head.php');
 
     <?php @require('modules/sidebar.php'); ?>
 
-    <main id="app-content" class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
+    <main id="app-content" class="main-content p-2 p-lg-4" style="background:#F4F4F5; min-height:100vh;">
 
   <?php @require('modules/bodyHeader.php'); ?>
 
-  <div class="rounded-3 border mt-4 overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+  <div class="rounded-3 border mt-2 mt-lg-4 overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
 
     <div class="table-responsive" style="min-height:400px;">
       <table class="table mb-0" style="border-collapse:collapse;">
@@ -54,7 +54,7 @@ require('modules/head.php');
 
 <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 p-4" style="border-radius:14px; max-width:440px; margin:auto; box-shadow:0 20px 50px rgba(0,0,0,0.15);">
+    <div class="modal-content border-0 p-2 p-lg-4" style="border-radius:14px; max-width:440px; margin:auto; box-shadow:0 20px 50px rgba(0,0,0,0.15);">
 
       <div class="d-flex align-items-center justify-content-between mb-3 pb-2" style="border-bottom:1px solid #EBEBEB;">
         <div>
@@ -130,7 +130,7 @@ require('modules/head.php');
 
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 p-4 text-center" style="border-radius:14px; max-width:420px; margin:auto; box-shadow:0 20px 50px rgba(0,0,0,0.15);">
+    <div class="modal-content border-0 p-2 p-lg-4 text-center" style="border-radius:14px; max-width:420px; margin:auto; box-shadow:0 20px 50px rgba(0,0,0,0.15);">
 
       <div class="d-flex align-items-center justify-content-center mx-auto mb-3"
         style="width:56px; height:56px; background:#FFF7ED; border-radius:50%;">

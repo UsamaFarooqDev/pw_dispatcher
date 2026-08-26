@@ -14,12 +14,12 @@ require('modules/head.php');
 
     <?php @require('modules/sidebar.php'); ?>
 
-    <main id="app-content" class="main-content p-4" style="background:#F4F4F5; min-height:100vh;">
+    <main id="app-content" class="main-content p-2 p-lg-4" style="background:#F4F4F5; min-height:100vh;">
 
   <?php @require('modules/bodyHeader.php'); ?>
 
   <!-- View toggle -->
-  <div class="d-flex align-items-center gap-2 mt-4 mb-3">
+  <div class="d-flex align-items-center gap-2 mt-1 mt-lg-4 mb-3 map-toggle-row">
     <button type="button" class="map-view-toggle is-active" id="btnTableView" onclick="switchMapView('table')">
       <i class="bi bi-table"></i> <span>Live Driver Coordinates</span>
     </button>
