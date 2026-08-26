@@ -54,6 +54,32 @@ function pgGet($url, $key) {
     return is_array($data) ? $data : [];
 }
 
+function pgPatch($url, $key, $payload) {
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL            => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CUSTOMREQUEST  => 'PATCH',
+        CURLOPT_POSTFIELDS     => json_encode($payload),
+        CURLOPT_HTTPHEADER     => [
+            'apikey: ' . $key,
+            'Authorization: Bearer ' . $key,
+            'Content-Type: application/json',
+            'Prefer: return=minimal',
+        ],
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => false,
+        CURLOPT_TIMEOUT        => 10,
+    ]);
+    $body    = curl_exec($ch);
+    $code    = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlErr = curl_error($ch);
+
+    if ($body === false || $curlErr) throw new Exception('cURL error: ' . $curlErr);
+    if ($code >= 400) throw new Exception('Supabase HTTP ' . $code . ': ' . substr($body, 0, 200));
+    return true;
+}
+
 try {
     $rows = pgGet(
         $supabaseUrl . '/rest/v1/rides'
@@ -99,6 +125,29 @@ try {
 
     $name = $profile['full_name'] ?? 'Driver';
 
+    $tripStartedAt = null;
+    try {
+        $onTripStatuses = ['on_trip', 'ontrip', 'ongoing', 'started', 'in_progress', 'on_progress', 'trip_started'];
+        $statusLower = strtolower((string) ($ride['status'] ?? ''));
+        $tsRows = pgGet(
+            $supabaseUrl . '/rest/v1/rides?select=trip_started_at&id=eq.' . rawurlencode($rideId),
+            $supabaseKey
+        );
+        $tripStartedAt = $tsRows[0]['trip_started_at'] ?? null;
+        if ($tripStartedAt === null && in_array($statusLower, $onTripStatuses, true)) {
+            $stampedAt = gmdate('Y-m-d\TH:i:s\Z');
+            pgPatch(
+                $supabaseUrl . '/rest/v1/rides?id=eq.' . rawurlencode($rideId) . '&trip_started_at=is.null',
+                $supabaseKey,
+                ['trip_started_at' => $stampedAt]
+            );
+            $tripStartedAt = $stampedAt;
+        }
+    } catch (Exception $e) {
+        error_log('get_ride_location.php: trip_started_at capture skipped: ' . $e->getMessage());
+        $tripStartedAt = null;
+    }
+
     echo json_encode([
         'success' => true,
         'data'    => [
@@ -106,6 +155,7 @@ try {
             'lng'            => $lng,
             'heading'        => $heading,
             'status'         => $ride['status'] ?? null,
+            'trip_started_at'=> $tripStartedAt,
             'updated_at'     => $ride['updated_at'] ?? null,
             'created_at'     => $ride['created_at'] ?? null,
             'scheduled_at'   => $ride['scheduled_at'] ?? null,

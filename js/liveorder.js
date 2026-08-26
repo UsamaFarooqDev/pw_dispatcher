@@ -83,7 +83,7 @@ function stopPolling() {
 // re-injecting this <script> (which would throw on the top-level let/const
 // above being redeclared).
 window.SPA_PAGES = window.SPA_PAGES || {};
-window.SPA_PAGES['liveorder.php'] = { init: initLiveOrderPage, cleanup: stopPolling };
+window.SPA_PAGES["liveorder.php"] = { init: initLiveOrderPage, cleanup: stopPolling };
 
 function toggleActionColumn(show) {
   // Toggle header
@@ -689,6 +689,13 @@ function renderAssignedStatusBadge(ride) {
   return renderStatusBadge(ride.status || "N/A");
 }
 
+function enrouteTooltip(ride) {
+  const lines = [];
+  if (ride.enroute_at) lines.push("Enroute to pickup: " + formatOrderTime(ride.enroute_at));
+  if (ride.trip_started_at) lines.push("Picked up / on trip: " + formatOrderTime(ride.trip_started_at));
+  return lines.join("\n");
+}
+
 // Prebook (pre-booked / scheduled) Yes-No badge.
 function renderPrebookBadge(ride) {
   return isScheduledRide(ride)
@@ -801,7 +808,7 @@ function populateAssignedTable(rides) {
             <td>${orderTime}</td>
             <td style="white-space:normal; word-break:break-word;">${pickup}</td>
             <td style="white-space:normal; word-break:break-word;">${destination}</td>
-            <td>${renderAssignedStatusBadge(ride)}</td>
+            <td title="${enrouteTooltip(ride)}">${renderAssignedStatusBadge(ride)}</td>
             <td>${renderPaymentBadge(ride.payment_method)}</td>
             <td>${renderPrebookBadge(ride)}</td>
             <td>${renderSourceBadge(ride.source)}</td>

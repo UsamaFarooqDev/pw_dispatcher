@@ -51,13 +51,27 @@ try {
         'updated_at' => date('Y-m-d H:i:s') . '+00'
     ];
 
+    $existing = $db->findData('rides', ['id' => $input['ride_id']]);
+    $existingRide = !empty($existing) ? $existing[0] : null;
+
     // When a ride leaves the scheduled state, clear is_scheduled
     if ($status !== 'scheduled') {
-        $existing = $db->findData('rides', ['id' => $input['ride_id']]);
-        $wasScheduled = !empty($existing) && strtolower((string)($existing[0]['status'] ?? '')) === 'scheduled';
+        $wasScheduled = $existingRide && strtolower((string)($existingRide['status'] ?? '')) === 'scheduled';
         if ($wasScheduled) {
             $updateData['is_scheduled'] = false;
         }
+    }
+
+    $phaseColumn = null;
+    if ($status === 'assigned') {
+        $phaseColumn = 'assigned_at';
+    } elseif ($status === 'enroute') {
+        $phaseColumn = 'enroute_at';
+    } elseif ($status === 'completed') {
+        $phaseColumn = 'completed_at';
+    }
+    if ($phaseColumn !== null && $existingRide && empty($existingRide[$phaseColumn])) {
+        $updateData[$phaseColumn] = date('Y-m-d H:i:s') . '+00';
     }
 
     // Update the ride

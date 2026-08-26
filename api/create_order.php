@@ -220,53 +220,59 @@ try {
         // user_id stays null; passenger_name & passenger_phone go on the ride.
         $userId = null;
     } else {
-        if (!preg_match('/^\+/', $phoneNumber)) {
-
+        $selectedUserId = isset($input['user_id']) ? trim((string) $input['user_id']) : '';
+        if ($selectedUserId !== '') {
+            $selectedPassengers = $db->findData('passengers', ['id' => $selectedUserId]);
+            if (!empty($selectedPassengers)) {
+                $userId = $selectedPassengers[0]['id'];
+            }
         }
 
-        $passengers = $db->findData('passengers', ['phone' => $phoneNumber]);
+        if ($userId === null) {
+            $passengers = $db->findData('passengers', ['phone' => $phoneNumber]);
 
-        if (!empty($passengers)) {
-            $userId = $passengers[0]['id'];
-        } else {
-            $userEmail = isset($input['email']) ? $input['email'] : null;
-            try {
-                $authUser = createSupabaseUser($userEmail, $phoneNumber);
-                $userId = $authUser['id'];
-            } catch (Exception $e) {
+            if (!empty($passengers)) {
+                $userId = $passengers[0]['id'];
+            } else {
+                $userEmail = isset($input['email']) ? $input['email'] : null;
                 try {
-                    $tempEmail = $userEmail ?: $phoneNumber . '@temp.passenger';
-                    $authUser = getUserByEmail($tempEmail);
+                    $authUser = createSupabaseUser($userEmail, $phoneNumber);
                     $userId = $authUser['id'];
-                } catch (Exception $e2) {
-                    http_response_code(500);
-                    echo json_encode([
-                        'success' => false,
-                        'error' => 'Failed to create or find user: ' . $e->getMessage(),
-                        'data' => null
-                    ], JSON_PRETTY_PRINT);
-                    exit;
+                } catch (Exception $e) {
+                    try {
+                        $tempEmail = $userEmail ?: $phoneNumber . '@temp.passenger';
+                        $authUser = getUserByEmail($tempEmail);
+                        $userId = $authUser['id'];
+                    } catch (Exception $e2) {
+                        http_response_code(500);
+                        echo json_encode([
+                            'success' => false,
+                            'error' => 'Failed to create or find user: ' . $e->getMessage(),
+                            'data' => null
+                        ], JSON_PRETTY_PRINT);
+                        exit;
+                    }
                 }
-            }
 
 
-            $passengerData = [
-                'id' => $userId,
-                'phone' => $phoneNumber,
-                'name' => $input['customer_name'],
-                'email' => $userEmail,
-                'is_email_verified' => false
-            ];
+                $passengerData = [
+                    'id' => $userId,
+                    'phone' => $phoneNumber,
+                    'name' => $input['customer_name'],
+                    'email' => $userEmail,
+                    'is_email_verified' => false
+                ];
 
-            try {
-                $newPassenger = $db->insertData('passengers', $passengerData);
-            } catch (Exception $e) {
+                try {
+                    $newPassenger = $db->insertData('passengers', $passengerData);
+                } catch (Exception $e) {
 
-                $existingPassengers = $db->findData('passengers', ['id' => $userId]);
-                if (!empty($existingPassengers)) {
-                    $userId = $existingPassengers[0]['id'];
-                } else {
-                    throw $e;
+                    $existingPassengers = $db->findData('passengers', ['id' => $userId]);
+                    if (!empty($existingPassengers)) {
+                        $userId = $existingPassengers[0]['id'];
+                    } else {
+                        throw $e;
+                    }
                 }
             }
         }

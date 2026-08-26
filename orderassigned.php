@@ -259,6 +259,10 @@ require('modules/head.php');
               <span style="font-size:0.67rem; text-transform:uppercase; color:#A1A1AA; letter-spacing:0.05em; font-weight:600;">Enroute Since</span>
               <span id="overlayEnrouteTime" style="font-size:0.76rem; color:#18181B; font-weight:600; text-align:right;">Not yet</span>
             </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+              <span style="font-size:0.67rem; text-transform:uppercase; color:#A1A1AA; letter-spacing:0.05em; font-weight:600;">Picked Up / On Trip</span>
+              <span id="overlayTripStartedTime" style="font-size:0.76rem; color:#18181B; font-weight:600; text-align:right;">Not yet</span>
+            </div>
           </div>
           <!-- Live ride progress status -->
           <div id="rideProgressCard" style="display:none; margin-top:10px; padding:9px 12px; border-radius:8px; background:#EFF6FF; border:1px solid #DBEAFE;">
