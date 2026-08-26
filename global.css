@@ -79,6 +79,13 @@ h1, h2, h3, h4, h5, h6 {
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(-100%);
+    /* Start the drawer below the navbar instead of covering it. The
+       sidebar (z-index 1031) otherwise sits above the navbar (1030) while
+       open, hiding the toggle button underneath it — tapping the button
+       again to close then does nothing because the tap lands on the
+       sidebar instead, which reads as the sidebar being "stuck" open. */
+    top: 56px;
+    height: calc(100vh - 56px);
   }
   .main-content {
     margin-left: 0;
@@ -629,6 +636,39 @@ body.is-dispatcher-role #customerTable th:nth-child(6), body.is-dispatcher-role 
 .map-filter-btn.is-active { background: #f37a20; color: #fff; border-color: #f37a20; box-shadow: 0 2px 10px rgba(243,122,32,0.3); }
 .map-filter-btn i { font-size: 12px; }
 
+/* map.php: mobile-only fixes (≤767.98px). Desktop/tablet layout above
+   this breakpoint is untouched. */
+@media (max-width: 767.98px) {
+  /* Top view-toggle buttons: cramped padding/tap-target, and the longer
+     "Live Driver Coordinates" label wrapped inside too little width. */
+  .map-view-toggle {
+    padding: 8px 10px;
+    font-size: 0.72rem;
+    min-height: 40px;
+  }
+
+  /* Map view: the driver-list sidebar (flex-shrink:0, fixed 300px) left
+     zero room for the flex-grow-1 map next to it, hiding the map
+     entirely. Stack them instead: map on top with its own height, driver
+     list below with its own scroll. #map/#driverCardList are unique ids
+     on this page, so :has() here can only ever match their one ancestor
+     each — no risk of matching an unrelated element elsewhere. */
+  #viewMap { height: auto !important; }
+  .d-flex.gap-3:has(> .position-relative.flex-grow-1 #map) {
+    flex-direction: column;
+    height: auto !important;
+  }
+  .position-relative.flex-grow-1:has(#map) {
+    height: 320px;
+    flex-grow: 0;
+  }
+  .d-flex.flex-column.rounded-3.overflow-hidden:has(#driverCardList) {
+    width: 100% !important;
+    flex-shrink: 1 !important;
+    max-height: 320px;
+  }
+}
+
 /* === liveorder.php === */
 /* Live Orders — tab bar now lives in the sidebar's Live Orders dropdown;
    these buttons stay functional (TAB_CONFIG still targets them) but are
@@ -1117,6 +1157,51 @@ body.is-dispatcher-role #customerTable th:nth-child(6), body.is-dispatcher-role 
 .oc-chip-lg { flex: 1 1 0; justify-content: center; padding: 10px 16px; font-size: 0.845rem; }
 .oc-chip-lg i { font-size: 16px; }
 
+/* order.php: mobile-only fixes (≤767.98px). Desktop/tablet layout above
+   this breakpoint is untouched. */
+@media (max-width: 767.98px) {
+  /* Service Type cards: 5 columns always (repeat(5,...)) split 8 cards
+     unevenly (5 + 3 leftover) and squeezed each card's 52px icon into a
+     ~49px-wide card. 4 columns gives an even 4+4 split with room to fit. */
+  .ride-type-group {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .ride-type-btn {
+    min-height: 84px;
+    padding: 8px 4px;
+    font-size: 0.7rem;
+  }
+  .ride-type-icon {
+    width: 38px;
+    height: 36px;
+    font-size: 17px;
+  }
+  .ride-type-icon img { width: 32px; height: 28px; }
+
+  /* Ride Timing ("Book Now" / "Schedule for Later"): flex-fill split the
+     row 50/50, too narrow for "Schedule for Later" to fit on one line —
+     it wrapped to a second line and got clipped inside the fixed 36px
+     button height. Stack them full-width instead. */
+  .d-flex.gap-2:has(> #modeNowBtn) { flex-wrap: wrap; }
+  #modeNowBtn, #modeScheduleBtn {
+    flex: 1 1 100%;
+    height: auto !important;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    white-space: nowrap;
+  }
+
+  /* Confirm Order: same wrap-and-clip issue inside its fixed 40px height
+     and px-5 padding once squeezed next to Clear Fields. */
+  #confirmOrderBtn {
+    height: auto !important;
+    padding: 10px 18px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}
+
 /* === orderassigned.php === */
 .btn-loading { opacity:0.7; cursor:not-allowed; pointer-events:none; }
 .btn-loading #btnText { opacity:0.9; }
@@ -1186,4 +1271,47 @@ main.view-mode-active #mapContainer {
   opacity: 0.65;
   transition: opacity 0.15s ease;
   pointer-events: none;
+}
+
+/* === Mobile responsiveness ============================================ */
+
+/* modules/navbar.php: the title/profile row is a non-wrapping flex row.
+   Without a min-width/truncation rule, a long page title (e.g. "Profile
+   Management") can't shrink, so on narrow screens the whole row — and with
+   it the whole page — gets forced wider than the viewport, pushing the
+   profile menu off-screen and producing a page-wide horizontal scrollbar.
+   Letting the title truncate instead fixes this on every page at once.
+   Scoped to the dedicated .navbar-title-wrap class (not a :has() match on
+   shared flex-utility classes) — an earlier version of this rule also
+   matched the outer navbar row via :has(), which clipped the profile
+   dropdown menu (a descendant of that same row) into invisibility. */
+.navbar-title-wrap {
+  min-width: 0;
+  flex-shrink: 1;
+  overflow: hidden;
+}
+.navbar-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Compact page padding on mobile — all dispatcher pages share the same
+   .main-content.p-4 combo on #app-content, so overriding it once here
+   applies everywhere without touching every page. Desktop/tablet keep the
+   original p-4. main.view-mode-active (orderassigned.php tracking view)
+   already sets its own !important padding above and is unaffected. */
+@media (max-width: 575.98px) {
+  /* :not(.view-mode-active) keeps this from outranking orderassigned.php's
+     own main.view-mode-active{padding:20px!important} rule — both are
+     !important, and two classes here would otherwise beat that rule's
+     one-class-one-element specificity regardless of source order. */
+  .main-content.p-4:not(.view-mode-active) {
+    /* Bootstrap's own .p-4 utility ships !important (CDN build), so this
+       has to match it to actually override the padding. 1rem (not smaller):
+       some pages' outermost .row uses g-4, whose -0.75rem gutter margin
+       needs at least that much padding on the container to not bleed past
+       the viewport edge and reopen the horizontal-scroll issue. */
+    padding: 1rem !important;
+  }
 }

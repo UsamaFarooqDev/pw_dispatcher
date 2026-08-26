@@ -65,7 +65,7 @@ require('modules/head.php');
         </div>
 
         <div id="customerTable" class="d-none mb-3" style="min-height:362px;">
-          <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB;">
+          <div class="table-responsive rounded-2" style="border:1px solid #EBEBEB;">
             <table class="table mb-0" style="border-collapse:collapse;">
               <thead>
                 <tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">

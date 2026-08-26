@@ -24,7 +24,7 @@ if ($user_name === '' && $user_email !== '') {
 }
 ?>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top px-4" style="height:56px; box-shadow: 0 1px 0 #EBEBEB, 0 4px 20px rgba(0,0,0,0.05); z-index:1030;">
+<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top px-1 px-lg-4" style="height:56px; box-shadow: 0 1px 0 #EBEBEB, 0 4px 20px rgba(0,0,0,0.05); z-index:1030;">
   <div id="spaProgressBar" aria-hidden="true"></div>
   <div class="d-flex align-items-center w-100 gap-2">
 
@@ -37,7 +37,7 @@ if ($user_name === '' && $user_email !== '') {
       <span class="navbar-toggler-icon" style="width:18px; height:18px;"></span>
     </button>
 
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2 navbar-title-wrap">
       <h5 class="m-0 fw-bold navbar-title ms-lg-230" id="pageTitle" style="font-size:1.3rem; color:#18181B; letter-spacing:-0.01em; white-space:nowrap;">
         <?php echo htmlspecialchars($page_title); ?>
       </h5>

@@ -1691,6 +1691,12 @@ function populateEnrouteTable(rides) {
     const status = ride.status || "N/A";
     const driverName = ride.driver_name || "Unassigned";
     const fare = formatFare(ride.fare_eur, ride.estimate_fare);
+    const rawFare =
+      ride.fare_eur != null
+        ? parseFloat(ride.fare_eur)
+        : ride.estimate_fare != null
+          ? parseFloat(ride.estimate_fare)
+          : 0;
     const rideId = encodeURIComponent(ride.id || "");
     const row = document.createElement("tr");
     row.innerHTML = `
@@ -1704,10 +1710,20 @@ function populateEnrouteTable(rides) {
             <td>${driverName}</td>
             <td>${fare}</td>
             <td class="text-end pe-4">
-              <a href="orderassigned.php?id=${rideId}&view=1&from=enroute" class="view-details-btn">
-                <span>View Live</span>
-                <i class="bi bi-geo-alt-fill"></i>
-              </a>
+              <div style="display:inline-grid; grid-template-columns:repeat(3, auto); gap:6px; justify-items:start;">
+                <button type="button" class="complete-ride-btn" onclick="completeRide('${rideId}', ${rawFare})">
+                  <i class="bi bi-check-circle-fill"></i>
+                  <span>Complete</span>
+                </button>
+                <button type="button" class="unassign-btn" onclick="unassignRide('${rideId}')">
+                  <i class="bi bi-person-dash"></i>
+                  <span>Unassign</span>
+                </button>
+                <a href="orderassigned.php?id=${rideId}&view=1&from=enroute" class="view-details-btn">
+                  <span>View Details</span>
+                  <i class="bi bi-chevron-right"></i>
+                </a>
+              </div>
             </td>
           `;
     tbody.appendChild(row);

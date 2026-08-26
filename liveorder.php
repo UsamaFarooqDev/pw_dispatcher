@@ -71,7 +71,7 @@ require('modules/head.php');
 
       <!-- Unassigned -->
       <div id="pane-unassigned" class="tab-pane-table">
-        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
+        <div class="table-responsive rounded-2" style="border:1px solid #EBEBEB; min-height:362px;">
           <table class="table mb-0" style="border-collapse:collapse;">
             <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
@@ -113,7 +113,7 @@ require('modules/head.php');
 
       <!-- Enroute -->
       <div id="pane-enroute" class="tab-pane-table" style="display:none;">
-        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
+        <div class="table-responsive rounded-2" style="border:1px solid #EBEBEB; min-height:362px;">
           <table class="table mb-0" style="border-collapse:collapse;">
             <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
@@ -134,7 +134,7 @@ require('modules/head.php');
 
       <!-- On Trip -->
       <div id="pane-ontrip" class="tab-pane-table" style="display:none;">
-        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
+        <div class="table-responsive rounded-2" style="border:1px solid #EBEBEB; min-height:362px;">
           <table class="table mb-0" style="border-collapse:collapse;">
             <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
@@ -156,7 +156,7 @@ require('modules/head.php');
 
       <!-- Scheduled -->
       <div id="pane-scheduled" class="tab-pane-table" style="display:none;">
-        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
+        <div class="table-responsive rounded-2" style="border:1px solid #EBEBEB; min-height:362px;">
           <table class="table mb-0" style="border-collapse:collapse;">
             <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
@@ -177,7 +177,7 @@ require('modules/head.php');
 
       <!-- Cancelled -->
       <div id="pane-cancelled" class="tab-pane-table" style="display:none;">
-        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
+        <div class="table-responsive rounded-2" style="border:1px solid #EBEBEB; min-height:362px;">
           <table class="table mb-0" style="border-collapse:collapse;">
             <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Name</th>
@@ -217,7 +217,7 @@ require('modules/head.php');
 
       <!-- Meet & Greet -->
       <div id="pane-meetgreet" class="tab-pane-table" style="display:none;">
-        <div class="table-responsive rounded-2 overflow-hidden" style="border:1px solid #EBEBEB; min-height:362px;">
+        <div class="table-responsive rounded-2" style="border:1px solid #EBEBEB; min-height:362px;">
           <table class="table mb-0" style="border-collapse:collapse;">
             <thead><tr style="background:#FAFAFA; border-bottom:1px solid #EBEBEB;">
               <th class="fw-semibold text-nowrap px-4 py-2" style="font-size:0.775rem; color:#71717A; letter-spacing:0.04em; text-transform:uppercase; border:none;">Company</th>

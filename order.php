@@ -146,17 +146,17 @@ foreach ($rideTypes as $t) {
 
               <div class="col-12">
                 <div class="row g-2">
-                  <div class="col-4">
+                  <div class="col-6 col-sm-4">
                     <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Est. Fare</label>
                     <input type="text" class="form-control" id="estimatedFare" readonly
                       style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#FAFAFA; color:#18181B; font-weight:600;" />
                   </div>
-                  <div class="col-4">
+                  <div class="col-6 col-sm-4">
                     <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Distance (km)</label>
                     <input type="text" class="form-control" id="distanceKm" readonly
                       style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#FAFAFA; color:#18181B;" />
                   </div>
-                  <div class="col-4">
+                  <div class="col-6 col-sm-4">
                     <label class="form-label fw-semibold" style="font-size:0.8125rem; color:#18181B;">Time (min)</label>
                     <input type="text" class="form-control" id="travelTime" readonly
                       style="height:38px; border:1.5px solid #EBEBEB; border-radius:8px; font-size:0.845rem; background:#FAFAFA; color:#18181B;" />

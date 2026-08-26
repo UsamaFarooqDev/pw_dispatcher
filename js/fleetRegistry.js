@@ -1,18 +1,7 @@
-document.getElementById('sidebarToggle')?.addEventListener('click', function () {
-  document.querySelector('.sidebar')?.classList.toggle('active');
-});
-
-document.addEventListener('click', function (event) {
-  const sidebar = document.querySelector('.sidebar');
-  if (
-    window.innerWidth < 768 &&
-    sidebar &&
-    !event.target.closest('.sidebar') &&
-    !event.target.closest('#sidebarToggle')
-  ) {
-    sidebar.classList.remove('active');
-  }
-});
+// Mobile sidebar toggle now lives in js/sidebar.js (the persistent shell
+// script, loaded on every page) instead of here — this file only loads
+// once the dispatcher has visited Fleet Registry, so the toggle was
+// unreliable everywhere else.
 
 let passengersLoaded = false;
 

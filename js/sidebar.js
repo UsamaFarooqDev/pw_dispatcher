@@ -25,6 +25,46 @@ window.highlightActiveSidebarLink = highlightActiveSidebarLink;
 document.addEventListener("DOMContentLoaded", function () {
   highlightActiveSidebarLink();
 
+  // Mobile sidebar toggle. This used to live only in js/fleetRegistry.js —
+  // a page-specific script that only loads once the dispatcher has visited
+  // Fleet Registry — so the toggle button did nothing on every other page
+  // until then. sidebar.js is part of the persistent shell (loaded once,
+  // on every page), so binding it here makes the toggle reliable from the
+  // very first load, everywhere.
+  const sidebarToggleBtn = document.getElementById("sidebarToggle");
+  if (sidebarToggleBtn) {
+    sidebarToggleBtn.addEventListener("click", function () {
+      document.querySelector(".sidebar")?.classList.toggle("active");
+    });
+  }
+  document.addEventListener("click", function (event) {
+    const sidebarEl = document.querySelector(".sidebar");
+    if (
+      window.innerWidth < 768 &&
+      sidebarEl &&
+      sidebarEl.classList.contains("active") &&
+      !event.target.closest(".sidebar") &&
+      !event.target.closest("#sidebarToggle")
+    ) {
+      sidebarEl.classList.remove("active");
+    }
+  });
+
+  // Close the mobile drawer when a nav link is actually followed. Under
+  // SPA navigation (js/spa-navigation.js) the sidebar is part of the
+  // persistent shell and never reloads, so without this it stayed open
+  // (covering the new page) after navigating on mobile. Scoped to real
+  // <a> links only — a.sidebar-link excludes the Live Orders <button>
+  // dropdown toggle (which also carries the .sidebar-link class but
+  // should just expand/collapse the submenu, not close the drawer).
+  document.querySelectorAll(".sidebar a.sidebar-link, .sidebar-sublink").forEach((link) => {
+    link.addEventListener("click", function () {
+      if (window.innerWidth < 768) {
+        document.querySelector(".sidebar")?.classList.remove("active");
+      }
+    });
+  });
+
   const LO_OPEN_KEY = "sidebarLiveOrdersOpen";
   const loToggle = document.getElementById("sidebarLiveOrdersToggle");
   const loItem = document.getElementById("sidebarLiveOrdersItem");
