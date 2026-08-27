@@ -107,45 +107,8 @@ function getUserByEmail($email) {
     throw new Exception('User not found');
 }
 
-/**
- * Calculate fare using the same formula as the passenger app (ride_selection.dart).
- * @param float $distanceKm Distance in km
- * @param float $durationMin Duration in minutes
- * @param string $rideType Service/ride type (Economy, Economy XL, Limousine, etc.)
- * @param string|null $scheduledDateTime Optional 'Y-m-d H:i:s' for day/night rate; if null uses current time
- * @return float Fare in EUR, rounded to 2 decimals
- */
-function calcFareFromPassengerFormula($distanceKm, $durationMin, $rideType, $scheduledDateTime = null, $tzOffsetMin = 0) {
-    $initialFare = 3.0;
-    $ts = $scheduledDateTime ? strtotime($scheduledDateTime . ' UTC') : time();
-    // Convert UTC hour back to dispatcher's local hour for day/night rate
-    $localTs = $ts - ($tzOffsetMin * 60);
-    $hour = (int) gmdate('G', $localTs);
-    if ($hour >= 8 && $hour < 20) {
-        $baseFare = 4.4;
-        $ratePerKm = 1.32;
-        $ratePerMinute = 0.20;
-    } else {
-        $baseFare = 5.4;
-        $ratePerKm = 1.81;
-        $ratePerMinute = 0.30;
-    }
-    $rawFare = $initialFare + $baseFare + ($distanceKm * $ratePerKm) + ($durationMin * $ratePerMinute);
-    $multipliers = [
-        'Economy' => 1.0,
-        'Economy XL' => 1.2,
-        'Business' => 1.0,
-        'Business Plus' => 1.2,
-        'Limousine' => 2.0,
-        'Wheelchair accessible' => 1.1,
-        'Wheelchair Taxi' => 1.1,
-        'Pets Taxi' => 1.15,
-        'Courier / Parcel' => 0.9,
-        'Parcel Delivery' => 0.9,
-    ];
-    $multiplier = isset($multipliers[$rideType]) ? $multipliers[$rideType] : 1.0;
-    return round((float) ($rawFare * $multiplier), 2);
-}
+
+require_once __DIR__ . '/../lib/fare_calculator.php';
 
 if (empty($_SESSION['admin_id'])) {
     http_response_code(401);
@@ -350,18 +313,17 @@ try {
     }
     $scheduledDateTime = gmdate('Y-m-d H:i:s', $scheduledTsUtc);
 
-    // Prefer the frontend-computed fare (which already accounts for any
-    // Special Cost override the dispatcher entered). Fall back to the legacy
-    // base+extra+special breakdown if the frontend didn't send fare_eur.
+    // Fare is now always computed authoritatively server-side (see
+    // resolveDispatcherFare below) rather than trusting the frontend's
+    // fare_eur — the frontend's live estimate reads the dispatcher's own
+    // browser clock and ride_types.multiplier, both of which can disagree
+    // with the passenger app's real pricing_config-driven fare for the
+    // same trip. The one legitimate exception is an explicit Special
+    // Cost override, which the dispatcher typed on purpose and must win.
     $baseFare = isset($input['base_fare']) ? floatval($input['base_fare']) : 0;
     $extraCost = isset($input['extra_cost']) ? floatval($input['extra_cost']) : 0;
-    $specialCost = isset($input['special_cost']) ? floatval($input['special_cost']) : 0;
-    $fareExplicit = isset($input['fare_eur']) && is_numeric($input['fare_eur']) && floatval($input['fare_eur']) >= 0;
-    if ($fareExplicit) {
-        $fareEur = floatval($input['fare_eur']);
-    } else {
-        $fareEur = $baseFare + $extraCost + $specialCost;
-    }
+    $hasSpecialCostOverride = isset($input['special_cost']) && $input['special_cost'] !== '' && is_numeric($input['special_cost']);
+    $specialCost = $hasSpecialCostOverride ? floatval($input['special_cost']) : 0;
 
 
     $metaData = [
@@ -438,20 +400,22 @@ try {
     }
 
 
-    // When no fare was provided (and the dispatcher didn't explicitly send one),
-    // use the same formula as the passenger app (ride_selection.dart)
-    if (!$fareExplicit && $fareEur == 0) {
-        if ($distanceKm > 0 || $durationMin > 0) {
-            $fareEur = calcFareFromPassengerFormula(
-                $distanceKm,
-                $durationMin,
-                isset($input['service_type']) ? trim((string) $input['service_type']) : 'Economy',
-                $scheduledDateTime,
-                $tzOffsetMin
-            );
-        } else {
-            $fareEur = 20.00; // fallback when distance/duration unknown
-        }
+    // Authoritative fare: an explicit Special Cost override always wins;
+    // otherwise always recompute server-side (see resolveDispatcherFare)
+    // rather than trusting whatever the frontend estimated, so a
+    // dispatcher order prices identically to the same trip booked
+    // through the passenger app.
+    if ($hasSpecialCostOverride) {
+        $fareEur = $specialCost;
+    } elseif ($distanceKm > 0 || $durationMin > 0) {
+        $fareEur = resolveDispatcherFare(
+            $db,
+            isset($input['service_type']) ? trim((string) $input['service_type']) : 'Economy',
+            $distanceKm,
+            $durationMin
+        );
+    } else {
+        $fareEur = 20.00; // last-resort when distance/duration truly unavailable
     }
 
 

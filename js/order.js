@@ -719,10 +719,28 @@
             orderDirectionsRenderer.setRouteIndex(bestIndex);
             googleDistance = bestDistanceKm;
             googleDuration = bestDurationMin;
-            googleFare = bestFare;
             pickupLatLng = leg.start_location;
             dropoffLatLng = leg.end_location;
-            applyFareOverrides();
+
+            // Distance/time are accurate immediately (straight from Google);
+            // only the fare needs the authoritative server round-trip, so
+            // show those two now and a loading placeholder for fare instead
+            // of a wrong local estimate that would flash and get replaced.
+            currentDistance = bestDistanceKm;
+            currentDuration = bestDurationMin;
+            const distEl2 = document.getElementById('distanceKm');
+            const timeEl2 = document.getElementById('travelTime');
+            const fareEl2 = document.getElementById('estimatedFare');
+            if (distEl2) distEl2.value = Number(bestDistanceKm).toFixed(2);
+            if (timeEl2) timeEl2.value = Math.round(Number(bestDurationMin)).toString();
+            if (fareEl2) fareEl2.value = 'Calculating…';
+
+            fetchAuthoritativeFare(bestDistanceKm, bestDurationMin, rideType).then((fare) => {
+              if (googleDistance === bestDistanceKm && googleDuration === bestDurationMin) {
+                googleFare = fare != null ? fare : bestFare;
+                applyFareOverrides();
+              }
+            });
           }
         });
       }
@@ -758,12 +776,51 @@
         return Math.round((rawFare * multiplier) * 100) / 100;
       }
 
-      function recalculateFareForCurrentRoute() {
+      // Authoritative fare from the server (api/estimate_fare.php), which
+      // runs the exact same pricing_config-driven calculation as
+      // create_order.php — so the live "Est. Fare" preview always matches
+      // what actually gets billed on Confirm. calculateFare() above stays
+      // as a fast local approximation used only to compare Google's route
+      // alternatives against each other (see tryCalculateRoute) — picking
+      // the cheapest of several routes doesn't need to be billing-accurate,
+      // just consistent across the comparison.
+      async function fetchAuthoritativeFare(distanceKm, durationMin, rideType) {
+        try {
+          const params = new URLSearchParams({
+            service_type: rideType,
+            distance_km: String(distanceKm),
+            duration_min: String(durationMin),
+          });
+          const res = await fetch(`api/estimate_fare.php?${params.toString()}`);
+          if (res.status === 401) { window.location.href = '/'; return null; }
+          if (!res.ok) return null;
+          const result = await res.json();
+          if (!result.success || typeof result.data?.fare_eur !== 'number') return null;
+          return result.data.fare_eur;
+        } catch (err) {
+          console.error('fetchAuthoritativeFare failed:', err);
+          return null;
+        }
+      }
+
+      async function recalculateFareForCurrentRoute() {
         if (googleDistance == null || googleDuration == null) return;
-        const pickupTimeStr = buildPickupDateTime();
         const rideType = document.getElementById('serviceType')?.value || 'Economy';
-        googleFare = calculateFare(googleDistance, googleDuration, pickupTimeStr, rideType);
-        applyFareOverrides();
+        // Distance/time are unchanged here (only service type changed) — just
+        // show a loading placeholder for fare instead of a wrong local
+        // estimate that would flash and get replaced a moment later.
+        const fareElLoading = document.getElementById('estimatedFare');
+        if (fareElLoading) fareElLoading.value = 'Calculating…';
+
+        const distanceSnapshot = googleDistance;
+        const durationSnapshot = googleDuration;
+        const fare = await fetchAuthoritativeFare(distanceSnapshot, durationSnapshot, rideType);
+        // Guard against the route/service type having changed again while
+        // this was in flight — never let a stale response overwrite it.
+        if (googleDistance === distanceSnapshot && googleDuration === durationSnapshot) {
+          googleFare = fare != null ? fare : calculateFare(distanceSnapshot, durationSnapshot, buildPickupDateTime(), rideType);
+          applyFareOverrides();
+        }
       }
 
       /**
@@ -972,6 +1029,15 @@ async function createOrder() {
         const isCustomPax = paxMode === 'custom';
         const finalName = customerName;
 
+        // Sent as its own field (not folded into fare_eur) so the backend can
+        // tell "dispatcher typed a manual override" apart from "this is just
+        // the auto-calculated route fare" — the server now always
+        // recalculates the fare itself unless this is present.
+        const specialCostRaw = document.getElementById('specialCost')?.value;
+        const specialCostOverride = (specialCostRaw !== '' && specialCostRaw != null && !isNaN(parseFloat(specialCostRaw)))
+          ? parseFloat(specialCostRaw)
+          : null;
+
         const payload = {
           user_id: passengerId || null,
           customer_name: finalName,
@@ -993,6 +1059,7 @@ async function createOrder() {
           distance_km: currentDistance,
           duration_min: currentDuration,
           fare_eur: currentFare,
+          special_cost: specialCostOverride,
           payment_method: paymentMethod,
           service_type_display: serviceType,
           scheduled_at: pickupTimeStr,

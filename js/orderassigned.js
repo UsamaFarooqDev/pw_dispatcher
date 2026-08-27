@@ -683,24 +683,17 @@ async function initOrderAssignedCore() {
       if (oaCurrentDistance == null || oaCurrentDuration == null) {
         return;
       }
-      const rideDateInput = document.getElementById("rideDate");
-      const rideTimeInput = document.getElementById("rideTime");
-      let pickupTimeStr = null;
-      if (rideDateInput && rideTimeInput && rideDateInput.value && rideTimeInput.value) {
-        pickupTimeStr = rideDateInput.value + "T" + rideTimeInput.value;
-      } else {
-        const now = new Date();
-        pickupTimeStr = now.toISOString().slice(0, 16);
-      }
       const rideType =
         serviceTypeSelect.value && serviceTypeSelect.value.trim() ? serviceTypeSelect.value.trim() : "Economy";
-      const newFare = oaCalculateFare(oaCurrentDistance, oaCurrentDuration, pickupTimeStr, rideType);
-      oaCurrentFare = newFare;
       hasDbFare = false;
+      // Distance/duration are unchanged here (only service type changed) —
+      // just show a loading placeholder for fare instead of a wrong local
+      // estimate that would flash and get replaced a moment later.
       const estimatedFareElem = document.getElementById("estimatedFare");
       if (estimatedFareElem) {
-        estimatedFareElem.value = `€${newFare.toFixed(2)}`;
+        estimatedFareElem.value = "Calculating…";
       }
+      oaCorrectFareFromServer(oaCurrentDistance, oaCurrentDuration, rideType);
     });
   }
 
@@ -766,25 +759,16 @@ function calculateRouteAndFare(pickup, dropoff) {
 
       // Only (re)calculate fare from distance/time when we are not using a DB fare
       if (!hasDbFare) {
-        const rideDateInput = document.getElementById("rideDate");
-        const rideTimeInput = document.getElementById("rideTime");
-        let pickupTimeStr = null;
-
-        if (rideDateInput && rideTimeInput && rideDateInput.value && rideTimeInput.value) {
-          pickupTimeStr = rideDateInput.value + "T" + rideTimeInput.value;
-        } else {
-          // Use current time if not specified
-          const now = new Date();
-          pickupTimeStr = now.toISOString().slice(0, 16);
-        }
-
-        const rideType = document.getElementById("serviceType")?.value?.trim() || "Economy";
-        const fareAmount = oaCalculateFare(distanceInKm, durationInMin, pickupTimeStr, rideType);
-
+        // Distance/time above are accurate immediately (straight from
+        // Google); only the fare needs the authoritative server round-trip
+        // (see oaCorrectFareFromServer), so show a loading placeholder
+        // instead of a wrong local estimate that would flash and get
+        // replaced a moment later.
         if (estimatedFareElem) {
-          estimatedFareElem.value = `€${fareAmount.toFixed(2)}`;
+          estimatedFareElem.value = "Calculating…";
         }
-        oaCurrentFare = fareAmount;
+        const rideType = document.getElementById("serviceType")?.value?.trim() || "Economy";
+        oaCorrectFareFromServer(distanceInKm, durationInMin, rideType);
       }
 
       // Store values for assignment
@@ -825,6 +809,46 @@ function oaCalculateFare(distanceInKm, durationInMin, pickupTimeStr, rideType) {
   };
   const multiplier = multipliers[rideType] ?? 1.0;
   return Math.round(rawFare * multiplier * 100) / 100;
+}
+
+// Sets the "Est. Fare" field from the authoritative, pricing_config-driven
+// calculation (api/estimate_fare.php — the same one api/create_order.php
+// and api/assign_driver.php actually bill from). The field is left on a
+// "Calculating…" placeholder by the caller until this resolves — never a
+// wrong local estimate that would flash and get replaced. If the server
+// call itself fails, falls back to the local oaCalculateFare() estimate
+// so the field never gets stuck on the placeholder.
+async function oaCorrectFareFromServer(distanceKm, durationMin, rideType) {
+  if (distanceKm == null || durationMin == null) return;
+  let fare = null;
+  try {
+    const params = new URLSearchParams({
+      service_type: rideType,
+      distance_km: String(distanceKm),
+      duration_min: String(durationMin),
+    });
+    const res = await fetch(`api/estimate_fare.php?${params.toString()}`);
+    if (res.status === 401) { window.location.href = "/"; return; }
+    if (res.ok) {
+      const result = await res.json();
+      if (result.success && typeof result.data?.fare_eur === "number") {
+        fare = result.data.fare_eur;
+      }
+    }
+  } catch (err) {
+    console.error("oaCorrectFareFromServer failed:", err);
+  }
+
+  // Guard against the route/service type having changed again while this
+  // was in flight — never let a stale response overwrite it.
+  if (oaCurrentDistance !== distanceKm || oaCurrentDuration !== durationMin) return;
+
+  if (fare == null) {
+    fare = oaCalculateFare(distanceKm, durationMin, new Date().toISOString().slice(0, 16), rideType);
+  }
+  oaCurrentFare = fare;
+  const estimatedFareElem = document.getElementById("estimatedFare");
+  if (estimatedFareElem) estimatedFareElem.value = `€${oaCurrentFare.toFixed(2)}`;
 }
 
 // Load passengers and populate dropdown (select only, no custom typing)

@@ -82,25 +82,60 @@ try {
         }
     }
 
+    // user_id doesn't always point at a passengers row — a corporate app
+    // booking's user_id is a corporate_employees id instead. get_ride.php
+    // (single-ride view) already falls back to this table; this endpoint
+    // (every list/table view) didn't, so a corporate employee's own app
+    // booking silently showed no name anywhere in the dispatcher panel.
+    // Only look up ids that passengerMap didn't already resolve.
+    $corpEmployeeMap = [];
+    $unresolvedIds = array_values(array_diff($passengerIds, array_keys($passengerMap)));
+    if (!empty($unresolvedIds)) {
+        try {
+            $corpEmployees = $db->fetchData('corporate_employees', [
+                'select' => 'id,name',
+                'filter' => ['id' => 'in.(' . implode(',', $unresolvedIds) . ')'],
+            ]);
+            foreach ($corpEmployees as $emp) {
+                if (isset($emp['id'])) {
+                    $corpEmployeeMap[$emp['id']] = $emp;
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Warning: Could not fetch corporate_employees data: " . $e->getMessage());
+        }
+    }
+
     foreach ($rides as &$ride) {
         $existingCompany = isset($ride['company']) ? trim((string)$ride['company']) : '';
         $existingEmployee = isset($ride['employee']) ? trim((string)$ride['employee']) : '';
+        $meta = isset($ride['meta']) ? (is_string($ride['meta']) ? json_decode($ride['meta'], true) : $ride['meta']) : [];
+        $metaCustomerName = is_array($meta) && !empty($meta['customer_name']) ? trim((string)$meta['customer_name']) : '';
 
-        if (isset($ride['user_id']) && isset($passengerMap[$ride['user_id']])) {
-            $passenger = $passengerMap[$ride['user_id']];
-            $ride['passenger_name'] = $passenger['name'] ?? ($existingEmployee !== '' ? $existingEmployee : 'N/A');
-            $ride['passenger_email'] = $passenger['email'] ?? 'N/A';
-            $ride['company'] = $passenger['business_name'] ?? ($existingCompany !== '' ? $existingCompany : 'N/A');
+        $passenger = (isset($ride['user_id']) && isset($passengerMap[$ride['user_id']])) ? $passengerMap[$ride['user_id']] : null;
+        $corpEmployee = (isset($ride['user_id']) && isset($corpEmployeeMap[$ride['user_id']])) ? $corpEmployeeMap[$ride['user_id']] : null;
+        $passengerName = $passenger && !empty($passenger['name']) ? trim((string)$passenger['name']) : '';
+        $corpEmployeeName = $corpEmployee && !empty($corpEmployee['name']) ? trim((string)$corpEmployee['name']) : '';
+
+        // Cascade through every available source instead of stopping at the
+        // first match that happens to be present but blank (e.g. a real
+        // passenger row whose name was never filled in) — that's what was
+        // quietly dropping to "N/A" instead of falling back further to a
+        // name the ride itself already has on hand.
+        if ($passengerName !== '') {
+            $ride['passenger_name'] = $passengerName;
+        } elseif ($corpEmployeeName !== '') {
+            $ride['passenger_name'] = $corpEmployeeName;
+        } elseif ($existingEmployee !== '') {
+            $ride['passenger_name'] = $existingEmployee;
+        } elseif ($metaCustomerName !== '') {
+            $ride['passenger_name'] = $metaCustomerName;
         } else {
-            $meta = isset($ride['meta']) ? (is_string($ride['meta']) ? json_decode($ride['meta'], true) : $ride['meta']) : [];
-            if ($existingEmployee !== '') {
-                $ride['passenger_name'] = $existingEmployee;
-            } else {
-                $ride['passenger_name'] = $meta['customer_name'] ?? 'N/A';
-            }
-            $ride['passenger_email'] = 'N/A';
-            $ride['company'] = $existingCompany !== '' ? $existingCompany : 'N/A';
+            $ride['passenger_name'] = 'N/A';
         }
+
+        $ride['passenger_email'] = $passenger['email'] ?? 'N/A';
+        $ride['company'] = $passenger['business_name'] ?? ($existingCompany !== '' ? $existingCompany : 'N/A');
     }
     unset($ride);
 

@@ -44,53 +44,53 @@ try {
     }
     
     $ride = $rides[0];
-    
-    // Fetch passenger information if user_id exists
+
+    // Cascade through every available source instead of stopping at the
+    // first record that happens to be present but blank (e.g. a real
+    // passenger row whose name was never filled in) — that used to quietly
+    // drop straight to "N/A" instead of falling back further to a name the
+    // ride itself already has on hand (meta.customer_name, or the employee
+    // column for a corporate ride).
+    $existingEmployee = isset($ride['employee']) ? trim((string)$ride['employee']) : '';
+    $existingCompany = isset($ride['company']) ? trim((string)$ride['company']) : '';
+    $meta = isset($ride['meta']) ? (is_string($ride['meta']) ? json_decode($ride['meta'], true) : $ride['meta']) : [];
+    $metaCustomerName = is_array($meta) && !empty($meta['customer_name']) ? trim((string)$meta['customer_name']) : '';
+    $metaCustomerPhone = is_array($meta) && !empty($meta['customer_phone']) ? trim((string)$meta['customer_phone']) : '';
+
+    $passenger = null;
+    $corpEmployee = null;
     if (isset($ride['user_id'])) {
-        $existingEmployee = isset($ride['employee']) ? trim((string)$ride['employee']) : '';
-        $existingCompany = isset($ride['company']) ? trim((string)$ride['company']) : '';
         try {
             $passengers = $db->findData('passengers', ['id' => $ride['user_id']]);
             if (!empty($passengers)) {
                 $passenger = $passengers[0];
-                $ride['passenger_name'] = $passenger['name'] ?? 'N/A';
-                $ride['passenger_email'] = $passenger['email'] ?? 'N/A';
-                $ride['passenger_phone'] = $passenger['phone'] ?? 'N/A';
-                $ride['company'] = $passenger['business_name'] ?? ($existingCompany !== '' ? $existingCompany : 'N/A');
             } else {
-                $corpEmployee = null;
-                try {
-                    $corpMatches = $db->findData('corporate_employees', ['id' => $ride['user_id']]);
-                    if (!empty($corpMatches)) $corpEmployee = $corpMatches[0];
-                } catch (Exception $e) {
-                    error_log("Warning: Could not fetch corporate_employees data: " . $e->getMessage());
-                }
-                if ($corpEmployee) {
-                    $ride['passenger_name'] = $corpEmployee['name'] ?? ($existingEmployee !== '' ? $existingEmployee : 'N/A');
-                    $ride['passenger_email'] = $corpEmployee['email'] ?? 'N/A';
-                    $ride['passenger_phone'] = $corpEmployee['phone'] ?? 'N/A';
-                    $ride['company'] = $corpEmployee['company'] ?? ($existingCompany !== '' ? $existingCompany : 'N/A');
-                } else {
-                    $ride['passenger_name'] = $existingEmployee !== '' ? $existingEmployee : 'N/A';
-                    $ride['passenger_email'] = 'N/A';
-                    $ride['passenger_phone'] = 'N/A';
-                    $ride['company'] = $existingCompany !== '' ? $existingCompany : 'N/A';
-                }
+                $corpMatches = $db->findData('corporate_employees', ['id' => $ride['user_id']]);
+                if (!empty($corpMatches)) $corpEmployee = $corpMatches[0];
             }
         } catch (Exception $e) {
             error_log("Warning: Could not fetch passenger data: " . $e->getMessage());
-            $ride['passenger_name'] = $existingEmployee !== '' ? $existingEmployee : 'N/A';
-            $ride['passenger_email'] = 'N/A';
-            $ride['passenger_phone'] = 'N/A';
-            $ride['company'] = $existingCompany !== '' ? $existingCompany : 'N/A';
         }
-    } else {
-        $meta = isset($ride['meta']) ? (is_string($ride['meta']) ? json_decode($ride['meta'], true) : $ride['meta']) : [];
-        $ride['passenger_name'] = $meta['customer_name'] ?? 'N/A';
-        $ride['passenger_phone'] = $meta['customer_phone'] ?? 'N/A';
-        $ride['passenger_email'] = 'N/A';
-        $ride['company'] = 'N/A';
     }
+
+    $passengerName = ($passenger && !empty($passenger['name'])) ? trim((string)$passenger['name']) : '';
+    $corpEmployeeName = ($corpEmployee && !empty($corpEmployee['name'])) ? trim((string)$corpEmployee['name']) : '';
+
+    if ($passengerName !== '') {
+        $ride['passenger_name'] = $passengerName;
+    } elseif ($corpEmployeeName !== '') {
+        $ride['passenger_name'] = $corpEmployeeName;
+    } elseif ($existingEmployee !== '') {
+        $ride['passenger_name'] = $existingEmployee;
+    } elseif ($metaCustomerName !== '') {
+        $ride['passenger_name'] = $metaCustomerName;
+    } else {
+        $ride['passenger_name'] = 'N/A';
+    }
+
+    $ride['passenger_email'] = $passenger['email'] ?? ($corpEmployee['email'] ?? 'N/A');
+    $ride['passenger_phone'] = $passenger['phone'] ?? ($corpEmployee['phone'] ?? ($metaCustomerPhone !== '' ? $metaCustomerPhone : 'N/A'));
+    $ride['company'] = $passenger['business_name'] ?? ($corpEmployee['company'] ?? ($existingCompany !== '' ? $existingCompany : 'N/A'));
     
     echo json_encode([
         'success' => true,

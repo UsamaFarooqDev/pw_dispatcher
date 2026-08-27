@@ -2,6 +2,7 @@
 header('Content-Type: application/json');
 session_start();
 require_once '../auth/config.php';
+require_once '../lib/fare_calculator.php';
 
 if (empty($_SESSION['admin_id'])) {
     http_response_code(401);
@@ -235,12 +236,13 @@ try {
     $rideType = isset($input['service_type']) && trim((string)$input['service_type']) !== ''
         ? trim((string)$input['service_type']) : (string)($corp['ride_type'] ?? 'Economy');
     $paymentMethod = strtolower(trim((string)($corp['payment_method'] ?? 'cash')));
-    $fareEur = isset($input['fare_eur']) ? floatval($input['fare_eur'])
-        : floatval($corp['fare_eur'] ?? 0);
     $distanceKm = isset($input['distance_km']) ? floatval($input['distance_km'])
         : floatval($corp['distance_km'] ?? 0);
     $durationMin = isset($input['duration_min']) ? intval($input['duration_min'])
         : intval($corp['duration_min'] ?? 0);
+    $fareEur = ($distanceKm > 0 || $durationMin > 0)
+        ? resolveDispatcherFare($db, $rideType, $distanceKm, $durationMin)
+        : floatval($corp['fare_eur'] ?? 0);
 
     $rideUpdatePayload = [
         'user_id' => $passengerId,

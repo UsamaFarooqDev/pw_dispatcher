@@ -2,6 +2,7 @@
 header('Content-Type: application/json');
 session_start();
 require_once '../auth/config.php';
+require_once '../lib/fare_calculator.php';
 
 // Security: Check if user is authenticated
 if (empty($_SESSION['admin_id'])) {
@@ -31,14 +32,7 @@ if (!$input || !isset($input['ride_id']) || !isset($input['driver_id'])) {
 
 try {
     $db = new SupabaseDB(null, true);
-
-    // force_assign is sent by the 40-min auto-transition to activate a scheduled
-    // ride (move it to 'assigned'); a normal manual assignment does not set it.
     $forceAssign = !empty($input['force_assign']) && $input['force_assign'] !== 'false';
-
-    // Look up the current status. Pre-assigning a driver to a *scheduled* ride must
-    // keep it scheduled (just attach the driver) — it should not activate early.
-    // Only force_assign (the timed activation) flips a scheduled ride to assigned.
     $existing = $db->findData('rides', ['id' => $input['ride_id']]);
     $currentStatus = !empty($existing) ? strtolower((string)($existing[0]['status'] ?? '')) : '';
 
@@ -68,11 +62,18 @@ try {
     if (isset($input['duration_min'])) {
         $updateData['duration_min'] = intval($input['duration_min']);
     }
-    if (isset($input['fare_eur'])) {
-        $updateData['fare_eur'] = number_format(floatval($input['fare_eur']), 2, '.', '');
-    }
     if (isset($input['service_type']) && trim((string)$input['service_type']) !== '') {
         $updateData['ride_type'] = trim((string)$input['service_type']);
+    }
+
+    $rideTypeForFare = $updateData['ride_type'] ?? ($existing[0]['ride_type'] ?? 'Economy');
+    $distanceForFare = isset($updateData['distance_km']) ? $updateData['distance_km'] : floatval($existing[0]['distance_km'] ?? 0);
+    $durationForFare = isset($updateData['duration_min']) ? $updateData['duration_min'] : floatval($existing[0]['duration_min'] ?? 0);
+    if ($distanceForFare > 0 || $durationForFare > 0) {
+        $updateData['fare_eur'] = number_format(
+            resolveDispatcherFare($db, $rideTypeForFare, $distanceForFare, $durationForFare),
+            2, '.', ''
+        );
     }
 
     // Update the ride
