@@ -20,11 +20,11 @@ require('modules/head.php');
 
   <!-- View toggle -->
   <div class="d-flex align-items-center gap-2 mt-1 mt-lg-4 mb-3 map-toggle-row">
-    <button type="button" class="map-view-toggle is-active" id="btnTableView" onclick="switchMapView('table')">
-      <i class="bi bi-table"></i> <span>Live Driver Coordinates</span>
-    </button>
-    <button type="button" class="map-view-toggle" id="btnMapView" onclick="switchMapView('map')">
+      <button type="button" class="map-view-toggle is-active" id="btnMapView" onclick="switchMapView('map')">
       <i class="bi bi-map"></i> <span>Live Map</span>
+    </button>  
+  <button type="button" class="map-view-toggle" id="btnTableView" onclick="switchMapView('table')">
+      <i class="bi bi-table"></i> <span>Live Driver Coordinates</span>
     </button>
     <span id="tableOnlineCount" class="d-inline-flex align-items-center gap-1 fw-semibold ms-auto" style="font-size:0.75rem; color:#22C55E; background:#F0FDF4; border:1px solid #DCFCE7; padding:4px 10px; border-radius:999px;">
       <span style="width:6px; height:6px; border-radius:50%; background:#22C55E; display:inline-block;"></span>
@@ -32,8 +32,8 @@ require('modules/head.php');
     </span>
   </div>
 
-  <!-- TABLE VIEW (default) -->
-  <div id="viewTable" class="rounded-3 border overflow-hidden" style="background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+  <!-- TABLE VIEW -->
+  <div id="viewTable" class="rounded-3 border overflow-hidden" style="display:none; background:#fff; border-color:#EBEBEB !important; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
     <div class="p-3 d-flex align-items-center gap-3" style="border-bottom:1px solid #F4F4F5;">
       <div class="position-relative" style="max-width:280px; flex:1;">
         <i class="bi bi-search position-absolute top-50 translate-middle-y" style="left:11px; font-size:12px; color:#A1A1AA; pointer-events:none;"></i>
@@ -62,8 +62,8 @@ require('modules/head.php');
     </div>
   </div>
 
-  <!-- MAP VIEW (hidden by default) -->
-  <div id="viewMap" style="display:none; height:calc(100vh - 200px);">
+  <!-- MAP VIEW (default) -->
+  <div id="viewMap" style="height:calc(100vh - 200px);">
   <div class="d-flex gap-3" style="height:100%;">
 
     <div class="position-relative flex-grow-1 rounded-3 overflow-hidden" style="border:1.5px solid #EBEBEB; box-shadow:0 1px 3px rgba(0,0,0,0.06);">

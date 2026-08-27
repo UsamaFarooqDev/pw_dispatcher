@@ -627,7 +627,7 @@
       }
 
       // ── View toggle (Table vs Map) ──
-      let currentView = 'table';
+      let currentView = 'map';
       let mapInitialized = false;
       let tablePollingId = null;
       let tableSearchQuery = '';
@@ -769,9 +769,10 @@
 
       // Initialize map when page loads
       function initMapPage() {
-        // Start in table view — map init deferred until user clicks "Live Map"
-        loadTableDrivers();
-        startTablePolling();
+        // Start in map view (table init deferred until the dispatcher
+        // clicks "Live Driver Coordinates") — matches the toggle buttons'
+        // markup, which now marks Live Map as the active one by default.
+        switchMapView('map');
 
         // Table search
         const tableSearch = document.getElementById('tableSearchInput');
@@ -808,7 +809,7 @@
         mapStopPolling();
         stopTablePolling();
         mapInitialized = false;
-        currentView = 'table';
+        currentView = 'map';
         tableSearchQuery = '';
         currentSearchQuery = '';
         driverMarkers = {};
