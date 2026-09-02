@@ -477,7 +477,7 @@ function populateUnassignedTable(rides) {
                 <td>${pickup}</td>
                 <td>${destination}</td>
                 <td>${renderStatusBadge(status)}</td>
-                <td>${renderPaymentBadge(ride.payment_method)}</td>
+                <td>${renderPaymentCell(ride)}</td>
                 <td>${renderPrebookBadge(ride)}</td>
                 <td>${renderSourceBadge(ride.source)}</td>
                 <td class="text-end pe-4">${fare}</td>
@@ -723,6 +723,20 @@ function renderSourceBadge(rawSource) {
   return `<span class="rounded-pill px-2 py-1 fw-semibold" style="font-size:0.72rem; background:${s.bg}; color:${s.color}; white-space:nowrap;">${s.label}</span>`;
 }
 
+// Payment badge + (Unassigned/Assigned/Enroute tabs only) a "Convert to Cash"
+// action link shown when the ride is still Prepaid, so a dispatcher can flip
+// it to Cash after handling the Stripe payment outside the app.
+function renderPaymentCell(ride) {
+  const badge = renderPaymentBadge(ride.payment_method);
+  const method = String(ride.payment_method ?? "").trim().toLowerCase();
+  if (method !== "prepaid") return badge;
+  const rideId = encodeURIComponent(ride.id || "");
+  return `<div class="d-flex flex-column align-items-start gap-1">
+            ${badge}
+            <a href="javascript:void(0)" onclick="convertRideToCash('${rideId}', this)" style="font-size:0.68rem; font-weight:600; color:#2563EB; text-decoration:underline; white-space:nowrap;">Convert to Cash</a>
+          </div>`;
+}
+
 async function loadAssignedRides(showLoading = false) {
   const tbody = document.getElementById("assignedRidesBody");
   if (showLoading && tbody) {
@@ -809,7 +823,7 @@ function populateAssignedTable(rides) {
             <td style="white-space:normal; word-break:break-word;">${pickup}</td>
             <td style="white-space:normal; word-break:break-word;">${destination}</td>
             <td title="${enrouteTooltip(ride)}">${renderAssignedStatusBadge(ride)}</td>
-            <td>${renderPaymentBadge(ride.payment_method)}</td>
+            <td>${renderPaymentCell(ride)}</td>
             <td>${renderPrebookBadge(ride)}</td>
             <td>${renderSourceBadge(ride.source)}</td>
             <td class="text-end pe-4">${fare}</td>
@@ -911,6 +925,50 @@ async function completeRide(encodedRideId, fareEur) {
   } catch (err) {
     console.error("Complete ride error:", err);
     showPreorderToast(err.message || "Failed to complete ride.", "error");
+  }
+}
+
+// Convert a Prepaid ride's payment method to Cash (Unassigned/Assigned/Enroute
+// tabs). Used e.g. when a Stripe payment didn't go through and the dispatcher
+// needs the ride to be collected as cash instead.
+async function convertRideToCash(encodedRideId, linkEl) {
+  const rideId = decodeURIComponent(encodedRideId);
+  const ok = await showConfirmDialog({
+    title: "Convert to cash payment?",
+    message: "This ride is currently marked <strong>Prepaid</strong>. Convert it to <strong>Cash</strong> payment? This cannot be undone.",
+    confirmText: "Yes, convert to cash",
+    cancelText: "Cancel",
+  });
+  if (!ok) return;
+
+  if (linkEl) {
+    linkEl.style.pointerEvents = "none";
+    linkEl.style.opacity = "0.6";
+  }
+
+  try {
+    const response = await fetch("api/convert_ride_to_cash.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ride_id: rideId }),
+    });
+    if (response.status === 401) {
+      window.location.href = "/";
+      return;
+    }
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || "Failed to convert ride to cash");
+    }
+    await checkRideStatusChanges();
+    showPreorderToast("Ride payment converted to Cash.", "success");
+  } catch (err) {
+    console.error("Convert to cash error:", err);
+    showPreorderToast(err.message || "Failed to convert ride to cash.", "error");
+    if (linkEl) {
+      linkEl.style.pointerEvents = "";
+      linkEl.style.opacity = "";
+    }
   }
 }
 
@@ -1705,7 +1763,7 @@ function populateEnrouteTable(rides) {
             <td>${pickup}</td>
             <td>${destination}</td>
             <td>${renderStatusBadge(status)}</td>
-            <td>${renderPaymentBadge(ride.payment_method)}</td>
+            <td>${renderPaymentCell(ride)}</td>
             <td>${renderSourceBadge(ride.source)}</td>
             <td>${driverName}</td>
             <td>${fare}</td>

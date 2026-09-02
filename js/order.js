@@ -1026,6 +1026,15 @@ async function createOrder() {
         const paymentChoice = document.querySelector('input[name="paymentMethod"]:checked');
         const paymentMethod = (paymentChoice && paymentChoice.value === 'stripe') ? 'prepaid' : 'cash';
 
+        // Mandatory for Stripe: the dispatcher must confirm the passenger's
+        // Stripe payment actually went through before the order can be
+        // created — otherwise a ride could go out with an unpaid Stripe
+        // selection and no cash collected either.
+        if (paymentMethod === 'prepaid' && !document.getElementById('stripePaymentConfirmed')?.checked) {
+          showToast('Please confirm the Stripe payment was completed before proceeding.');
+          return;
+        }
+
         const isCustomPax = paxMode === 'custom';
         const finalName = customerName;
 
@@ -1124,13 +1133,26 @@ modal.show();
           console.warn('clearFieldsYesBtn not found in DOM');
         }
 
-        // Show the Stripe checkout link only when "Pay with Stripe" is selected.
+        // Show the Stripe checkout link + mandatory "payment completed"
+        // confirmation only when "Pay with Stripe" is selected. Switching
+        // back to Cash also resets and re-hides the checkbox — it's only
+        // meaningful (and only enforced) while Stripe is the active choice.
         const stripeLink = document.getElementById('stripePayLink');
+        const stripeConfirmWrap = document.getElementById('stripeConfirmWrap');
+        const stripeConfirmCheckbox = document.getElementById('stripePaymentConfirmed');
         const syncStripeLink = () => {
           const stripeSelected = document.getElementById('paymentStripe')?.checked;
-          if (!stripeLink) return;
-          stripeLink.classList.toggle('d-none', !stripeSelected);
-          stripeLink.classList.toggle('d-inline-flex', !!stripeSelected);
+          if (stripeLink) {
+            stripeLink.classList.toggle('d-none', !stripeSelected);
+            stripeLink.classList.toggle('d-inline-flex', !!stripeSelected);
+          }
+          if (stripeConfirmWrap) {
+            stripeConfirmWrap.classList.toggle('d-none', !stripeSelected);
+            stripeConfirmWrap.classList.toggle('d-flex', !!stripeSelected);
+          }
+          if (!stripeSelected && stripeConfirmCheckbox) {
+            stripeConfirmCheckbox.checked = false;
+          }
         };
         document.querySelectorAll('input[name="paymentMethod"]').forEach((r) => {
           r.addEventListener('change', syncStripeLink);
@@ -1183,7 +1205,7 @@ modal.show();
           if (el) el.checked = false;
         });
 
-        // Reset payment method back to Cash and hide the Stripe link
+        // Reset payment method back to Cash and hide the Stripe link + confirmation
         const cashRadio = document.getElementById('paymentCash');
         if (cashRadio) cashRadio.checked = true;
         const stripeLink = document.getElementById('stripePayLink');
@@ -1191,6 +1213,13 @@ modal.show();
           stripeLink.classList.add('d-none');
           stripeLink.classList.remove('d-inline-flex');
         }
+        const stripeConfirmWrap = document.getElementById('stripeConfirmWrap');
+        if (stripeConfirmWrap) {
+          stripeConfirmWrap.classList.add('d-none');
+          stripeConfirmWrap.classList.remove('d-flex');
+        }
+        const stripeConfirmCheckbox = document.getElementById('stripePaymentConfirmed');
+        if (stripeConfirmCheckbox) stripeConfirmCheckbox.checked = false;
 
         const suggestions = document.getElementById('customerSuggestions');
         if (suggestions) {

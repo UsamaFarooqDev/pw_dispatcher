@@ -381,6 +381,13 @@ foreach ($rideTypes as $t) {
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
               Pay with Stripe
             </a>
+            <div class="d-none align-items-center gap-2 mt-2" id="stripeConfirmWrap">
+              <input type="checkbox" id="stripePaymentConfirmed"
+                style="width:17px; height:17px; accent-color:#16A34A; cursor:pointer; flex-shrink:0;" />
+              <label for="stripePaymentConfirmed" class="mb-0 fw-semibold" style="font-size:0.8125rem; color:#16A34A; cursor:pointer;">
+                Stripe payment completed
+              </label>
+            </div>
           </div>
         </div>
 

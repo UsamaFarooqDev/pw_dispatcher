@@ -66,6 +66,18 @@ try {
         $updateData['ride_type'] = trim((string)$input['service_type']);
     }
 
+    // Self-heal a corrupted payment_method rather than propagate it forward.
+    // This endpoint never writes payment_method itself (nothing in this app
+    // does, other than order creation) — the ride keeps whatever it already
+    // had — but if it's already invalid (e.g. a status string sitting in
+    // that column instead of cash/prepaid/card/online) it's normalized here
+    // so it never shows up wrong on the Assigned tab.
+    $validPaymentMethods = ['cash', 'prepaid', 'card', 'online'];
+    $existingPaymentMethod = strtolower(trim((string)($existing[0]['payment_method'] ?? '')));
+    if ($existingPaymentMethod !== '' && !in_array($existingPaymentMethod, $validPaymentMethods, true)) {
+        $updateData['payment_method'] = 'cash';
+    }
+
     $rideTypeForFare = $updateData['ride_type'] ?? ($existing[0]['ride_type'] ?? 'Economy');
     $distanceForFare = isset($updateData['distance_km']) ? $updateData['distance_km'] : floatval($existing[0]['distance_km'] ?? 0);
     $durationForFare = isset($updateData['duration_min']) ? $updateData['duration_min'] : floatval($existing[0]['duration_min'] ?? 0);
